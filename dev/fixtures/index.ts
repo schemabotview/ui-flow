@@ -12,5 +12,6 @@ import { memory } from './memory'
 import { padding } from './padding'
 import { vendorIcons } from './vendor-icons'
 import { warn } from './warn'
+import { minCols } from './min-cols'
 
-export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding, vendorIcons, warn]
+export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding, vendorIcons, warn, minCols]

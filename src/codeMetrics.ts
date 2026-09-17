@@ -20,7 +20,8 @@ export const CODE_PAD_Y = 14 // body vertical padding (top & bottom)
 // 2.34x, a 38% swing in code text size between consecutive shots of the same course. Padding every
 // card out to a common column makes them all render at one size. The house rule that follows: keep
 // source lines at or under this width — a longer line widens its card and shrinks that scene's type
-// again.
+// again. A concept whose source runs wider than this raises it per card via `minCols` rather than
+// changing this default, which is calibrated for narrow snippets.
 export const CODE_MIN_COLS = 64
 
 // The lines a code node paints: `label` split on newlines, plus a trailing `# sub` comment line when
@@ -31,10 +32,10 @@ export function codeLines(node: Pick<SceneNode, 'label' | 'sub'>): string[] {
 }
 
 // Natural pixel size of a code card for the given content — the box the layout reserves for it.
-export function codeCardSize(node: Pick<SceneNode, 'label' | 'sub' | 'filename' | 'hug'>): { w: number; h: number } {
+export function codeCardSize(node: Pick<SceneNode, 'label' | 'sub' | 'filename' | 'hug' | 'minCols'>): { w: number; h: number } {
   const lines = codeLines(node)
   const chrome = (node.filename?.length ?? 0) + 8 // filename tab needs room past the traffic lights
-  const floor = node.hug ? 1 : CODE_MIN_COLS // a card inside a diagram sizes to its own content
+  const floor = node.hug ? 1 : (node.minCols ?? CODE_MIN_COLS) // a card inside a diagram sizes to its own content
   const maxChars = Math.max(floor, chrome, ...lines.map((l) => l.length))
   const w = CODE_GUTTER_W + Math.ceil(maxChars * CODE_CHAR_W) + CODE_PAD_X * 2
   const h = CODE_BAR_H + lines.length * CODE_LINE_H + CODE_PAD_Y * 2

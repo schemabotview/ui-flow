@@ -40,6 +40,12 @@ export interface SceneNode {
   // padding a 21-col bytecode listing out to 64 just inflates the scene and shrinks everything in it.
   // Set this on code cards that sit alongside other nodes; leave it off for a standalone card.
   hug?: boolean
+  // Raise the CODE_MIN_COLS width floor for THIS card. The floor exists so every code card in a deck
+  // renders its type at one size; 64 suits narrow source, but a concept whose snippets run wider
+  // (verbose APIs) needs a higher common column or its cards come out at differing widths — and the
+  // widest card then sets a smaller type size than its neighbours. Set it once per concept, at the
+  // point the code node is built. Ignored when `hug` is set, which opts out of the floor entirely.
+  minCols?: number
   // A node with `children` is a CONTAINER: the engine lays the children out inside it and sizes the
   // box to fit them (a labelled group). Children with no edges stack vertically. Lets a scene show
   // nesting — "AWS Cloud ⊃ services", a Region ⊃ its AZs — instead of faking peers as a flow chain.
