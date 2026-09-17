@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Declarative react-flow scene engine for GraphL — authors describe nodes, edges and nesting; the engine computes every position.",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schemabotview/ui-flow.git"
+  },
   "type": "module",
   "files": [
     "dist"
