@@ -1,4 +1,4 @@
-# @graphl/flow
+# @graphlearning/flow
 
 The scene engine for [GraphL](https://graphl.in). A **scene** is a declarative graph — nodes, edges
 and nesting — and this package computes every position and renders it with react-flow.
@@ -7,8 +7,8 @@ Authors never place nodes. That is the point: layout is derived, so a scene is d
 screenshots are reproducible frame to frame.
 
 ```tsx
-import { SceneView, type Scene } from '@graphl/flow'
-import '@graphl/flow/styles.css'
+import { SceneView, type Scene } from '@graphlearning/flow'
+import '@graphlearning/flow/styles.css'
 
 const scene: Scene = {
   id: 'request-path',
@@ -40,7 +40,7 @@ scenes deterministic dies at that point.
 
 Both are invisible until they break:
 
-1. **Import the stylesheet once** — `import '@graphl/flow/styles.css'`. It carries react-flow's
+1. **Import the stylesheet once** — `import '@graphlearning/flow/styles.css'`. It carries react-flow's
    stylesheet and the IBM Plex faces the engine is *calibrated* to: `codeMetrics.ts` sizes every code
    node from a measured 9.02px glyph advance, so a different monospace face mis-sizes every card.
 2. **The host paints the canvas.** `SceneView` draws its background dots at `#2a2f38` and assumes a

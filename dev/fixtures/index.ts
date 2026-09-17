@@ -1,5 +1,5 @@
 // The fixture registry. One entry per engine capability — together they are the visual spec for what
-// @graphl/flow must render, and the only place a layout regression can be caught before it reaches a
+// @graphlearning/flow must render, and the only place a layout regression can be caught before it reaches a
 // content repo. Ordered simplest → most specialised.
 import type { Scene } from '../../src'
 import { flowTb } from './flow-tb'

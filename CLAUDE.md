@@ -1,4 +1,4 @@
-# CLAUDE.md — @graphl/flow
+# CLAUDE.md — @graphlearning/flow
 
 The scene engine consumed by every GraphL content repo. See `README.md` for the contract; this file
 is the working notes.

@@ -6,7 +6,7 @@
  *     advance (CODE_CHAR_W = 9.02px at 15px). A different monospace face silently mis-sizes cards.
  *   - IBM Plex Sans 400/600 — node labels and sub-labels.
  *
- * A consuming app imports this once:  import '@graphl/flow/styles.css'
+ * A consuming app imports this once:  import '@graphlearning/flow/styles.css'
  */
 @import '@xyflow/react/dist/style.css';
 @import '@fontsource/ibm-plex-sans/400.css';

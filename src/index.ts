@@ -1,4 +1,4 @@
-// Public surface of @graphl/flow. `exports` in package.json makes this the single entry point, so a
+// Public surface of @graphlearning/flow. `exports` in package.json makes this the single entry point, so a
 // content repo can import these names and nothing else — deep imports do not resolve.
 //
 // The scene model an author writes, plus the component that renders it. That is the whole contract.
