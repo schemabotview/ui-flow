@@ -5,6 +5,7 @@
 
 import {
   Workflow, Box, Cog, MemoryStick, Zap, Brain, Waves, Share2,
+  Filter, Copy, Table2,
   Monitor, Terminal, Code2, FileCode2, Cloud, Building2, Braces,
   Cpu, Layers, Globe, Database, Network, Wrench,
   Receipt, Tag, Gauge, BellRing,
@@ -60,4 +61,8 @@ export const LUCIDE_ICONS: Record<string, LucideIcon> = {
   brain: Brain, // an optimizer / planner (Catalyst, the driver planning)
   waves: Waves, // a stream (Structured Streaming)
   share: Share2, // one input fanning out to many (a broadcast join, a merge)
+  // ── SQL glyphs (merged in at 0.4.0 from sql's copy) ──
+  funnel: Filter, // a filtering / narrowing step (a semi/anti join, a WHERE)
+  copy: Copy, // duplication — deduplicate, a broadcast copy
+  table: Table2, // a table / tabular result
 }

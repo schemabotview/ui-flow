@@ -14,6 +14,13 @@ export interface MemorySlot {
   group?: string
 }
 
+/** One column of a SCHEMA-mode table node: its name, its data type, and an optional key badge. */
+export interface TableColumn {
+  name: string
+  type?: string // right-aligned beside the name (e.g. 'timestamptz')
+  key?: 'PK' | 'FK' // badged in the gutter; the gutter is only reserved when some column has one
+}
+
 export interface SceneNode {
   id: string
   label: string
@@ -31,7 +38,17 @@ export interface SceneNode {
   // regions. Carries `slots` instead of `label` lines; `label` titles it and `sub` captions it.
   // Use it wherever the subject IS a byte layout — adjacency and offsets are the content, and a grid
   // of separate cards would misrepresent them as unordered peers.
-  kind?: 'code' | 'memory'
+  // A TABLE node renders as a real relation instead of a card: the table's name (`label`) and optional
+  // caption (`sub`) over a monospace grid. Two modes, picked by which field is set —
+  //   SCHEMA: `columns` — one line per column, name left, type right-aligned, PK/FK badged.
+  //   DATA:   `headers` + `values` — a small result set, one line per row.
+  // Size is computed from the content (see tableMetrics) and fitView scales it, so every table in the
+  // deck shares one type size. Uses `pattern` for its accent; ignores `icon` and `variant`. May sit in
+  // a flow like any other node — but note edges anchor to the NODE, never to an individual row.
+  kind?: 'code' | 'memory' | 'table'
+  columns?: TableColumn[] // table, schema mode: the table's columns
+  headers?: string[] // table, data mode: the header row
+  values?: string[][] // table, data mode: the body rows, each a list of cells
   slots?: MemorySlot[] // memory node only: the cells, top→bottom in address order
   filename?: string // the tab label on a code node (e.g. "list.py")
   // Opt a code card OUT of the CODE_MIN_COLS width floor, sizing it to its own longest line instead.

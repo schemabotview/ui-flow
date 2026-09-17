@@ -2,7 +2,7 @@
 // content repo can import these names and nothing else — deep imports do not resolve.
 //
 // The scene model an author writes, plus the component that renders it. That is the whole contract.
-export type { Scene, SceneNode, SceneEdge, PatternKey, MemorySlot } from './types'
+export type { Scene, SceneNode, SceneEdge, PatternKey, MemorySlot, TableColumn } from './types'
 export { SceneView } from './SceneView'
 
 // DELIBERATELY NOT EXPORTED: computeLayout, collectEdges, Placed, NODE_W, NODE_H, PATTERNS,
