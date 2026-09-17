@@ -10,5 +10,7 @@ import { container } from './container'
 import { code } from './code'
 import { memory } from './memory'
 import { padding } from './padding'
+import { vendorIcons } from './vendor-icons'
+import { warn } from './warn'
 
-export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding]
+export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding, vendorIcons, warn]

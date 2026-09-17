@@ -4,6 +4,7 @@
 // aren't AWS services — the four access surfaces (Console/CLI/SDK/IaC), non-AWS clouds, on-prem, etc.
 
 import {
+  Workflow, Box, Cog, MemoryStick, Zap, Brain, Waves, Share2,
   Monitor, Terminal, Code2, FileCode2, Cloud, Building2, Braces,
   Cpu, Layers, Globe, Database, Network, Wrench,
   Receipt, Tag, Gauge, BellRing,
@@ -49,4 +50,14 @@ export const LUCIDE_ICONS: Record<string, LucideIcon> = {
   repeat: Repeat, // throughput / high transaction rate
   lock: Lock, // durability / committed-and-permanent
   scale: Scale, // a ledger that must balance
+
+  // ── Spark glyphs (merged in at 0.2.0 from apache-spark's copy) ──
+  workflow: Workflow, // a DAG / scheduler (code → stages → tasks)
+  box: Box, // an executor (a JVM process)
+  gears: Cog, // task slots / cores turning tasks
+  memory: MemoryStick, // in-memory cache
+  zap: Zap, // the Spark engine (in-memory speed)
+  brain: Brain, // an optimizer / planner (Catalyst, the driver planning)
+  waves: Waves, // a stream (Structured Streaming)
+  share: Share2, // one input fanning out to many (a broadcast join, a merge)
 }

@@ -2,7 +2,7 @@
 // never hand-place nodes (that keeps a scene deterministic → screenshots are reproducible).
 // A scene is content-agnostic and can be SHARED across many slugs (course-section).
 
-export type PatternKey = 'service' | 'storage' | 'network' | 'user' | 'external' | 'group'
+export type PatternKey = 'service' | 'storage' | 'network' | 'user' | 'external' | 'group' | 'warn'
 
 // One cell of a MEMORY node. `at` is the offset painted on the axis outside the block; `name` fills
 // the cell; `note` trails it, aligned into a common column across the figure. Consecutive slots that

@@ -2,7 +2,7 @@
 // pick a PatternKey; the engine owns how each looks, so every scene across every course renders in
 // one consistent visual language.
 
-import { Server, Database, Network, Users, Globe, Box, type LucideIcon } from 'lucide-react'
+import { Server, Database, Network, Users, Globe, Box, TriangleAlert, type LucideIcon } from 'lucide-react'
 import type { PatternKey } from './types'
 
 export interface PatternStyle {
@@ -18,4 +18,8 @@ export const PATTERNS: Record<PatternKey, PatternStyle> = {
   user: { icon: Users, color: '#c98bff', bg: '#1e1428' },
   external: { icon: Globe, color: '#9aa4b2', bg: '#181b20' },
   group: { icon: Box, color: '#9aa4b2', bg: 'transparent' },
+  // A limitation / "the catch" callout — a warm red so the constraint reads as the thing being
+  // flagged, distinct from the neutral roles. Used for bottleneck/limit nodes and reusable across
+  // courses.
+  warn: { icon: TriangleAlert, color: '#f0656f', bg: '#2a1416' },
 }

@@ -36,6 +36,18 @@ The layout internals (`computeLayout`, `Placed`, `PATTERNS`, …) are deliberate
 Shipping them would ship a supported way to hand-compute positions, and the invariant that keeps
 scenes deterministic dies at that point.
 
+## Icons
+
+A node's `icon` key is looked up in two registries, in order, with the pattern's own glyph as the
+fallback. They share no keys, so it is a fallback chain rather than a precedence rule:
+
+| `icon: 'ec2'` | an official AWS service tile, full colour, in a rounded frame |
+| `icon: 'terminal'` | a lucide line glyph, tinted in the pattern accent |
+| *(omitted)* | the pattern's default glyph |
+
+The AWS set is bundled rather than injected, so every content repo renders from one package version
+with no per-repo wiring. It costs ~165 kB, which is nothing beside the audio a content repo ships.
+
 ## Two contracts
 
 Both are invisible until they break:
@@ -59,8 +71,8 @@ npm run watch    # rebuild the library on change, for a linked content repo
 ```
 
 The **fixtures** under `dev/fixtures/` are the visual spec: flow direction, grids, containers, code
-nodes, the memory figure, tiles, padding. There is no test runner — the harness is where a layout
-regression is caught before it reaches a content repo.
+nodes, the memory figure, tiles, padding, the two icon registries, and the `warn` role. There is no
+test runner — the harness is where a layout regression is caught before it reaches a content repo.
 
 ## Consumed by
 

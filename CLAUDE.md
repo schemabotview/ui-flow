@@ -12,6 +12,10 @@ is the working notes.
 - **Peer deps, never deps**, for `react`, `react-dom`, `@xyflow/react`, `lucide-react`. Bundling any
   of them puts a second React in the package and breaks hooks in every consuming app. The `external`
   list in `vite.config.ts` is what enforces it — check it after any dependency change.
+- **One palette, no per-repo theming.** `patterns.ts` owns how each role looks so every scene across
+  every course reads the same. Colours are concatenated with hex alpha (`${p.color}0f`) in 14 places,
+  so they must stay 6-digit hex — a CSS variable cannot be substituted without reworking all of them.
+  apache-spark's brand-orange `service` override was dropped at 0.2.0 for exactly this reason.
 - **`CODE_CHAR_W = 9.02`** in `codeMetrics.ts` is a *measured* IBM Plex Mono advance at 15px. It is
   why the font ships as a real dependency via `styles.css`. Changing the font or size means
   re-measuring it.
