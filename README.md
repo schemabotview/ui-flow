@@ -64,5 +64,6 @@ regression is caught before it reaches a content repo.
 
 ## Consumed by
 
-Every GraphL content repo (`python`, `aws`, `sql`, …). They pin a version, so an engine change never
-breaks them all at once — each upgrades when it is ready to re-verify.
+`python` today; every other GraphL content repo (`aws`, `sql`, `linux`, …) as they migrate off their
+bundled copy. They pin a version, so an engine change never breaks them all at once — each upgrades
+when it is ready to re-verify.
