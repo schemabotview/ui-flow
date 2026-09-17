@@ -42,7 +42,7 @@ A node's `icon` key is looked up in two registries, in order, with the pattern's
 fallback. They share no keys, so it is a fallback chain rather than a precedence rule:
 
 | `icon: 'ec2'` | an official AWS service tile, full colour, in a rounded frame |
-| `icon: 'terminal'` | a lucide line glyph, tinted in the pattern accent |
+| `icon: 'terminal'` | a lucide line glyph, tinted in the pattern accent — 75 keys, see the `icon-gallery` fixture |
 | *(omitted)* | the pattern's default glyph |
 
 The AWS set is bundled rather than injected, so every content repo renders from one package version
@@ -71,8 +71,8 @@ npm run watch    # rebuild the library on change, for a linked content repo
 ```
 
 The **fixtures** under `dev/fixtures/` are the visual spec: flow direction, grids, containers, code
-nodes, the memory figure, table nodes in both modes, tiles, padding, the two icon registries, and the
-`warn` role. There is no
+nodes, the memory figure, table nodes in both modes, tiles, padding, the two icon registries, the
+`warn` role, and a gallery of every icon key. There is no
 test runner — the harness is where a layout regression is caught before it reaches a content repo.
 
 ## Consumed by
