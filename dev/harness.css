@@ -1,0 +1,21 @@
+/* Chrome for the harness only — deliberately plain, so nothing here can be mistaken for engine
+   styling. The stage is locked to 16:9 because that is the capture aspect the engine targets.
+
+   The stage background is #1a1d23 on purpose, NOT white. SceneView does not paint its own canvas:
+   it draws Background dots at #2a2f38 and its node fills and label colours all assume a dark surface
+   behind them. The host app supplies that (python's index.css sets --bg: #1a1d23). On a light stage
+   tile labels render nearly invisible — so a harness with the wrong background silently lies about
+   every fixture. This is a real part of the engine's contract, same as styles.css. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #0f1115; color: #e6e8ec; }
+.layout { display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
+.rail { border-right: 1px solid #262a33; padding: 16px 0; overflow-y: auto; }
+.rail h1 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #7d8696; margin: 0 16px 12px; }
+.rail a { display: block; padding: 7px 16px; color: #b8c0cc; text-decoration: none; font-size: 13px; }
+.rail a:hover { background: #171a21; color: #fff; }
+.rail a[data-on='1'] { background: #1d222c; color: #fff; box-shadow: inset 2px 0 0 #4c8dff; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.bar { padding: 12px 20px; border-bottom: 1px solid #262a33; font-size: 13px; color: #7d8696; }
+.bar b { color: #e6e8ec; font-weight: 600; }
+.stagewrap { flex: 1; display: grid; place-items: center; padding: 24px; min-height: 0; }
+.stage { width: 100%; max-width: calc((100vh - 140px) * 16 / 9); aspect-ratio: 16 / 9; background: #1a1d23; border-radius: 6px; overflow: hidden; }
