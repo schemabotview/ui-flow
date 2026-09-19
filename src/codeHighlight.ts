@@ -1,7 +1,7 @@
 // A deliberately small syntax highlighter for the `code` node — NOT a real parser, just enough
 // to make a method chain / call expression read as IDE-colored source. It scans left→right and
 // classifies each run; the `code` branch of SceneNode paints each token in its class color
-// (see scene.css .tok-*). General enough for Python / Scala / SQL-ish one-liners across concepts.
+// (see styles.css .tok-*). General enough for Python / Scala / SQL-ish one-liners across concepts.
 
 export type TokClass = 'var' | 'method' | 'keyword' | 'string' | 'number' | 'punct' | 'ws' | 'comment'
 export interface CodeTok { cls: TokClass; text: string }

@@ -12,3 +12,17 @@
 @import '@fontsource/ibm-plex-sans/400.css';
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-mono/400.css';
+
+/* --- code node: syntax-highlight token colours --------------------------------------------------
+   CodeNode renders each token as <span class="tok-{cls}"> (see codeHighlight.ts), so these classes
+   are the ENGINE's own output and belong to the engine's stylesheet contract — every content repo
+   used to carry an identical copy of these seven rules, and a repo that forgot them rendered code
+   cards as flat undifferentiated text. A neutral IDE palette on the dark editor surface;
+   independent of the scene's pattern accents. */
+.tok-var { color: #eceef2; }
+.tok-method { color: #5b8cff; }
+.tok-keyword { color: #b98bff; }
+.tok-string { color: #37d39a; }
+.tok-number { color: #ff7a59; }
+.tok-punct { color: #8b909c; }
+.tok-comment { color: #6b748b; font-style: italic; }
