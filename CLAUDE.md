@@ -26,6 +26,22 @@ is the working notes.
   miss: grid **gaps sit between tracks**, and the PK/FK gutter is a track (this shipped broken in
   sql — the gutter's gap was never reserved); and the card's **border eats inner width** under
   `box-sizing: border-box`, so it counts on both axes at its focused width.
+- **A plot's x/y are DATA, not layout.** `kind: 'plot'` is the one node whose author writes numbers,
+  and it does not weaken the no-x/y rule: those are values in the axes' own units, and the engine
+  still owns every pixel (the data→pixel transform, the box, the ticks, the gutters). An author
+  cannot nudge anything by a pixel. Curves are sampled in the scene file — the file is TypeScript, so
+  the maths is written where it is stated and the engine needs no expression parser.
+- **The plot ramp is the PATTERNS accents, in a fixed order that keeps green and orange apart.**
+  `PLOT_SERIES_COLORS` is network · service · user · storage, because green↔orange is the pair that
+  collapses under protanopia (ΔE 7.9) and they must never be adjacent slots. `warn` red is excluded:
+  in this engine red means "the catch", and a colour that also means "series 5" means neither. The
+  ramp fails only the dataviz lightness band for dark surfaces (L 0.48–0.67) — deliberately, because
+  matching the cards in the same frame outranks it; every other check passes.
+- **A plot is sized to ONE deck-wide box, not to its content.** A curve is continuous — there is no
+  "longest line" to measure — so `PLOT_AREA_W/H` is what makes every plot in a course render its
+  tick labels at the same size. `equal: true` is the exception and the only one: it lets the axis
+  SPANS set the aspect so a right angle looks like one, which is required wherever distance is the
+  content (slope triangles, decision boundaries, k-means).
 - **`CODE_CHAR_W = 9.02`** in `codeMetrics.ts` is a *measured* IBM Plex Mono advance at 15px. It is
   why the font ships as a real dependency via `styles.css`. Changing the font or size means
   re-measuring it.

@@ -11,10 +11,11 @@ import { TileNode } from './TileNode'
 import { MemoryNode } from './MemoryNode'
 import { TableNode } from './TableNode'
 import { CodeNode } from './CodeNode'
+import { PlotNode } from './PlotNode'
 import { FlowEdge } from './FlowEdge'
 import { PATTERNS } from './patterns'
 
-const nodeTypes = { scene: SceneNode, container: ContainerNode, tile: TileNode, code: CodeNode, memory: MemoryNode, table: TableNode }
+const nodeTypes = { scene: SceneNode, container: ContainerNode, tile: TileNode, code: CodeNode, memory: MemoryNode, table: TableNode, plot: PlotNode }
 const edgeTypes = { flow: FlowEdge }
 
 export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }) {
@@ -24,7 +25,7 @@ export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }
     // its own size; children carry `parentId` + a parent-relative position, as react-flow expects.
     const nodes: Node[] = placed.map((p) => ({
       id: p.id,
-      type: p.node.kind === 'code' ? 'code' : p.node.kind === 'memory' ? 'memory' : p.node.kind === 'table' ? 'table' : p.node.children?.length ? 'container' : p.node.variant === 'tile' ? 'tile' : 'scene',
+      type: p.node.kind === 'code' ? 'code' : p.node.kind === 'memory' ? 'memory' : p.node.kind === 'table' ? 'table' : p.node.kind === 'plot' ? 'plot' : p.node.children?.length ? 'container' : p.node.variant === 'tile' ? 'tile' : 'scene',
       position: { x: p.x, y: p.y },
       data: { ...p.node, __focus: p.node.id === focusId },
       style: { width: p.w, height: p.h },

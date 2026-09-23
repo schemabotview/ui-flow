@@ -1,6 +1,6 @@
 {
   "name": "@graphlearning/flow",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Declarative react-flow scene engine for GraphL — authors describe nodes, edges and nesting; the engine computes every position.",
   "license": "UNLICENSED",
   "repository": {

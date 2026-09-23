@@ -21,6 +21,66 @@ export interface TableColumn {
   key?: 'PK' | 'FK' // badged in the gutter; the gutter is only reserved when some column has one
 }
 
+/** One axis of a PLOT node: the window it shows, and how it is ticked and named. */
+export interface PlotAxis {
+  min: number
+  max: number
+  /** Tick & gridline interval. Omit and the engine picks a "nice" one (1/2/5 × 10ⁿ) for the span. */
+  step?: number
+  /** The axis's name, drawn at its far end ('x', 'y', 'size (ft²)', 'P(y=1)'). */
+  label?: string
+}
+
+/** A point in DATA space — `[x, y]` in the axes' own units, never pixels. */
+export type PlotPoint = [number, number]
+
+/**
+ * One drawn thing on a plot. `line` and `scatter` take `points`; `marker` takes `at`; `segment`
+ * takes `from`/`to`. A CURVE is just a `line` with enough points — scene files are TypeScript, so
+ * the author writes the function and maps it:
+ *
+ *   { kind: 'line', points: sample(-8, 8, 120, (x) => 1 / (1 + Math.exp(-x))) }
+ *
+ * which keeps the engine free of an expression parser and keeps the maths readable where it lives.
+ */
+export interface PlotSeries {
+  kind: 'line' | 'scatter' | 'marker' | 'segment' | 'area'
+  points?: PlotPoint[] // line · scatter · area (two points is a straight line)
+  at?: PlotPoint // marker: the single emphasised point
+  from?: PlotPoint // segment: an annotation rule (the run of a rise-over-run, a threshold)
+  to?: PlotPoint
+  /**
+   * A direct label, drawn beside the series rather than in a legend box. Prefer this: on a teaching
+   * figure the reader should never have to look away from the curve to find out what it is.
+   */
+  label?: string
+  /** Nudge the label off its anchor, in data units, when it would collide with the curve. */
+  labelAt?: PlotPoint
+  /** An explicit hex, or a PatternKey resolved to that pattern's accent. Defaults to the series ramp
+   *  in fixed assignment order — never cycled, so a curve keeps its colour when a sibling is added. */
+  color?: PatternKey | string
+  dashed?: boolean
+  /** Marker radius in px (marker · scatter). Defaults to 7 — the readable floor at capture size. */
+  size?: number
+}
+
+/** The PLOT node's figure: two axes and the things drawn against them. */
+export interface PlotSpec {
+  x: PlotAxis
+  y: PlotAxis
+  series: PlotSeries[]
+  /** Axes through the origin (a maths plane) or along the left/bottom edges (a data chart). Derived
+   *  from the ranges when omitted: a window containing the origin on both axes is drawn as a plane. */
+  axes?: 'origin' | 'corner'
+  /** Gridlines at every tick. Default true. */
+  grid?: boolean
+  /** Force one data unit to be the same pixel length on BOTH axes, so distance is drawn faithfully —
+   *  a right angle looks like one, a round cluster looks round. Set it wherever distance is the
+   *  content (a decision boundary, k-means, a slope triangle); leave it off when the axes measure
+   *  unrelated quantities (probability against a raw feature), where an aspect ratio means nothing. */
+  equal?: boolean
+}
+
 export interface SceneNode {
   id: string
   label: string
@@ -45,11 +105,18 @@ export interface SceneNode {
   // Size is computed from the content (see tableMetrics) and fitView scales it, so every table in the
   // deck shares one type size. Uses `pattern` for its accent; ignores `icon` and `variant`. May sit in
   // a flow like any other node — but note edges anchor to the NODE, never to an individual row.
-  kind?: 'code' | 'memory' | 'table'
+  // A PLOT node renders a figure with axes: a Cartesian plane or a data chart, carrying lines,
+  // curves, scatters, markers and annotation segments. Use it wherever the SHAPE of a function or a
+  // distribution is the content — a cost surface, the sigmoid, a decision boundary, a learning
+  // curve — and a box-and-arrow diagram would only be able to name it. `label` captions the figure
+  // and `sub` subtitles it; `plot` carries everything drawn. Size is one deck-wide box (see
+  // plotMetrics) and fitView scales it, so every plot in a course shares one tick-label size.
+  kind?: 'code' | 'memory' | 'table' | 'plot'
   columns?: TableColumn[] // table, schema mode: the table's columns
   headers?: string[] // table, data mode: the header row
   values?: string[][] // table, data mode: the body rows, each a list of cells
   slots?: MemorySlot[] // memory node only: the cells, top→bottom in address order
+  plot?: PlotSpec // plot node only: the axes and the series drawn against them
   filename?: string // the tab label on a code node (e.g. "list.py")
   // Opt a code card OUT of the CODE_MIN_COLS width floor, sizing it to its own longest line instead.
   // The floor exists so a card that IS the scene renders its type at the deck-wide size; but for a card
