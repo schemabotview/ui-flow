@@ -38,15 +38,18 @@ scenes deterministic dies at that point.
 
 ## Icons
 
-A node's `icon` key is looked up in two registries, in order, with the pattern's own glyph as the
+A node's `icon` key is looked up in three registries, in order, with the pattern's own glyph as the
 fallback. They share no keys, so it is a fallback chain rather than a precedence rule:
 
-| `icon: 'ec2'` | an official AWS service tile, full colour, in a rounded frame |
+| `icon: 'ec2'` | an official AWS service tile, full colour, in a rounded frame — 68 keys, see the `vendor-icons` fixture |
+| `icon: 'vm'` | an official Azure service tile — 134 keys, see the `azure-gallery` fixture |
 | `icon: 'terminal'` | a lucide line glyph, tinted in the pattern accent — 75 keys, see the `icon-gallery` fixture |
 | *(omitted)* | the pattern's default glyph |
 
-The AWS set is bundled rather than injected, so every content repo renders from one package version
-with no per-repo wiring. It costs ~165 kB, which is nothing beside the audio a content repo ships.
+Both vendor sets are bundled rather than injected, so every content repo renders from one package
+version with no per-repo wiring. Together they cost ~455 kB (~125 kB gzipped), which is nothing
+beside the audio a content repo ships — but it *is* paid by every repo, AWS icons on the dbt site
+included, and that is the trade the single bundle makes.
 
 ## Two contracts
 

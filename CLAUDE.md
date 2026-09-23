@@ -30,6 +30,16 @@ is the working notes.
   why the font ships as a real dependency via `styles.css`. Changing the font or size means
   re-measuring it.
 
+- **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
+  present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
+  `dms` and `waf` collide, which is why the Azure side spells them `backupcenter`, `costbudgets`,
+  `dbmigration` and `wafpolicy`. Check both files before adding a key.
+- **Azure tiles are scaled by a viewBox the upstream package does not ship.** `@threeveloper/azure-react-icons`
+  writes `size` into the SVG's width/height and omits `viewBox` entirely, so width alone just grows
+  the canvas and strands the art at 18px in the corner — the first cut of 0.6.0 rendered every Azure
+  icon a third of its box. `NodeIcon` supplies `viewBox="0 0 18 18"`, which is correct for all 134
+  registered keys; four icons in the package use a 16/19/36 board and would need their own.
+
 ## Verification bar
 
 No test runner. A change is done when `npm run build` is clean **and** every fixture still renders

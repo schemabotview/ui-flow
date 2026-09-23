@@ -15,5 +15,6 @@ import { warn } from './warn'
 import { minCols } from './min-cols'
 import { table } from './table'
 import { iconGallery } from './icon-gallery'
+import { azureGallery } from './azure-gallery'
 
-export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding, vendorIcons, warn, minCols, table, iconGallery]
+export const fixtures: Scene[] = [flowTb, flowLr, grid, tile, container, code, memory, padding, vendorIcons, warn, minCols, table, iconGallery, azureGallery]
