@@ -2,14 +2,16 @@
 // they exist only so react-flow routes edges cleanly, never shown.
 
 import { type NodeProps } from '@xyflow/react'
-import { PATTERNS } from './patterns'
+import { patternOf } from './themes'
+import { useFlowTheme } from './themeContext'
 import { NodeIcon } from './NodeIcon'
 import { NodeHandles } from './Handles'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function SceneNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
-  const p = PATTERNS[d.pattern ?? 'service'] ?? PATTERNS.service
+  const t = useFlowTheme()
+  const p = patternOf(t, d.pattern, 'service')
   return (
     <div
       style={{
@@ -23,7 +25,7 @@ export function SceneNode({ data }: NodeProps) {
         borderRadius: 14,
         border: `${d.__focus ? 2.5 : 1.5}px solid ${p.color}`,
         background: p.bg,
-        color: '#eef2f8',
+        color: t.ink,
         fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
         // The focus node (the one this section narrates) glows, so it reads as "live" and the slide
         // is placed clear of it.

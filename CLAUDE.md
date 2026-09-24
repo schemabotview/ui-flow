@@ -7,15 +7,36 @@ is the working notes.
 
 - **Scenes are declarative — never write x/y.** Authors list nodes, edges and nesting; `layout.ts`
   assigns every position and size. Deterministic layout is what makes capture reproducible.
-- **The public surface is seven exports.** Adding one is a promise to every content repo. The layout
+- **The public surface is eight exports.** Adding one is a promise to every content repo. The layout
   internals stay withheld on purpose — see the comment block at the foot of `src/index.ts`.
 - **Peer deps, never deps**, for `react`, `react-dom`, `@xyflow/react`, `lucide-react`. Bundling any
   of them puts a second React in the package and breaks hooks in every consuming app. The `external`
   list in `vite.config.ts` is what enforces it — check it after any dependency change.
-- **One palette, no per-repo theming.** `patterns.ts` owns how each role looks so every scene across
-  every course reads the same. Colours are concatenated with hex alpha (`${p.color}0f`) in 14 places,
-  so they must stay 6-digit hex — a CSS variable cannot be substituted without reworking all of them.
-  apache-spark's brand-orange `service` override was dropped at 0.2.0 for exactly this reason.
+- **One palette per THEME, and no per-repo theming.** `themes.ts` owns how each role looks under each
+  theme so every scene in a deck reads the same. Colours are concatenated with hex alpha
+  (`${p.color}0f`) in 14 places, so every value must stay 6-digit hex — a CSS variable cannot be
+  substituted without reworking all of them, which is why a theme is a second resolved TABLE rather
+  than a token indirection. (A light theme's fills cannot be derived from a dark theme's by alpha
+  anyway; they have to be picked.) apache-spark's brand-orange `service` override was dropped at
+  0.2.0 and stays dropped — a repo still cannot theme itself.
+- **A theme owns the ROOM, never the furniture's identity.** It sets the surface, every ink, the edge
+  stroke and label pill, the code chrome, the plot gutters, and the exact SHADE of each role. It may
+  not change what a role MEANS: `service` is warm, `storage` green, `network` blue, `user` violet,
+  `warn` red, in every theme. A theme may shift an accent within its own hue family; it never swaps
+  families. Green means storage in every deck — the invariant the 0.2.0 override broke.
+- **Two themes ship: `dark` and `light`.** Vendor themes (`aws`, `azure`) were built at 0.8.0 and
+  removed before release. They obeyed the rule above and were therefore confined to a surface tint
+  plus one accent nudged within its own hue — which on screen did not read as a different look, only
+  as a slightly different dark. Recorded here so it is not rebuilt: under this invariant a vendor
+  theme has almost no room to be one, and the cost is two more tables to hold in colour parity.
+- **The ENGINE paints the canvas** as of 0.8.0. Through 0.7.0 the shell painted it (`--bg`) and
+  SceneView only assumed a dark surface behind its dots — which is why FlowEdge hardcoded the shell's
+  `#1a1d23` to fill its label pill, across a package boundary it could not see. A theme cannot change
+  a background the engine does not own, so it owns it now. `THEMES` is deliberately NOT exported: a
+  repo picks a `ThemeKey` from a fixed set, and a new theme is added here and inherited by every repo.
+- **`ThemeKey` defaults to `'dark'`, whose values are byte-identical to 0.7.0's hardcoded ones.** A
+  repo that never passes `theme` renders exactly what it rendered before. That is what makes theming
+  a minor rather than a major.
 - **`CODE_MIN_COLS` is calibrated, not arbitrary.** It is the common column every code card is padded
   to so a deck's code renders at one type size. 64 suits narrow source (python tops out at 61 chars);
   a concept with wider snippets raises it per card with `minCols` (apache-spark uses 76) rather than

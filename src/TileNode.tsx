@@ -8,14 +8,16 @@
 // without turning the tile into a card.
 
 import { type NodeProps } from '@xyflow/react'
-import { PATTERNS } from './patterns'
+import { patternOf } from './themes'
+import { useFlowTheme } from './themeContext'
 import { NodeIcon } from './NodeIcon'
 import { NodeHandles } from './Handles'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function TileNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
-  const p = PATTERNS[d.pattern ?? 'service'] ?? PATTERNS.service
+  const t = useFlowTheme()
+  const p = patternOf(t, d.pattern, 'service')
   return (
     <div
       style={{
@@ -26,7 +28,7 @@ export function TileNode({ data }: NodeProps) {
         alignItems: 'center',
         justifyContent: 'center',
         gap: 9,
-        color: '#eef2f8',
+        color: t.ink,
         fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
         boxSizing: 'border-box',
         borderRadius: 12,

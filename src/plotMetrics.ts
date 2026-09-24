@@ -34,18 +34,15 @@ export const PLOT_AREA_W_MIN = 420
 export const PLOT_AREA_W_MAX = 940
 export const PLOT_AREA_H_MAX = 620
 
-// The series ramp, in FIXED assignment order — never cycled. These are the PATTERNS accents
-// (network · service · user · storage) so a curve and a card in the same frame speak one visual
-// language. The order is deliberate: it keeps green and orange non-adjacent, which is the pair that
-// collapses under protanopia. `warn` red is NOT in the ramp — in this engine red means "the catch",
-// and a status colour that also means "series 5" stops meaning either.
-export const PLOT_SERIES_COLORS = ['#4f8ff7', '#f0902f', '#c98bff', '#37b877'] as const
-
-// Recessive furniture: the grid is a hint, the axes are a reference, neither is the content.
-export const PLOT_GRID_COLOR = '#272c34'
-export const PLOT_AXIS_COLOR = '#6b7686'
-export const PLOT_TICK_COLOR = '#78828f'
-export const PLOT_INK = '#eef2f8'
+// COLOURS MOVED TO themes.ts at 0.8.0. The ramp, the grid, the axes, the ticks and the ink are all
+// theme-owned now — a plot painted on an AWS canvas has to use that canvas's gutters, or the figure
+// reads as pasted in from another deck. What stays here is GEOMETRY, which is theme-independent:
+// a tick is in the same place whatever colour it is.
+//
+// The ramp's ORDER is still fixed and still a constraint on every theme — see the note in themes.ts.
+// It is network · service · user · storage so green and orange are never adjacent, that being the
+// pair that collapses under protanopia; and `warn` red is never in it, because in this engine red
+// means "the catch".
 
 /** A "nice" tick interval (1/2/5 × 10ⁿ) for a span, when the author has not named one. */
 export function niceStep(span: number): number {

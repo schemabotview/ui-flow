@@ -3,19 +3,66 @@
 
    The stage background is #1a1d23 on purpose, NOT white. SceneView does not paint its own canvas:
    it draws Background dots at #2a2f38 and its node fills and label colours all assume a dark surface
-   behind them. The host app supplies that (python's index.css sets --bg: #1a1d23). On a light stage
-   tile labels render nearly invisible — so a harness with the wrong background silently lies about
-   every fixture. This is a real part of the engine's contract, same as styles.css. */
+   behind them. The host app supplies that (ui-shell's stylesheet sets --bg: #1a1d23). On a light
+   stage tile labels render nearly invisible — so a harness with the wrong background silently lies
+   about every fixture. This is a real part of the engine's contract, same as styles.css.
+
+   It is also the seam a light theme has to close: FlowEdge fills its label pill with a hardcoded
+   #1a1d23 to match this surface, across a package boundary it cannot see. See edges/labels.ts. */
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #0f1115; color: #e6e8ec; }
-.layout { display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
-.rail { border-right: 1px solid #262a33; padding: 16px 0; overflow-y: auto; }
-.rail h1 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #7d8696; margin: 0 16px 12px; }
-.rail a { display: block; padding: 7px 16px; color: #b8c0cc; text-decoration: none; font-size: 13px; }
-.rail a:hover { background: #171a21; color: #fff; }
-.rail a[data-on='1'] { background: #1d222c; color: #fff; box-shadow: inset 2px 0 0 #4c8dff; }
+.layout { display: grid; grid-template-columns: 240px 1fr; height: 100vh; }
+
+.rail { padding: 22px 0 40px; overflow-y: auto; border-right: 1px solid #23272f; }
+
+/* THREE levels, and they have to be told apart at a glance — the rail is read peripherally while the
+   eye is on the stage. Before 0.8.0 the title was 13px/600 and a category 12px/600, one pixel and no
+   weight apart, so they read as one flat list. The separation now comes from three axes at once:
+     title      15px · regular case · brightest · sits above a rule, so it is a header, not an item
+     category   11px · UPPERCASE · tracked · dimmest — small caps is what makes a short label read as
+                a label rather than a link, which is why every docs sidebar does it
+     fixture    13px · regular case · mid — the only thing here that is actually content
+   A single-fixture category renders at CATEGORY level (it is one), so it is uppercase too. */
+.rail h1 {
+  font-size: 15px; font-weight: 600; color: #f0f2f5; letter-spacing: -0.01em;
+  margin: 0 20px 4px; padding-bottom: 15px; border-bottom: 1px solid #23272f;
+}
+.rail section { margin: 0; }
+.rail h2, .rail a.solo {
+  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  color: #78828f; margin: 20px 0 7px; padding: 0 20px; border-left: 0;
+  text-decoration: none; /* a.solo is an anchor — without this it takes the browser's underline */
+}
+.rail h2[data-on='1'] { color: #aab4c4; }
+.rail a.solo:hover { color: #c6cedb; }
+.rail a.solo[data-on='1'] { color: #4c8dff; }
+
+.rail ul { list-style: none; margin: 0; padding: 0 0 0 20px; border-left: 1px solid #23272f; }
+.rail li { margin: 0; }
+.rail li a {
+  display: block; padding: 5px 16px 5px 12px; margin-left: -1px;
+  color: #98a2b1; text-decoration: none; font-size: 13px; line-height: 1.4;
+  border-left: 2px solid transparent;
+}
+.rail li a:hover { color: #e6e8ec; }
+.rail li a[data-on='1'] { color: #4c8dff; font-weight: 500; border-left-color: #4c8dff; }
+
 .main { display: flex; flex-direction: column; min-width: 0; }
-.bar { padding: 12px 20px; border-bottom: 1px solid #262a33; font-size: 13px; color: #7d8696; }
+.bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 12px 20px; border-bottom: 1px solid #262a33; font-size: 13px; color: #7d8696;
+}
+/* The title side must be the thing that gives way. Without min-width:0 a flex item refuses to shrink
+   below its content, so a long fixture title pushed the controls off the right edge entirely — the
+   theme picker rendered outside the viewport and focus was clipped in half. */
+.bar > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar b { color: #e6e8ec; font-weight: 600; }
+.controls { display: inline-flex; align-items: center; gap: 18px; flex: none; }
+.pick { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; }
+.pick select {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px;
+  background: #171a21; color: #e6e8ec; border: 1px solid #2c323d; border-radius: 5px;
+  padding: 4px 8px; min-width: 110px;
+}
 .stagewrap { flex: 1; display: grid; place-items: center; padding: 24px; min-height: 0; }
 .stage { width: 100%; max-width: calc((100vh - 140px) * 16 / 9); aspect-ratio: 16 / 9; background: #1a1d23; border-radius: 6px; overflow: hidden; }

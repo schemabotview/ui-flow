@@ -5,7 +5,7 @@
 // `sample` is deliberately NOT an engine export: a scene file is TypeScript, so the author writes
 // the function itself and maps it to points. That keeps an expression parser out of the engine and
 // keeps the maths readable at the place it is stated.
-import type { Scene, PlotPoint } from '../../src'
+import type { Scene, PlotPoint } from '../../../src'
 
 const sample = (a: number, b: number, n: number, f: (x: number) => number): PlotPoint[] =>
   Array.from({ length: n + 1 }, (_, i) => {

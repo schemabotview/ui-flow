@@ -9,10 +9,7 @@
 // peer boards don't need fake edges. PURE + DETERMINISTIC: same scene in → same coordinates out.
 
 import type { Scene, SceneNode, SceneEdge } from './types'
-import { codeCardSize } from './codeMetrics'
-import { memoryCardSize } from './memoryMetrics'
-import { tableCardSize } from './tableMetrics'
-import { plotCardSize } from './plotMetrics'
+import { kindOf } from './kinds'
 
 export const NODE_W = 210
 export const NODE_H = 96
@@ -94,19 +91,14 @@ function layoutSubtree(
   // Size each node — recurse into containers first so we know their box size.
   const sized = new Map<string, { w: number; h: number; kids?: Placed[]; header?: number }>()
   for (const n of nodes) {
+    const kind = kindOf(n) // a CONTENT node (code/memory/table/plot) sizes itself from its content
     if (n.children?.length) {
       const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB') // flow if edges
       const boxW = inner.w + 2 * PAD
       const header = headerHeight(n.label, n.sub, boxW) // grows to fit a wrapping label + sub
       sized.set(n.id, { w: boxW, h: inner.h + header + PAD, kids: inner.placed, header })
-    } else if (n.kind === 'code') {
-      sized.set(n.id, codeCardSize(n)) // an IDE card: sized to its content (longest line × line count)
-    } else if (n.kind === 'memory') {
-      sized.set(n.id, memoryCardSize(n)) // a layout figure: sized to its slots (widest cell × slot count)
-    } else if (n.kind === 'table') {
-      sized.set(n.id, tableCardSize(n)) // a relation: sized to its widest column × its line count
-    } else if (n.kind === 'plot') {
-      sized.set(n.id, plotCardSize(n)) // a figure with axes: one deck-wide box (+ its caption/gutters)
+    } else if (kind) {
+      sized.set(n.id, kind.size(n))
     } else if (n.variant === 'tile') {
       sized.set(n.id, { w: TILE_W, h: TILE_H })
     } else {

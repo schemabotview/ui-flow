@@ -7,7 +7,8 @@
 
 import { type NodeProps } from '@xyflow/react'
 import { NodeHandles } from './Handles'
-import { PATTERNS } from './patterns'
+import { patternOf } from './themes'
+import { useFlowTheme } from './themeContext'
 import {
   MEM_FONT,
   MEM_ROW_H,
@@ -27,7 +28,8 @@ import type { SceneNode as SceneNodeData } from './types'
 export function MemoryNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
   const slots = d.slots ?? []
-  const p = PATTERNS[d.pattern ?? 'network'] ?? PATTERNS.network
+  const t = useFlowTheme()
+  const p = patternOf(t, d.pattern, 'network')
   const runs = groupRuns(slots)
   const { nameCols, totalCols } = cellCols(slots)
   const blockW = totalCols * MEM_CHAR_W + MEM_CELL_PAD_X * 2
@@ -39,7 +41,7 @@ export function MemoryNode({ data }: NodeProps) {
       <NodeHandles />
 
       {d.label && (
-        <div style={{ height: MEM_TITLE_H, display: 'flex', alignItems: 'center', paddingLeft: axisW, fontSize: 16, fontWeight: 600, color: '#eef2f8' }}>{d.label}</div>
+        <div style={{ height: MEM_TITLE_H, display: 'flex', alignItems: 'center', paddingLeft: axisW, fontSize: 16, fontWeight: 600, color: t.ink }}>{d.label}</div>
       )}
 
       {/* the block: cells share edges, so only the first carries a full border and the rest a top rule */}
@@ -66,11 +68,11 @@ export function MemoryNode({ data }: NodeProps) {
                 fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
                 fontSize: MEM_FONT,
                 whiteSpace: 'pre',
-                color: '#eef2f8',
+                color: t.ink,
               }}
             >
               <span>{s.name.padEnd(nameCols + MEM_NOTE_GAP)}</span>
-              {s.note && <span style={{ color: '#8b95a7' }}>{s.note}</span>}
+              {s.note && <span style={{ color: t.inkNote }}>{s.note}</span>}
             </div>
           ))}
         </div>
@@ -90,7 +92,7 @@ export function MemoryNode({ data }: NodeProps) {
               justifyContent: 'flex-end',
               fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
               fontSize: 13,
-              color: '#6b7686',
+              color: t.inkFaint,
             }}
           >
             {s.at}
@@ -112,13 +114,13 @@ export function MemoryNode({ data }: NodeProps) {
             }}
           >
             <span style={{ width: MEM_BRACKET_W, height: '100%', borderLeft: `2px solid ${p.color}`, borderTop: `2px solid ${p.color}`, borderBottom: `2px solid ${p.color}`, borderRadius: '3px 0 0 3px' }} />
-            <span style={{ fontSize: 12, color: '#9aa4b2', whiteSpace: 'pre' }}>{r.label}</span>
+            <span style={{ fontSize: 12, color: t.inkMuted, whiteSpace: 'pre' }}>{r.label}</span>
           </div>
         ))}
       </div>
 
       {d.sub && (
-        <div style={{ position: 'absolute', left: axisW, top: blockTop + slots.length * MEM_ROW_H, height: MEM_FOOT_H, display: 'flex', alignItems: 'center', fontSize: 12, color: '#9aa4b2' }}>
+        <div style={{ position: 'absolute', left: axisW, top: blockTop + slots.length * MEM_ROW_H, height: MEM_FOOT_H, display: 'flex', alignItems: 'center', fontSize: 12, color: t.inkMuted }}>
           {d.sub}
         </div>
       )}

@@ -5,7 +5,7 @@
 // so is framed without the AWS bleed. The registries share no keys, so this is a fallback chain, not a
 // precedence puzzle — but the four paths look different enough that a regression in NodeIcon shows up
 // here immediately.
-import type { Scene } from '../../src'
+import type { Scene } from '../../../src'
 
 export const vendorIcons: Scene = {
   id: 'vendor-icons',

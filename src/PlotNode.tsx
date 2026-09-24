@@ -11,17 +11,13 @@
 // than a legend box, so the reader never looks away from the curve to find out what it is.
 
 import { type NodeProps } from '@xyflow/react'
-import { PATTERNS } from './patterns'
 import { NodeHandles } from './Handles'
+import { patternOf, type Theme } from './themes'
+import { useFlowTheme } from './themeContext'
 import {
-  PLOT_AXIS_COLOR,
   PLOT_AXIS_FONT,
-  PLOT_GRID_COLOR,
-  PLOT_INK,
   PLOT_LABEL_FONT,
-  PLOT_SERIES_COLORS,
   PLOT_SUB_H,
-  PLOT_TICK_COLOR,
   PLOT_TICK_FONT,
   PLOT_TITLE_FONT,
   axisStep,
@@ -34,19 +30,23 @@ import {
 } from './plotMetrics'
 import type { PatternKey, PlotPoint, PlotSeries, SceneNode as SceneNodeData } from './types'
 
-/** A series' colour: an explicit hex, a PatternKey's accent, or its slot in the fixed ramp. */
-function seriesColor(s: PlotSeries, i: number): string {
+/** A series' colour: an explicit hex, a PatternKey's accent IN THIS THEME, or its slot in the fixed
+ *  ramp. Resolving the PatternKey against the theme rather than a global is the point — a curve
+ *  labelled `color: 'storage'` has to be the same green as the storage card beside it, and under a
+ *  vendor theme that green has moved. */
+function seriesColor(t: Theme, s: PlotSeries, i: number): string {
   if (s.color?.startsWith('#')) return s.color
-  if (s.color && s.color in PATTERNS) return PATTERNS[s.color as PatternKey].color
-  return PLOT_SERIES_COLORS[i % PLOT_SERIES_COLORS.length]
+  if (s.color && s.color in t.patterns) return t.patterns[s.color as PatternKey].color
+  return t.plot.series[i % t.plot.series.length]
 }
 
 export function PlotNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
+  const t = useFlowTheme()
   const spec = d.plot
   if (!spec) return null
 
-  const p = PATTERNS[d.pattern ?? 'external'] ?? PATTERNS.external
+  const p = patternOf(t, d.pattern, 'external')
   const box = plotContentSize(d) // the viewBox: the card's content box, inside the border
   const area = plotAreaSize(spec)
   const inset = plotInset(d)
@@ -79,7 +79,7 @@ export function PlotNode({ data }: NodeProps) {
         boxSizing: 'border-box',
         borderRadius: 14,
         border: `${d.__focus ? 2.5 : 1.5}px solid ${p.color}`,
-        background: '#15181d',
+        background: t.plot.surface,
         overflow: 'hidden',
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
@@ -108,7 +108,7 @@ export function PlotNode({ data }: NodeProps) {
           </text>
         )}
         {d.label && d.sub && (
-          <text x={inset.l} y={PLOT_TITLE_FONT + 14 + PLOT_SUB_H} fill={PLOT_INK} opacity={0.7}
+          <text x={inset.l} y={PLOT_TITLE_FONT + 14 + PLOT_SUB_H} fill={t.plot.ink} opacity={0.7}
             fontFamily="'IBM Plex Sans', system-ui, sans-serif" fontSize={12}>
             {d.sub}
           </text>
@@ -116,21 +116,21 @@ export function PlotNode({ data }: NodeProps) {
 
         {/* grid — a hint, not the content */}
         {spec.grid !== false && (
-          <g stroke={PLOT_GRID_COLOR} strokeWidth={1}>
+          <g stroke={t.plot.grid} strokeWidth={1}>
             {xTicks.map((t) => <line key={`gx${t}`} x1={sx(t)} y1={inset.t} x2={sx(t)} y2={inset.t + area.h} />)}
             {yTicks.map((t) => <line key={`gy${t}`} x1={inset.l} y1={sy(t)} x2={inset.l + area.w} y2={sy(t)} />)}
           </g>
         )}
 
         {/* axes */}
-        <g stroke={PLOT_AXIS_COLOR} strokeWidth={1.6}>
+        <g stroke={t.plot.axis} strokeWidth={1.6}>
           <line x1={inset.l} y1={axisY} x2={inset.l + area.w} y2={axisY} />
           <line x1={axisX} y1={inset.t} x2={axisX} y2={inset.t + area.h} />
         </g>
 
         {/* tick labels. On a plane the zero tick is dropped on both axes — it is drawn once, at the
             crossing, and two "0"s stacked in the corner read as a defect. */}
-        <g fill={PLOT_TICK_COLOR} fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontSize={PLOT_TICK_FONT}>
+        <g fill={t.plot.tick} fontFamily="'IBM Plex Mono', ui-monospace, monospace" fontSize={PLOT_TICK_FONT}>
           {xTicks.map((t) =>
             origin && t === 0 ? null : (
               <text key={`tx${t}`} x={sx(t)} y={axisY + PLOT_TICK_FONT + 9} textAnchor="middle">
@@ -150,7 +150,7 @@ export function PlotNode({ data }: NodeProps) {
         {/* axis names. On a PLANE they ride the far end of each axis, the way a maths figure names
             them. On a CHART they are centred in their own gutter, outside the tick labels — drawn at
             the axis end there, they sit on top of the corner data points. */}
-        <g fill={PLOT_INK} opacity={0.85} fontFamily="'IBM Plex Sans', system-ui, sans-serif" fontSize={PLOT_AXIS_FONT}>
+        <g fill={t.plot.ink} opacity={0.85} fontFamily="'IBM Plex Sans', system-ui, sans-serif" fontSize={PLOT_AXIS_FONT}>
           {spec.x.label &&
             (origin ? (
               <text x={inset.l + area.w} y={axisY - 12} textAnchor="end">{spec.x.label}</text>
@@ -175,7 +175,7 @@ export function PlotNode({ data }: NodeProps) {
         {/* the series */}
         <g clipPath={`url(#${clipId})`}>
           {spec.series.map((s, i) => {
-            const c = seriesColor(s, i)
+            const c = seriesColor(t, s, i)
             const dash = s.dashed ? '7 6' : undefined
             const r = s.size ?? 7
             if (s.kind === 'area' && s.points?.length) {
@@ -199,13 +199,13 @@ export function PlotNode({ data }: NodeProps) {
               return (
                 <g key={i}>
                   {s.points.map((pt, j) => (
-                    <circle key={j} cx={sx(pt[0])} cy={sy(pt[1])} r={r * 0.72} fill={c} stroke="#15181d" strokeWidth={2} />
+                    <circle key={j} cx={sx(pt[0])} cy={sy(pt[1])} r={r * 0.72} fill={c} stroke={t.plot.surface} strokeWidth={2} />
                   ))}
                 </g>
               )
             }
             if (s.kind === 'marker' && s.at) {
-              return <circle key={i} cx={sx(s.at[0])} cy={sy(s.at[1])} r={r} fill={c} stroke="#15181d" strokeWidth={2} />
+              return <circle key={i} cx={sx(s.at[0])} cy={sy(s.at[1])} r={r} fill={c} stroke={t.plot.surface} strokeWidth={2} />
             }
             if (s.kind === 'segment' && s.from && s.to) {
               return <line key={i} x1={sx(s.from[0])} y1={sy(s.from[1])} x2={sx(s.to[0])} y2={sy(s.to[1])}
@@ -238,7 +238,7 @@ export function PlotNode({ data }: NodeProps) {
                 x={sx(anchor[0]) + (flip ? -12 : 12)}
                 y={sy(anchor[1]) + 5}
                 textAnchor={flip ? 'end' : 'start'}
-                fill={seriesColor(s, i)}
+                fill={seriesColor(t, s, i)}
               >
                 {s.label}
               </text>

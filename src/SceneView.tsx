@@ -8,31 +8,45 @@ import { computeLayout, collectEdges } from './layout'
 import { SceneNode } from './SceneNode'
 import { ContainerNode } from './ContainerNode'
 import { TileNode } from './TileNode'
-import { MemoryNode } from './MemoryNode'
-import { TableNode } from './TableNode'
-import { CodeNode } from './CodeNode'
-import { PlotNode } from './PlotNode'
 import { FlowEdge } from './FlowEdge'
-import { PATTERNS } from './patterns'
+import { THEMES, patternOf, type ThemeKey } from './themes'
+import { FlowThemeProvider } from './themeContext'
+import { NODE_KINDS, kindOf } from './kinds'
 
-const nodeTypes = { scene: SceneNode, container: ContainerNode, tile: TileNode, code: CodeNode, memory: MemoryNode, table: TableNode, plot: PlotNode }
+// The three STRUCTURAL types (whose size is a constant in layout.ts) plus every content kind from
+// the registry — so a new kind registers its renderer by being in NODE_KINDS, not by being added here.
+const nodeTypes = {
+  scene: SceneNode,
+  container: ContainerNode,
+  tile: TileNode,
+  ...Object.fromEntries(Object.values(NODE_KINDS).map((k) => [k.type, k.component])),
+}
 const edgeTypes = { flow: FlowEdge }
 
-export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }) {
+/**
+ * `theme` picks the surface, ink and furniture the scene is painted in (see themes.ts). It is a
+ * DECK-level choice, not a scene-level one: a Scene is content-agnostic and shared across slugs, so
+ * the theme belongs to the app rendering it, not to the diagram. Defaults to 'dark', whose values
+ * are byte-identical to 0.7.0's hardcoded ones — so a repo that does not pass it sees no change.
+ */
+export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; focusId?: string; theme?: ThemeKey }) {
+  const t = THEMES[theme] ?? THEMES.dark
   const { nodes, edges } = useMemo(() => {
     const placed = computeLayout(scene)
     // Placed is a flat, parent-first list of every node (containers + their descendants). Each keeps
     // its own size; children carry `parentId` + a parent-relative position, as react-flow expects.
     const nodes: Node[] = placed.map((p) => ({
       id: p.id,
-      type: p.node.kind === 'code' ? 'code' : p.node.kind === 'memory' ? 'memory' : p.node.kind === 'table' ? 'table' : p.node.kind === 'plot' ? 'plot' : p.node.children?.length ? 'container' : p.node.variant === 'tile' ? 'tile' : 'scene',
+      // A content kind names its own react-flow type; everything else is structural (container →
+      // tile → card). Containers win over `variant` because a node with children IS a box.
+      type: kindOf(p.node)?.type ?? (p.node.children?.length ? 'container' : p.node.variant === 'tile' ? 'tile' : 'scene'),
       position: { x: p.x, y: p.y },
       data: { ...p.node, __focus: p.node.id === focusId },
       style: { width: p.w, height: p.h },
       ...(p.parentId ? { parentId: p.parentId, extent: 'parent' as const } : {}),
       draggable: false,
     }))
-    const patternOf = new Map(placed.map((p) => [p.id, p.node.pattern]))
+    const patternOf_ = new Map(placed.map((p) => [p.id, p.node.pattern]))
     // Which (source-side, target-side) handles an edge uses, per flow direction — so the arrow leaves
     // and enters the correct faces (down for TB, up for BT, right for LR, left for RL).
     const HANDLES = {
@@ -42,9 +56,9 @@ export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }
       RL: { s: 'l-s', t: 'r-t' },
     } as const
     const edges: Edge[] = collectEdges(scene).map((e, i) => {
-      const p = PATTERNS[patternOf.get(e.target) ?? 'external'] ?? PATTERNS.external
+      const p = patternOf(t, patternOf_.get(e.target), 'external')
       const h = HANDLES[e.dir] ?? HANDLES.TB
-      const marker = { type: MarkerType.ArrowClosed, color: '#5b6675' }
+      const marker = { type: MarkerType.ArrowClosed, color: t.edge.stroke }
       return {
         id: `${e.source}->${e.target}#${i}`,
         source: e.source,
@@ -55,14 +69,14 @@ export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }
         type: 'flow',
         // Pulse tinted to the destination service so arriving at a node lights up in its accent.
         data: { pulse: p.color, bidirectional: !!e.bidirectional },
-        style: { stroke: '#5b6675', strokeWidth: 2 },
+        style: { stroke: t.edge.stroke, strokeWidth: 2 },
         markerEnd: marker,
         // A two-way edge also gets an arrowhead at the source end.
         ...(e.bidirectional ? { markerStart: marker } : {}),
       }
     })
     return { nodes, edges }
-  }, [scene, focusId])
+  }, [scene, focusId, t])
 
   // Re-fit whenever the pane's real size changes. `fitView` alone only runs on mount, and it can
   // measure the container before the flex layout has settled (so a wide scene overflows past the
@@ -84,8 +98,14 @@ export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }
     return () => ro.disconnect()
   }, [])
 
+  // THE ENGINE PAINTS ITS OWN CANVAS as of 0.8.0. Through 0.7.0 the shell painted it (--bg) and
+  // SceneView only ASSUMED a dark surface behind its dots — which meant a theme could not change the
+  // background, and FlowEdge had to hardcode the shell's colour to fill its label pill. Owning the
+  // surface here is what makes the theme prop mean anything. `data-flow-theme` rides the same
+  // element so the .tok-* syntax colours in styles.css can key off it.
   return (
-    <div ref={wrap} style={{ width: '100%', height: '100%' }}>
+    <FlowThemeProvider value={t}>
+      <div ref={wrap} data-flow-theme={t.key} style={{ width: '100%', height: '100%', background: t.surface }}>
       {/* react-flow paints .react-flow__nodes AFTER .react-flow__edgelabel-renderer and sets no
           z-index on either, so an edge label is covered by any node/container it overlaps — a label
           on a short edge between two cards simply disappears. Lift the label layer above the nodes.
@@ -128,8 +148,9 @@ export function SceneView({ scene, focusId }: { scene: Scene; focusId?: string }
         fitViewOptions={FIT}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={42} size={1} color="#2a2f38" />
+        <Background gap={42} size={1} color={t.dots} />
       </ReactFlow>
-    </div>
+      </div>
+    </FlowThemeProvider>
   )
 }

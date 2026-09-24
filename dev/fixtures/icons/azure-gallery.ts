@@ -6,8 +6,8 @@
 //
 // It is also the only place the Azure tiles are seen at tile size: the upstream art board is 18px
 // against AWS's padded square, so if a set of tiles ever reads small or clipped, it shows here first.
-import type { Scene } from '../../src'
-import { AZURE_ICONS } from '../../src/azureIcons'
+import type { Scene } from '../../../src'
+import { AZURE_ICONS } from '../../../src/azureIcons'
 
 export const azureGallery: Scene = {
   id: 'azure-gallery',

@@ -6,12 +6,14 @@
 
 import { type NodeProps } from '@xyflow/react'
 import { NodeHandles } from './Handles'
+import { useFlowTheme } from './themeContext'
 import { tokenizeCode } from './codeHighlight'
 import { CODE_FONT, CODE_LINE_H, CODE_BAR_H, CODE_GUTTER_W, CODE_PAD_X, CODE_PAD_Y, codeLines } from './codeMetrics'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function CodeNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
+  const t = useFlowTheme()
   const lines = codeLines(d)
   return (
     <div
@@ -22,8 +24,8 @@ export function CodeNode({ data }: NodeProps) {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 12,
-        border: `1px solid ${d.__focus ? '#3b475c' : '#232a36'}`,
-        background: '#0e1420',
+        border: `1px solid ${d.__focus ? t.code.borderFocus : t.code.border}`,
+        background: t.code.bg,
         overflow: 'hidden',
         fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
         boxShadow: d.__focus ? '0 0 0 4px #5b8cff22, 0 0 28px #5b8cff33' : '0 1px 0 #00000040',
@@ -39,8 +41,8 @@ export function CodeNode({ data }: NodeProps) {
           alignItems: 'center',
           gap: 10,
           padding: '0 12px',
-          background: '#131b29',
-          borderBottom: '1px solid #202836',
+          background: t.code.chrome,
+          borderBottom: `1px solid ${t.code.chromeBorder}`,
         }}
       >
         <span style={{ display: 'flex', gap: 6 }}>
@@ -48,7 +50,7 @@ export function CodeNode({ data }: NodeProps) {
           <i style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
           <i style={{ width: 10, height: 10, borderRadius: '50%', background: '#27c93f' }} />
         </span>
-        {d.filename && <span style={{ fontSize: 12, color: '#7f8a9c' }}>{d.filename}</span>}
+        {d.filename && <span style={{ fontSize: 12, color: t.code.filename }}>{d.filename}</span>}
       </div>
       {/* source body */}
       <div style={{ flex: 1, padding: `${CODE_PAD_Y}px 0`, fontSize: CODE_FONT, lineHeight: `${CODE_LINE_H}px` }}>
@@ -60,7 +62,7 @@ export function CodeNode({ data }: NodeProps) {
                 flex: 'none',
                 textAlign: 'right',
                 paddingRight: 12,
-                color: '#454f60',
+                color: t.code.gutter,
                 userSelect: 'none',
               }}
             >

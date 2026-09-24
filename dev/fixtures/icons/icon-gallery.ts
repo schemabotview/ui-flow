@@ -7,8 +7,8 @@
 // It enumerates LUCIDE_ICONS directly rather than restating the keys, so it can never drift from the
 // registry. The harness is internal to the package, so reaching past the barrel here is fine — a
 // content repo cannot do this, and should not need to.
-import type { Scene } from '../../src'
-import { LUCIDE_ICONS } from '../../src/lucideIcons'
+import type { Scene } from '../../../src'
+import { LUCIDE_ICONS } from '../../../src/lucideIcons'
 
 export const iconGallery: Scene = {
   id: 'icon-gallery',

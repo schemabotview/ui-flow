@@ -19,6 +19,12 @@
    used to carry an identical copy of these seven rules, and a repo that forgot them rendered code
    cards as flat undifferentiated text. A neutral IDE palette on the dark editor surface;
    independent of the scene's pattern accents. */
+/* Syntax colours. These stay in CSS rather than moving into themes.ts with everything else, because
+   CodeNode emits CLASSES per token — the colour is applied by the cascade, not by an inline style.
+   They key off [data-flow-theme], which SceneView stamps on its wrapper.
+
+   The default below is the dark set, unscoped, so a consumer on 0.7.0's stylesheet is unaffected and
+   any future theme that does not override them inherits something sane. */
 .tok-var { color: #eceef2; }
 .tok-method { color: #5b8cff; }
 .tok-keyword { color: #b98bff; }
@@ -26,3 +32,9 @@
 .tok-number { color: #ff7a59; }
 .tok-punct { color: #8b909c; }
 .tok-comment { color: #6b748b; font-style: italic; }
+
+/* LIGHT keeps the DARK code card (see themes.ts: an IDE is dark in every screenshot a learner has
+   seen), so the token colours are unchanged under it on purpose — only the card's chrome shifts.
+   That is why there is exactly one set of .tok-* rules and no [data-flow-theme] override below: the
+   surface a code card presents is dark in BOTH themes the engine ships. A future theme that paints a
+   light code card is the one that would need its own block. */

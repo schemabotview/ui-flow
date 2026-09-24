@@ -10,14 +10,16 @@
 // stronger tint, and a soft ring — enough to read as "this band" without drowning its own children.
 
 import { type NodeProps } from '@xyflow/react'
-import { PATTERNS } from './patterns'
+import { patternOf } from './themes'
+import { useFlowTheme } from './themeContext'
 import { NodeIcon } from './NodeIcon'
 import { NodeHandles } from './Handles'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function ContainerNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
-  const p = PATTERNS[d.pattern ?? 'external'] ?? PATTERNS.external
+  const t = useFlowTheme()
+  const p = patternOf(t, d.pattern, 'external')
   return (
     <div
       style={{
@@ -35,8 +37,8 @@ export function ContainerNode({ data }: NodeProps) {
       <div style={{ position: 'absolute', top: 10, left: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
         <NodeIcon icon={d.icon} pattern={p} size={22} />
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.2, color: '#eef2f8' }}>{d.label}</div>
-          {d.sub && <div style={{ fontSize: 12, opacity: 0.7, marginTop: 1, color: '#eef2f8' }}>{d.sub}</div>}
+          <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.2, color: t.ink }}>{d.label}</div>
+          {d.sub && <div style={{ fontSize: 12, opacity: 0.7, marginTop: 1, color: t.ink }}>{d.sub}</div>}
         </div>
       </div>
     </div>

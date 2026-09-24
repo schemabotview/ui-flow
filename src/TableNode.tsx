@@ -7,7 +7,8 @@
 // whole reason a table reads as a table rather than as a list.
 
 import { type NodeProps } from '@xyflow/react'
-import { PATTERNS } from './patterns'
+import { patternOf } from './themes'
+import { useFlowTheme } from './themeContext'
 import { NodeHandles } from './Handles'
 import {
   TABLE_FONT,
@@ -27,7 +28,8 @@ import type { SceneNode as SceneNodeData } from './types'
 
 export function TableNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
-  const p = PATTERNS[d.pattern ?? 'service'] ?? PATTERNS.service
+  const t = useFlowTheme()
+  const p = patternOf(t, d.pattern, 'service')
   const dataMode = isDataTable(d)
   const chars = tableColumnChars(d)
   const gutter = hasKeys(d.columns) && !dataMode
@@ -57,7 +59,7 @@ export function TableNode({ data }: NodeProps) {
         borderRadius: 14,
         border: `${d.__focus ? 2.5 : 1.5}px solid ${p.color}`,
         background: p.bg,
-        color: '#eef2f8',
+        color: t.ink,
         overflow: 'hidden',
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
@@ -100,7 +102,7 @@ export function TableNode({ data }: NodeProps) {
                     alignItems: 'center',
                     fontWeight: isHeader ? 600 : 400,
                     // The header row is the column NAMES, so it takes the accent; values stay neutral.
-                    color: isHeader ? p.color : '#eef2f8',
+                    color: isHeader ? p.color : t.ink,
                   }}
                 >
                   {chars.map((_, c) => cell(row[c] ?? '', c === 0 ? 'left' : 'right', !isHeader && c > 0))}

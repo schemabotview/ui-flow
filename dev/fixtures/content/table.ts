@@ -7,7 +7,7 @@
 // SCHEMA mode (left) takes `columns`; the PK/FK gutter is only reserved when some column has a key.
 // DATA mode (right) takes `headers` + `values` — a small result set. Edges anchor to the NODE, never
 // to a row, which is why the join here points at the table rather than at `customer_id`.
-import type { Scene } from '../../src'
+import type { Scene } from '../../../src'
 
 export const table: Scene = {
   id: 'table',

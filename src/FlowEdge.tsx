@@ -8,6 +8,7 @@
 // cleanly. Getting the motion into the composited video is a capture-pipeline concern, not here.
 
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react'
+import { useFlowTheme } from './themeContext'
 
 export function FlowEdge({
   sourceX,
@@ -31,8 +32,9 @@ export function FlowEdge({
     sourcePosition,
     targetPosition,
   })
+  const t = useFlowTheme()
   const d = data as { pulse?: string; bidirectional?: boolean } | undefined
-  const pulse = d?.pulse ?? '#7dd3fc'
+  const pulse = d?.pulse ?? t.edge.pulse
 
   return (
     <>
@@ -54,9 +56,13 @@ export function FlowEdge({
               pointerEvents: 'none',
               padding: '2px 8px',
               borderRadius: 6,
-              background: '#1a1d23', // the scene canvas — see --bg / index.css
-              border: '1px solid #2a2f38',
-              color: '#9aa4b2',
+              // The scene canvas, from the THEME. Through 0.7.0 this was hardcoded '#1a1d23' — the
+              // shell's --bg, duplicated across a package boundary the engine could not see, so the
+              // pill only interrupted the line as long as nobody changed the canvas. It is now the
+              // same value SceneView paints, which is what makes the pill work under every theme.
+              background: t.edge.labelBg,
+              border: `1px solid ${t.edge.labelBorder}`,
+              color: t.edge.labelInk,
               fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
               fontSize: 12.5,
               fontWeight: 500,
