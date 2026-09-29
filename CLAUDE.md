@@ -63,6 +63,13 @@ is the working notes.
   tick labels at the same size. `equal: true` is the exception and the only one: it lets the axis
   SPANS set the aspect so a right angle looks like one, which is required wherever distance is the
   content (slope triangles, decision boundaries, k-means).
+- **The edge pulse's period is a RECORDER contract, not just a look.** `FlowEdge`'s pulse is
+  `<animateMotion dur="2.4s" repeatCount="indefinite">`, and it is the only thing in a scene that
+  moves — which is what lets the shell's recorders screencast one short window and loop it over a
+  90-second narration instead of holding the browser for the whole wav. They snap that window to a
+  whole multiple of 2.4s, read from `PULSE_S` in `record-course.mjs` / `record-reels.mjs`. Changing
+  `dur` here without changing `PULSE_S` there does not break the build; it puts a visible jump at
+  every loop join in every recorded video. Keep the two in step, or give the shell a way to read it.
 - **`CODE_CHAR_W = 9.02`** in `codeMetrics.ts` is a *measured* IBM Plex Mono advance at 15px. It is
   why the font ships as a real dependency via `styles.css`. Changing the font or size means
   re-measuring it.
