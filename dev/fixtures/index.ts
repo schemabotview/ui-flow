@@ -19,6 +19,12 @@
 //   others      fixtures that are not about a scene ELEMENT at all — the viewport (padding) and a
 //               harness-driven state (focus). They live here rather than being wedged into a
 //               category they only half belong to.
+//   studies     a WHOLE architecture, at the size one really is. The categories above each vary one
+//               capability against a minimal scene; a study varies SCALE — 30+ nodes, three nesting
+//               levels, cross-band edges — which is the only way to see what the layout does when a
+//               scene stops being a teaching frame. Read at full window (`?full=1`), not in the 16:9
+//               stage. A study is NOT a regression fixture: it is allowed to change shape whenever
+//               the architecture it documents does.
 //
 // ONE MERGED FIXTURE PER CATEGORY, where merging is honest. Panels are containers, so the same layout
 // code runs one level down and a whole category is comparable at a glance instead of N rail clicks
@@ -55,24 +61,27 @@ import { code } from './content/code'
 import { table } from './content/table'
 import { memory } from './content/memory'
 import { plot, plotMl } from './content/plot'
+import { list } from './content/list'
 import { vendorIcons } from './icons/vendor-icons'
 import { iconGallery } from './icons/icon-gallery'
 import { azureGallery } from './icons/azure-gallery'
 import { flow } from './layouts/flow'
 import { padding } from './others/padding'
 import { focus } from './others/focus'
+import { barclaysAzure } from './studies/barclays-azure'
 
-export const CATEGORIES = ['nodes', 'edges', 'containers', 'content', 'icons', 'layouts', 'others'] as const
+export const CATEGORIES = ['nodes', 'edges', 'containers', 'content', 'icons', 'layouts', 'others', 'studies'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export const fixtures: Record<Category, Scene[]> = {
   nodes: [nodesFixture],
   edges: [edgesFixture],
   containers: [containersFixture],
-  content: [code, table, memory, plot, plotMl],
+  content: [code, table, memory, plot, plotMl, list],
   icons: [vendorIcons, iconGallery, azureGallery],
   layouts: [flow],
   others: [padding, focus],
+  studies: [barclaysAzure],
 }
 
 /** Every fixture, flattened — for id lookup and for counting. */

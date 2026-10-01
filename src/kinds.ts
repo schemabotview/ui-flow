@@ -18,10 +18,12 @@ import { codeCardSize } from './codeMetrics'
 import { memoryCardSize } from './memoryMetrics'
 import { tableCardSize } from './tableMetrics'
 import { plotCardSize } from './plotMetrics'
+import { listCardSize } from './listMetrics'
 import { CodeNode } from './CodeNode'
 import { MemoryNode } from './MemoryNode'
 import { TableNode } from './TableNode'
 import { PlotNode } from './PlotNode'
+import { ListNode } from './ListNode'
 
 /** A content node kind: sized from its own content, painted by its own renderer. */
 export interface NodeKind {
@@ -41,6 +43,7 @@ export const NODE_KINDS: Record<string, NodeKind> = {
   memory: { type: 'memory', size: memoryCardSize, component: MemoryNode }, // a layout figure: widest cell × slot count
   table: { type: 'table', size: tableCardSize, component: TableNode }, // a relation: widest column × line count
   plot: { type: 'plot', size: plotCardSize, component: PlotNode }, // a figure with axes: one deck-wide box
+  list: { type: 'list', size: listCardSize, component: ListNode }, // a service + its properties: widest line × wrapped line count
 }
 
 /** The sizer for a node, or undefined when it is a STRUCTURAL node (card / tile / container) whose

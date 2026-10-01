@@ -74,8 +74,8 @@ npm run watch    # rebuild the library on change, for a linked content repo
 ```
 
 The **fixtures** under `dev/fixtures/` are the visual spec: flow direction, grids, containers, code
-nodes, the memory figure, table nodes in both modes, tiles, padding, the two icon registries, the
-`warn` role, and a gallery of every icon key. There is no
+nodes, the memory figure, table nodes in both modes, list nodes (a service and its properties), tiles,
+padding, the two icon registries, the `warn` role, and a gallery of every icon key. There is no
 test runner — the harness is where a layout regression is caught before it reaches a content repo.
 
 ## Consumed by

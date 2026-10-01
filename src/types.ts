@@ -105,16 +105,24 @@ export interface SceneNode {
   // Size is computed from the content (see tableMetrics) and fitView scales it, so every table in the
   // deck shares one type size. Uses `pattern` for its accent; ignores `icon` and `variant`. May sit in
   // a flow like any other node — but note edges anchor to the NODE, never to an individual row.
+  // A LIST node renders a service card with a BODY: icon + title + sub over a bulleted list of
+  // `items`. Use it wherever a box has a few PROPERTIES rather than a few neighbours — "Bronze (raw)
+  // · ADLS Gen2 ⟶ raw immutable, partitioned by date, 90-day retention". The alternative, a
+  // container of one card per bullet, models a property as a peer: it triples the node count, takes
+  // ~3.4× the height, and every bullet becomes something an edge could point at. Sized from its own
+  // content (see listMetrics) between a width floor and a reading measure, so a deck of them shares
+  // one type size. It is a LEAF — no children — so it flows and grids exactly like a card.
   // A PLOT node renders a figure with axes: a Cartesian plane or a data chart, carrying lines,
   // curves, scatters, markers and annotation segments. Use it wherever the SHAPE of a function or a
   // distribution is the content — a cost surface, the sigmoid, a decision boundary, a learning
   // curve — and a box-and-arrow diagram would only be able to name it. `label` captions the figure
   // and `sub` subtitles it; `plot` carries everything drawn. Size is one deck-wide box (see
   // plotMetrics) and fitView scales it, so every plot in a course shares one tick-label size.
-  kind?: 'code' | 'memory' | 'table' | 'plot'
+  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list'
   columns?: TableColumn[] // table, schema mode: the table's columns
   headers?: string[] // table, data mode: the header row
   values?: string[][] // table, data mode: the body rows, each a list of cells
+  items?: string[] // list node only: the bullet lines, in reading order
   slots?: MemorySlot[] // memory node only: the cells, top→bottom in address order
   plot?: PlotSpec // plot node only: the axes and the series drawn against them
   filename?: string // the tab label on a code node (e.g. "list.py")

@@ -1,6 +1,13 @@
 // Fixture browser: a rail of scenes grouped by capability on the left, one 16:9 stage on the right.
 // Hash-routed so a fixture is linkable (#/flow-tb) and a reload keeps its place.
 //
+// FULL-WINDOW mode (`?full=1`) drops the rail, the bar and the 16:9 stage and gives SceneView the
+// whole viewport. It exists because the stage is deliberately locked to the capture aspect, which is
+// right for a teaching frame and wrong for a `studies` fixture — a 30-node architecture renders its
+// `sub` lines too small to read inside a letterboxed stage with 24px of harness padding around it.
+// It is a URL param rather than a React state so a full-window frame stays linkable and survives a
+// reload, same as the fixture id and the theme.
+//
 // The FOCUS control in the bar exists because `focusId` is part of SceneView's public surface and the
 // harness never passed it — so the one prop a content repo uses to say "this is the node this section
 // narrates" had no way to be looked at here. Two renderers were found ignoring it in production as a
@@ -14,6 +21,14 @@ import { CATEGORIES, fixtures, allFixtures, categoryOf } from './fixtures'
 // every deck in one visual language), so the harness names them; it is inside the package, so this is
 // the one place that is allowed to.
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
+
+/** This URL with `?full` set or cleared, hash (→ the fixture) and every other param preserved. */
+function fullUrl(on: boolean) {
+  const u = new URL(window.location.href)
+  if (on) u.searchParams.set('full', '1')
+  else u.searchParams.delete('full')
+  return u.toString()
+}
 
 function useHashId(fallback: string) {
   const read = () => window.location.hash.replace(/^#\/?/, '') || fallback
@@ -58,6 +73,20 @@ export function App() {
   })
   useEffect(() => localStorage.setItem('flow-theme', theme), [theme])
   const ids = useMemo(() => nodeIds(scene.nodes), [scene])
+  const full = new URLSearchParams(window.location.search).has('full')
+
+  // Full window: the scene and nothing else. The only chrome is the way back out — and it has to be
+  // there, because with the rail gone a link is the only exit that does not mean editing the URL.
+  if (full) {
+    return (
+      <div className="fullstage">
+        <SceneView scene={scene} theme={theme} />
+        <a className="unfull" href={fullUrl(false)} title="Back to the fixture browser">
+          ✕ full window
+        </a>
+      </div>
+    )
+  }
 
   return (
     <div className="layout">
@@ -123,6 +152,9 @@ export function App() {
                 ))}
               </select>
             </label>
+            <a className="pick full" href={fullUrl(true)} title="Render this scene at the full viewport">
+              full window
+            </a>
           </span>
         </div>
         <div className="stagewrap">

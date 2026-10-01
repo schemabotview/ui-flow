@@ -42,7 +42,7 @@ is the working notes.
   a concept with wider snippets raises it per card with `minCols` (apache-spark uses 76) rather than
   changing the default, which would resize every other concept's cards.
 - **A sizer must count what the RENDERER draws, exactly.** `layout.ts` reserves a box from
-  `codeCardSize` / `tableCardSize` / `memoryCardSize`, and the node paints into it at `width: 100%` —
+  `codeCardSize` / `tableCardSize` / `memoryCardSize` / `listCardSize`, and the node paints into it at `width: 100%` —
   so any pixel the sizer forgets is a clipped last column, not a scrollbar. Two things are easy to
   miss: grid **gaps sit between tracks**, and the PK/FK gutter is a track (this shipped broken in
   sql — the gutter's gap was never reserved); and the card's **border eats inner width** under
@@ -73,6 +73,26 @@ is the working notes.
 - **`CODE_CHAR_W = 9.02`** in `codeMetrics.ts` is a *measured* IBM Plex Mono advance at 15px. It is
   why the font ships as a real dependency via `styles.css`. Changing the font or size means
   re-measuring it.
+- **A property is not a peer — use `kind: 'list'`.** The commonest shape in a cloud diagram is a
+  service with a few properties under it. Built from a container of one card per bullet it costs
+  ~3.4× the height (a four-point box: ~537px against ~160), triples the node count, and makes every
+  property something an edge can point at and `focus` can light up. Worse, it drags the whole scene's
+  fitView zoom down until the leaf type stops being readable — which is how it was found, in the
+  azure case-study study fixture. A card is a THING; a bullet is a FACT ABOUT one. Reach for `list`
+  whenever a box has points rather than neighbours, and for a plain card when it genuinely has
+  neither (a consumer, a source system) — a list node with nothing to put in its body is the same
+  mistake mirrored.
+- **`SANS_ADVANCE = 0.525` in `listMetrics.ts` is a MARGIN, not a measurement.** Mixed-case Plex Sans
+  runs ~0.503; the constant sits a few percent above because an under-reserved box clips its last
+  line rather than scrolling it. Do not tune it down to the measured value. It was 0.54 and lowered
+  once, after a title one word short of wrapping was counted as two lines and left 25px of dead space
+  under the card's last bullet — that is the whole budget this number trades against.
+- **`wrapLines` packs WORDS, not characters.** `layout.ts:headerHeight` estimates with
+  `ceil(chars × advance / width)`, which assumes text packs with no waste at the end of a line — so
+  it undercounts exactly when a long word is pushed to the next line, the one direction that clips.
+  `listMetrics.wrapLines` runs the browser's greedy algorithm instead, and splits a word wider than
+  the whole measure to match the renderer's `overflow-wrap: anywhere`. If `headerHeight` is ever
+  made exact, this is the function to reuse.
 
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
   present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
@@ -89,10 +109,13 @@ is the working notes.
 No test runner. A change is done when `npm run build` is clean **and** every fixture still renders
 correctly at `npm run dev` (:5174). Adding an engine capability means adding a fixture for it.
 
-For a content-sized node (code, table, memory), "renders correctly" includes *measuring* it, not just
-looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right` means
-the sizer is under-reserving. A fixture whose content lands exactly on the min floor is the one that
-catches it — comfortable content hides the bug.
+For a content-sized node (code, table, memory, list), "renders correctly" includes *measuring* it, not
+just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
+means the sizer is under-reserving. A fixture whose content lands exactly on the min floor is the one
+that catches it — comfortable content hides the bug. For `list`, whose body WRAPS, the check is
+`body.scrollHeight > body.clientHeight` on each card, and the slack worth watching is the other way
+too: every card should reserve exactly 2px over what it renders (the focused border's extra width),
+and a card reserving much more has a wrap estimate that is counting a line the browser does not draw.
 
 ## Releasing
 
