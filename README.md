@@ -113,6 +113,13 @@ from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`;
 must not return — it is per-repo theming through a side door, and one variable cannot paint four
 bands in four hues anyway, which is the shape every architecture diagram actually wants.
 
+Text is measured, not estimated. `textMetrics.ts` carries the real IBM Plex Sans advances per
+character at weights 400 and 600, rounded up, so a sizer can only over-reserve and only by a fraction
+of a pixel per character — replacing the single mean advance plus safety margin that used to count
+lines the browser never drew. It stays a table rather than a DOM measurement because `computeLayout`
+must be pure: same scene in, same coordinates out, or a capture stops reproducing. **Remeasure if the
+font changes**, the same standing requirement `CODE_CHAR_W` carries.
+
 Verification is `npm run check` (geometry + determinism, then a headless sweep that measures real
 text rectangles against node bounds in both themes at 1920, 3840 and 390) plus reading the fixtures
 at `npm run dev`. Builds and geometry checks alone are not visual sign-off. These changes are not

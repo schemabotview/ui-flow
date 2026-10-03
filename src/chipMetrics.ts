@@ -18,7 +18,7 @@
 // a layout that is lying about the content.
 
 import type { SceneNode } from './types'
-import { SANS_ADVANCE } from './listMetrics'
+import { textWidth } from './textMetrics'
 import { hasIcon } from './NodeIcon'
 
 // ── Type scale ─────────────────────────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ export const CHIP_MIN_W = 72
 /** Natural pixel size of a chip — the box the layout reserves for it. Single line by construction:
  *  a chip that needs two lines is a card, and sizing it as one line would clip the second. */
 export function chipSize(node: Pick<SceneNode, 'label' | 'icon'>): { w: number; h: number } {
-  const textW = Math.ceil(node.label.length * CHIP_FONT * SANS_ADVANCE)
+  const textW = Math.ceil(textWidth(node.label, CHIP_FONT))
   const iconW = hasIcon(node.icon) ? CHIP_ICON + CHIP_ICON_GAP : 0
   const w = Math.max(CHIP_MIN_W, textW + iconW + 2 * (CHIP_PAD_X + CHIP_BORDER))
   const h = Math.max(CHIP_LINE_H, CHIP_ICON) + 2 * (CHIP_PAD_Y + CHIP_BORDER)

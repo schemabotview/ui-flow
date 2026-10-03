@@ -16,7 +16,7 @@
 // only framed thing on the canvas — which is what focus is for.
 
 import type { SceneNode } from './types'
-import { wrapLines } from './listMetrics'
+import { wrapLines } from './textMetrics'
 
 // ── Type scale ─────────────────────────────────────────────────────────────────────────────────
 export const PROSE_TITLE_FONT = 20 // the label
@@ -51,7 +51,7 @@ export const proseTextWidth = (): number =>
 /** Natural pixel size of a prose card — the box the layout reserves for it. */
 export function proseSize(node: Pick<SceneNode, 'label' | 'sub'>): { w: number; h: number } {
   const textW = proseTextWidth()
-  const title = wrapLines(node.label, textW, PROSE_TITLE_FONT) * PROSE_TITLE_LINE_H
+  const title = wrapLines(node.label, textW, PROSE_TITLE_FONT, 600) * PROSE_TITLE_LINE_H
   const caption = node.sub
     ? PROSE_CAPTION_GAP + wrapLines(node.sub, textW, PROSE_CAPTION_FONT) * PROSE_CAPTION_LINE_H
     : 0

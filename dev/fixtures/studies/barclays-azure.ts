@@ -67,7 +67,13 @@ const sources: SceneNode = {
       children: [
         { id: 'src-master', label: 'Counterparty master', sub: 'LEI codes', pattern: 'external', icon: 'fingerprint' },
         { id: 'src-product', label: 'Product hierarchy', pattern: 'external', icon: 'layers' },
-        { id: 'src-collateral', label: 'Collateral positions', sub: 'and valuations', pattern: 'external', icon: 'package' },
+        {
+          id: 'src-collateral',
+          label: 'Collateral positions',
+          sub: 'and valuations',
+          pattern: 'external',
+          icon: 'package',
+        },
       ],
     },
   ],
@@ -150,6 +156,12 @@ const storage: SceneNode = {
   children: [
     {
       id: 'adls',
+      // FRAMED, and it is the rule rather than an exception to it: three list cards sit side by side
+      // in this box, and a list card is a header, a hairline and a body. Unframed and adjacent, one
+      // zone's last bullet and the next zone's title are separated by nothing but a gap, and each
+      // card's hairline runs out into the space between them. Everywhere else in this study a box
+      // holds a SINGLE card, which the box itself already bounds — so they stay unframed.
+      framed: true,
       label: 'Azure Data Lake Storage Gen2',
       sub: 'lakehouse storage with Delta',
       pattern: 'storage',
@@ -208,38 +220,54 @@ const storage: SceneNode = {
         { source: 'silver', target: 'gold' },
       ],
     },
-    // The two Databricks jobs are PEERS of the lake, not children of a "Processing" box. The box's
-    // whole claim — separate pipeline code, sharing only the storage layer — is a statement about
-    // their relationship to the LAKE, and nesting them under a wrapper is the one arrangement that
-    // cannot show it: a sibling row can, because the thing they share is sitting next to them. It is
-    // also what the reference draws, three rows under the band rather than two.
+    // THE TWO JOBS ARE A PAIR, in one box, side by side. An earlier pass pulled them out of this box
+    // on the grounds that their relationship to the LAKE is the whole claim and a wrapper obscures it.
+    // That was overstated: the box sits directly under the lake in the same band, so the relationship
+    // is still drawn — and what the wrapper buys is real. It states the fact that belongs to the PAIR
+    // and to neither job alone (separate pipeline code, sharing only the storage layer), it puts them
+    // in a row instead of a column so the band reads as two tiers rather than three stacked cards,
+    // and it is the thing `framed` can hang off for both of them at once.
     {
-      id: 'batch-proc',
-      kind: 'list',
-      label: 'Batch processing',
-      sub: 'Azure Databricks — PySpark, SQL, Delta',
+      id: 'processing',
+      label: 'Processing',
+      sub: 'separate pipeline code; shares only the storage layer',
       pattern: 'service',
       icon: 'databricks',
-      items: [
-        'Great Expectations validates Bronze first',
-        'Business-rule mapping on product and status',
-        'Scala Spark Partitioner removes a 3M-row shuffle',
-        'Writes Silver and Gold in Delta',
-      ],
-    },
-    {
-      id: 'rt-proc',
-      kind: 'list',
-      label: 'Real-time processing',
-      sub: 'Azure Databricks — Structured Streaming',
-      pattern: 'service',
-      icon: 'waves',
-      items: [
-        'Consumes from Event Hubs',
-        'Validation and dedup on trade_id + event_version',
-        '10-minute watermark for late events',
-        'Windowed exposure against broadcast limits',
-        'Checkpointed to ADLS for exactly-once',
+      cols: 2,
+      // No `align: 'start'` here, deliberately. The box is stretched to the lake's width above it, so
+      // the pair would otherwise left-pack and leave the surplus pooled on the right as one void; a
+      // centred pair reads as padding on both sides instead of a missing third card.
+      framed: true,
+      children: [
+        {
+          id: 'batch-proc',
+          kind: 'list',
+          label: 'Batch processing',
+          sub: 'Azure Databricks — PySpark, SQL, Delta',
+          pattern: 'service',
+          icon: 'databricks',
+          items: [
+            'Great Expectations validates Bronze first',
+            'Business-rule mapping on product and status',
+            'Scala Spark Partitioner removes a 3M-row shuffle',
+            'Writes Silver and Gold in Delta',
+          ],
+        },
+        {
+          id: 'rt-proc',
+          kind: 'list',
+          label: 'Real-time processing',
+          sub: 'Azure Databricks — Structured Streaming',
+          pattern: 'service',
+          icon: 'waves',
+          items: [
+            'Consumes from Event Hubs',
+            'Validation and dedup on trade_id + event_version',
+            '10-minute watermark for late events',
+            'Windowed exposure against broadcast limits',
+            'Checkpointed to ADLS for exactly-once',
+          ],
+        },
       ],
     },
   ],

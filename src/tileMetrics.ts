@@ -17,7 +17,7 @@
 // cheap axis here: a grid row is already as tall as its tallest member.
 
 import type { SceneNode } from './types'
-import { wrapLines, longestWordWidth } from './listMetrics'
+import { wrapLines, longestWordWidth } from './textMetrics'
 import { hasIcon } from './NodeIcon'
 
 // ── Type scale ─────────────────────────────────────────────────────────────────────────────────
@@ -44,10 +44,10 @@ export const TILE_MAX_W = 168
 export function tileSize(node: Pick<SceneNode, 'label' | 'sub' | 'icon'>): { w: number; h: number } {
   // The widest single WORD is what sets the width: a phrase can wrap between its words at the floor
   // measure, but `identitygovernance` cannot, and a box narrower than it is the clip.
-  const longestWord = longestWordWidth(node.label, TILE_LABEL_FONT)
+  const longestWord = longestWordWidth(node.label, TILE_LABEL_FONT, 600)
   const w = Math.min(TILE_MAX_W, Math.max(TILE_W, Math.ceil(longestWord) + 2 * TILE_PAD_X))
   const textW = w - 2 * TILE_PAD_X
-  const labelH = wrapLines(node.label, textW, TILE_LABEL_FONT) * TILE_LABEL_LINE_H
+  const labelH = wrapLines(node.label, textW, TILE_LABEL_FONT, 600) * TILE_LABEL_LINE_H
   const subH = node.sub ? TILE_SUB_GAP + wrapLines(node.sub, textW, TILE_SUB_FONT) * TILE_SUB_LINE_H : 0
   const iconH = hasIcon(node.icon) ? TILE_ICON + TILE_ICON_GAP : 0
   return { w, h: Math.max(TILE_H, Math.ceil(iconH + labelH + subH + 2 * TILE_PAD_Y)) }

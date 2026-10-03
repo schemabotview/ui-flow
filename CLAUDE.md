@@ -82,27 +82,23 @@ is the working notes.
   whenever a box has points rather than neighbours, and for a plain card when it genuinely has
   neither (a consumer, a source system) — a list node with nothing to put in its body is the same
   mistake mirrored.
-- **`SANS_ADVANCE = 0.525` in `listMetrics.ts` is a MARGIN, not a measurement.** Mixed-case Plex Sans
-  phrases run ~0.49; the constant sits a few percent above because an under-reserved box clips its
-  last line rather than scrolling it. Do not tune it down to the measured value. It was 0.54 and
-  lowered once, after a title one word short of wrapping was counted as two lines and left 25px of
-  dead space under the card's last bullet — that is the whole budget this number trades against, and
-  the entry below records what it currently costs.
-- **`wrapLines` packs WORDS, not characters.** `headerMetrics.headerHeight` and every other sizer
-  wrap with it rather than `ceil(chars × advance / width)`, which assumes text packs with no waste at
-  the end of a line — so it undercounts exactly when a long word is pushed to the next line, the one
-  direction that clips. It splits a word wider than the whole measure to match the renderers'
-  `overflow-wrap: anywhere`.
-- **`SANS_ADVANCE` (0.525) is for PHRASES; `SANS_WORD_ADVANCE` (0.62) is for a single WORD.** They are
-  different statistics and conflating them is a real defect, found on screen at 0.10.0. A phrase's
-  per-character mean is pulled down by its spaces to ~0.49; one word has no spaces and runs higher —
-  measured in Plex Sans at 22px/600: `between` 0.578, `Consumers` 0.580, `managementgroup` 0.585,
-  `DevOps` 0.596, all above 0.525. Anywhere a sizer measures the LONGEST WORD rather than a whole
-  string (`headerMinWidth`, `tileSize`, the badge gutter) the phrase constant under-reserves, and the
-  symptom is a word broken mid-syllable — "Same label betwee / n tiles". Not a clip, so no check
-  catches it; it just reads as broken. 0.62 covers the worst real word with headroom and deliberately
-  NOT the pathological one (`WWWWWW` runs 0.95): this is a WIDTH floor, where over-reserving costs
-  geometry on every box and under-reserving costs one ugly break.
+- **Text is MEASURED from a per-character table, not estimated from a mean.** `textMetrics.ts` holds
+  the real IBM Plex Sans advances at weights 400 and 600, in thousandths of the em, rounded UP — so
+  summing them can only ever over-reserve, and only by a fraction of a pixel per character. Verified
+  against canvas on the studies' own text: sum-of-characters predicts a rendered string to within
+  0.2–1.1%, erring high. **Remeasure if the font or its weights change**, the same standing
+  requirement `CODE_CHAR_W` carries. It must stay a TABLE, never a DOM measurement: `computeLayout`
+  is pure and deterministic, which is what makes a capture reproducible.
+- **Why the mean had to go, so it is not reinstated.** Until 0.10.0 this was one constant
+  (`SANS_ADVANCE = 0.525`) with a safety margin, plus a second for single words (0.62) after the
+  first proved to be the wrong statistic for them. A mean is wrong in both directions and only one is
+  survivable — an under-reserved box CLIPS — so the margin had to cover the worst case and every
+  ordinary line paid for it. A phrase's true mean is ~0.49, so any line within 7% of the measure was
+  counted as two and the card grew by a line it never drew: ~65px of dead height on a medallion card
+  in the barclays study. That was invisible while leaves were unframed and became three ragged boxes
+  the moment `framed` went on — three zones with five bullets each have no business being three
+  different heights. A table removes the guess instead of tuning the margin; the weight argument
+  matters too, since a 600 title runs ~4% wider than the same string at 400.
 - **A CONTAINER is sized by its children AND by its own header.** `layout.ts` sized a box from
   `inner.w + 2 * PAD` alone, so a panel of two 128px tiles could not seat its own title's longest word
   and broke it. `headerMinWidth` is the floor that fixes it, capped at `HEADER_MAX_FORCED_W` so a
@@ -155,14 +151,10 @@ is the working notes.
   its REAL deep endpoints (`w1-exec → drv-tasks` rather than `workers → driver`): layout remaps it to
   the same pair and still declines to rank it, but the drawn path has somewhere else to go. A proper
   fix is an edge offset, or a same-face handle pair for a feedback channel.
-- **A known over-reserve, measured and left alone.** A `list` card in the barclays study reserves
-  ~65px more height than it paints — three items whose real width (phrase advance ~0.49) fits the
-  measure but whose estimate at 0.525 tips them onto a second line. The margin is not tunable down:
-  CLAUDE.md has warned since 0.9.0 that under-reserving CLIPS while over-reserving only costs empty
-  card, and 0.525 is already one step below the original 0.54. The real fix is a per-character width
-  TABLE instead of one mean — still pure, still deterministic, and accurate enough that the margin
-  could shrink. Canvas measurement is NOT the fix: `computeLayout` must stay deterministic or
-  capture stops reproducing.
+- **What slack is LEFT, and why.** After the table, the worst over-reserve in the barclays study is
+  38px and the median 23.5px, against ~80px before. Most of what remains is `PROSE_MIN_H` doing its
+  job — a one-line card is floored at 96px so a row of them stays a tidy band rather than each box
+  shrink-wrapping — and that is deliberate, not an error to chase. Nothing clips.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
   present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
   `dms` and `waf` collide, which is why the Azure side spells them `backupcenter`, `costbudgets`,
