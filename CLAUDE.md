@@ -125,7 +125,23 @@ is the working notes.
 - **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** The default stays
   `center` — right for a teaching frame, where a short stage should sit on the tall one's midline.
   `stretch` applies to CONTAINERS only: a leaf is sized to its own content, and painting it at a
-  sibling's height just floats its text in dead space.
+  sibling's height just floats its text in dead space. It runs a LAYER out to the full cross-extent
+  and **shares the surplus** among that layer's boxes — a layer of one takes all of it, a layer of two
+  takes half each. Handing each member the whole extent is the bug the Spark study caught, where the
+  lower row is two bands in one layer and each grew to the width of the four-band row above.
+- **A BACK EDGE is drawn but does not RANK.** `depthOf` skips any edge whose target already precedes
+  its source in the topological order. Without that, one feedback arrow — an executor's status
+  returning to the driver, an ack, a heartbeat — pushes its own target forward past the node it points
+  back at: in the Spark topology `workers → driver` moved the driver from layer 1 to layer 3 and sat
+  it beside the cluster manager. The flow is what the LAYOUT is; a channel running against it is an
+  annotation on that flow, not a stage of it.
+- **Two edges between the same pair of FACES coincide exactly.** There is one handle per face per
+  role, so a forward edge and a back edge between the same two nodes leave and enter the same points
+  and land on the same midpoint — one hidden under the other, with both arrowheads visible and
+  neither line readable. The workaround, and what the Spark study does, is to anchor the back edge at
+  its REAL deep endpoints (`w1-exec → drv-tasks` rather than `workers → driver`): layout remaps it to
+  the same pair and still declines to rank it, but the drawn path has somewhere else to go. A proper
+  fix is an edge offset, or a same-face handle pair for a feedback channel.
 - **A known over-reserve, measured and left alone.** A `list` card in the barclays study reserves
   ~65px more height than it paints — three items whose real width (phrase advance ~0.49) fits the
   measure but whose estimate at 0.525 tips them onto a second line. The margin is not tunable down:
@@ -157,6 +173,12 @@ exhaustive on purpose: the fixture that fails is never the one you suspect, beca
 wherever content lands exactly on a width floor, and which fixture that is changes every time a
 metric moves. Its first full run found a clip in `azure-gallery` — two Azure keys overrunning a tile
 that had been a flat 128 × 96 constant since the engine was written.
+
+Two studies, and they vary different things. `barclays-azure` varies SCALE — 30+ nodes, three nesting
+levels, a five-band row. `spark-topology` varies the SHAPE of the composition: two band rows rather
+than one, a repeated unit three levels deep, a counted-token leaf, and a channel running against the
+flow. A capability claimed on one row only is an untested claim about the second — which is how the
+`stretch` surplus bug survived its first fixture.
 
 Neither pass is visual sign-off. For a content-sized node (code, table, memory, list, tile, chip),
 "renders correctly" includes *measuring* it, not just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`

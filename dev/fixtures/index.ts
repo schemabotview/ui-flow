@@ -70,6 +70,7 @@ import { padding } from './others/padding'
 import { focus } from './others/focus'
 import { prose, proseSizing } from './others/prose'
 import { barclaysAzure } from './studies/barclays-azure'
+import { sparkTopology } from './studies/spark-topology'
 
 export const CATEGORIES = ['nodes', 'edges', 'containers', 'content', 'icons', 'layouts', 'others', 'studies'] as const
 export type Category = (typeof CATEGORIES)[number]
@@ -82,7 +83,7 @@ export const fixtures: Record<Category, Scene[]> = {
   icons: [vendorIcons, iconGallery, azureGallery],
   layouts: [flow],
   others: [padding, focus, prose, proseSizing],
-  studies: [barclaysAzure],
+  studies: [barclaysAzure, sparkTopology],
 }
 
 /** Every fixture, flattened — for id lookup and for counting. */

@@ -41,5 +41,22 @@ try {
   assert.ok(bands.length >= 4, 'study must still have its band row')
   assert.equal(new Set(bands.map(b => b.y)).size, 1, 'align:start must rule every band to one top edge')
   assert.equal(new Set(bands.map(b => b.h)).size, 1, 'stretch must run every band to one bottom edge')
+  // A BACK EDGE must not rank. `workers -> driver` (drawn from the executor to the scheduler) would,
+  // relaxed like any other edge, push the driver from layer 1 to layer 3 and sit it beside the
+  // cluster manager. Asserted on x because the row runs LR: four bands, four distinct left edges, in
+  // the author's order.
+  const spark = allFixtures.find(scene => scene.id === 'spark-topology')
+  const row = computeLayout(spark).filter(node => node.parentId === 'runtime')
+  const order = row.slice().sort((a, b) => a.x - b.x).map(node => node.id)
+  assert.deepEqual(order, ['sources', 'driver', 'workers', 'cluster'], 'a back edge must not re-rank the flow')
+  assert.equal(new Set(row.map(b => b.y)).size, 1, 'align:start must rule every band to one top edge')
+  assert.equal(new Set(row.map(b => b.h)).size, 1, 'stretch must run every band to one bottom edge')
+  // And stretch must SHARE a layer's surplus, not hand all of it to each member: the two lower bands
+  // are one layer, and giving each the full extent doubled the scene.
+  const lower = computeLayout(spark).filter(node => !node.parentId && node.id !== 'runtime')
+  const runtime = computeLayout(spark).find(node => node.id === 'runtime')
+  const span = Math.max(...lower.map(n => n.x + n.w)) - Math.min(...lower.map(n => n.x))
+  assert.ok(Math.abs(span - runtime.w) < 60, `stretched layer should span the row (${span} vs ${runtime.w})`)
+
   console.log(`Geometry and determinism passed for ${allFixtures.length} visual fixtures.`)
 } finally { await rm(temp, {recursive:true,force:true}) }

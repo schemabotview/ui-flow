@@ -62,7 +62,21 @@ function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<stri
     }
   }
   for (const n of nodes) if (!order.includes(n.id)) order.push(n.id)
-  for (const u of order) for (const v of adj.get(u)!) depth.set(v, Math.max(depth.get(v)!, depth.get(u)! + 1))
+  // A BACK EDGE is drawn but does not RANK. Relaxing every edge against this order would let a
+  // feedback arrow — an executor's status returning to the driver, an ack, a heartbeat — push its own
+  // target forward past the node it points back at: in a four-stage Spark topology the one edge
+  // `workers → driver` moved the driver from layer 1 to layer 3 and sat it beside the cluster
+  // manager. The flow is what the LAYOUT is, and a channel running against it is an annotation on
+  // that flow, not a stage of it. So an edge whose target already precedes its source in the
+  // topological order is skipped here — and only here. SceneView still draws it, with its own
+  // handles and (usually) `dashed`, which is how a reader tells the two apart.
+  const pos = new Map(order.map((id, i) => [id, i]))
+  for (const u of order) {
+    for (const v of adj.get(u)!) {
+      if (pos.get(v)! <= pos.get(u)!) continue
+      depth.set(v, Math.max(depth.get(v)!, depth.get(u)! + 1))
+    }
+  }
   return depth
 }
 
@@ -171,18 +185,30 @@ function layoutSubtree(
   // Total extent along the flow — precomputed so a reversed flow can mirror positions against it.
   const totalAlong = sortedD.reduce((sum, d) => sum + layerAlong.get(d)!, 0) + gapAlong * Math.max(0, sortedD.length - 1)
 
-  // STRETCH grows every container in the group to the full cross-extent, so a row of bands ends on
-  // one line as well as beginning on one. Containers only: a leaf is sized to its own content and
-  // painting it at someone else's height would just float its text in dead space — so a mixed layer
-  // stretches its boxes and leaves its cards. It is resolved BEFORE placement because it changes the
-  // size the cursor walks over, and it is a no-op under 'center', where a bigger box would simply be
-  // centred too.
+  // STRETCH runs every LAYER out to the full cross-extent, so a row of bands ends on one line as well
+  // as beginning on one. The surplus is SHARED among the layer's stretchable members, not handed to
+  // each of them: a layer of one band takes all of it (the four-band row, where every layer is a
+  // single column), but a layer of two takes half each. Giving each member the whole extent is the
+  // bug this shape caught — the Spark study's lower row is two bands in one layer, and each grew to
+  // the width of the four-band row above, doubling the scene.
+  //
+  // Containers only: a leaf is sized to its own content, and painting it at a sibling's height would
+  // just float its text in dead space — so a mixed layer stretches its boxes and leaves its cards.
+  // Resolved BEFORE placement because it changes the size the cursor walks over, and a no-op under
+  // 'center', where a bigger box would simply be centred too.
   if (stretch && align === 'start') {
-    for (const n of nodes) {
-      if (!n.children?.length) continue
-      const s = sized.get(n.id)!
-      if (horizontal) s.h = Math.max(s.h, maxAcross)
-      else s.w = Math.max(s.w, maxAcross)
+    for (const d of sortedD) {
+      const arr = layers.get(d)!
+      const boxes = arr.filter((n) => n.children?.length)
+      if (!boxes.length) continue
+      const surplus = maxAcross - layerAcross.get(d)!
+      if (surplus <= 0) continue
+      const share = surplus / boxes.length
+      for (const n of boxes) {
+        const s = sized.get(n.id)!
+        if (horizontal) s.h += share
+        else s.w += share
+      }
     }
   }
 
