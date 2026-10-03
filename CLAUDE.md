@@ -82,18 +82,79 @@ is the working notes.
   whenever a box has points rather than neighbours, and for a plain card when it genuinely has
   neither (a consumer, a source system) — a list node with nothing to put in its body is the same
   mistake mirrored.
-- **`SANS_ADVANCE = 0.525` in `listMetrics.ts` is a MARGIN, not a measurement.** Mixed-case Plex Sans
-  runs ~0.503; the constant sits a few percent above because an under-reserved box clips its last
-  line rather than scrolling it. Do not tune it down to the measured value. It was 0.54 and lowered
-  once, after a title one word short of wrapping was counted as two lines and left 25px of dead space
-  under the card's last bullet — that is the whole budget this number trades against.
-- **`wrapLines` packs WORDS, not characters.** `layout.ts:headerHeight` estimates with
-  `ceil(chars × advance / width)`, which assumes text packs with no waste at the end of a line — so
-  it undercounts exactly when a long word is pushed to the next line, the one direction that clips.
-  `listMetrics.wrapLines` runs the browser's greedy algorithm instead, and splits a word wider than
-  the whole measure to match the renderer's `overflow-wrap: anywhere`. If `headerHeight` is ever
-  made exact, this is the function to reuse.
-
+- **Text is MEASURED from a per-character table, not estimated from a mean.** `textMetrics.ts` holds
+  the real IBM Plex Sans advances at weights 400 and 600, in thousandths of the em, rounded UP — so
+  summing them can only ever over-reserve, and only by a fraction of a pixel per character. Verified
+  against canvas on the studies' own text: sum-of-characters predicts a rendered string to within
+  0.2–1.1%, erring high. **Remeasure if the font or its weights change**, the same standing
+  requirement `CODE_CHAR_W` carries. It must stay a TABLE, never a DOM measurement: `computeLayout`
+  is pure and deterministic, which is what makes a capture reproducible.
+- **Why the mean had to go, so it is not reinstated.** Until 0.10.0 this was one constant
+  (`SANS_ADVANCE = 0.525`) with a safety margin, plus a second for single words (0.62) after the
+  first proved to be the wrong statistic for them. A mean is wrong in both directions and only one is
+  survivable — an under-reserved box CLIPS — so the margin had to cover the worst case and every
+  ordinary line paid for it. A phrase's true mean is ~0.49, so any line within 7% of the measure was
+  counted as two and the card grew by a line it never drew: ~65px of dead height on a medallion card
+  in the barclays study. That was invisible while leaves were unframed and became three ragged boxes
+  the moment `framed` went on — three zones with five bullets each have no business being three
+  different heights. A table removes the guess instead of tuning the margin; the weight argument
+  matters too, since a 600 title runs ~4% wider than the same string at 400.
+- **A CONTAINER is sized by its children AND by its own header.** `layout.ts` sized a box from
+  `inner.w + 2 * PAD` alone, so a panel of two 128px tiles could not seat its own title's longest word
+  and broke it. `headerMinWidth` is the floor that fixes it, capped at `HEADER_MAX_FORCED_W` so a
+  sentence in a title cannot set the geometry of the diagram around it — and when the header is what
+  set the width, `attachKids` re-centres the children, or they sit hard left with the slack pooled on
+  the right.
+- **The CONTAINER carries the colour; a leaf is unframed prose.** Through 0.9.0 it was the reverse —
+  every card framed and tinted in its role, the box around them a hairline — which reads as a wash,
+  with the grouping drawn weakest of all. A container's accent is its `pattern` and nothing else: an
+  unreleased draft read it from a `--flow-container-accent` CSS variable a repo set in its own
+  `theme.css`, and it was removed before release and must not come back. It is per-repo theming
+  through a side door (the thing the 0.2.0 brand-orange override was dropped for), and one variable
+  paints every container in a scene the same colour anyway — whereas what an architecture diagram
+  wants is four bands in four hues, which `pattern` already gives per node from the theme's table.
+- **`framed` is INHERITED, and that is the whole point of it.** 0.10.0 unframed the leaves because a
+  leaf inside a container is already bounded by that container. The case that argument does not cover
+  is a leaf with INTERNAL STRUCTURE on the bare canvas: a `list` card is a header, a hairline and a
+  body, and with nothing around it the hairline runs out into space and the three stop reading as one
+  object. `framed` is the opt-in — set on a scene or a container, applying to everything beneath.
+  It is deliberately NOT a per-node decoration: as one, every author frames the node they happen to
+  care about and the deck is back at 0.9.0's wash, a dozen rectangles competing with the band that
+  groups them. If two cards need separating from each other, they all do. A node-level override
+  exists and is a smell — `focus` is the tool for "this one". It costs no geometry, which is what
+  makes it safe: every sizer already reserves the FOCUS border width on both axes so a node does not
+  reflow when it lights up, so a drawn border fills space that was reserved either way. Read only by
+  the two leaves 0.10.0 unframed (the prose card and `list`); a `chip` is always framed and a `tile`
+  never is.
+- **`variant: 'chip'` is the ONE framed leaf BY DEFAULT, and that is a rule about meaning.** The frame came off
+  the prose card because a leaf inside a container is already bounded by it. A chip is the case that
+  argument does not cover: it is a thing COUNTED, not described (Task 1 … Task 4), and what the reader
+  must take from the row is its cardinality. Four outlines carry that; four runs of text do not. The
+  test before reaching for one: would the row still mean what it means with a member removed?
+- **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** The default stays
+  `center` — right for a teaching frame, where a short stage should sit on the tall one's midline.
+  `stretch` applies to CONTAINERS only: a leaf is sized to its own content, and painting it at a
+  sibling's height just floats its text in dead space. It runs a LAYER out to the full cross-extent
+  and **shares the surplus** among that layer's boxes — a layer of one takes all of it, a layer of two
+  takes half each. Handing each member the whole extent is the bug the Spark study caught, where the
+  lower row is two bands in one layer and each grew to the width of the four-band row above.
+- **A BACK EDGE is drawn but does not RANK.** `depthOf` skips any edge whose target already precedes
+  its source in the topological order. Without that, one feedback arrow — an executor's status
+  returning to the driver, an ack, a heartbeat — pushes its own target forward past the node it points
+  back at: in the Spark topology `workers → driver` moved the driver from layer 1 to layer 3 and sat
+  it beside the cluster manager. The flow is what the LAYOUT is; a channel running against it is an
+  annotation on that flow, not a stage of it.
+- **Two edges between the same pair of FACES coincide exactly.** There is one handle per face per
+  role, so a forward edge and a back edge between the same two nodes leave and enter the same points
+  and land on the same midpoint — one hidden under the other, with both arrowheads visible and
+  neither line readable. The workaround, and what the Spark study does, is to anchor the back edge at
+  its REAL deep endpoints (`w1-exec → drv-tasks` rather than `workers → driver`): layout remaps it to
+  the same pair and still declines to rank it, but the drawn path has somewhere else to go. A proper
+  fix is an edge offset, or a same-face handle pair for a feedback channel.
+- **What slack is LEFT, and why.** After the table, the worst over-reserve in the barclays study is
+  38px and the median 23.5px, against ~80px before. Most of what remains is `PROSE_MIN_H` doing its
+  job — a one-line card is floored at 96px so a row of them stays a tidy band rather than each box
+  shrink-wrapping — and that is deliberate, not an error to chase. Nothing clips.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
   present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
   `dms` and `waf` collide, which is why the Azure side spells them `backupcenter`, `costbudgets`,
@@ -109,8 +170,23 @@ is the working notes.
 No test runner. A change is done when `npm run build` is clean **and** every fixture still renders
 correctly at `npm run dev` (:5174). Adding an engine capability means adding a fixture for it.
 
-For a content-sized node (code, table, memory, list), "renders correctly" includes *measuring* it, not
-just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
+`npm run check` is the floor, and it is two passes: `check-geometry.mjs` (determinism, finite boxes,
+every child inside its parent, and the align/stretch assertions on the study) and `check-visual.mjs`,
+which loads EVERY fixture in the registry in both themes at 1920 / 3840 / 390 and measures the real
+client rectangles of every text node against the bounds of the node that owns it. The sweep is
+exhaustive on purpose: the fixture that fails is never the one you suspect, because the defect lives
+wherever content lands exactly on a width floor, and which fixture that is changes every time a
+metric moves. Its first full run found a clip in `azure-gallery` — two Azure keys overrunning a tile
+that had been a flat 128 × 96 constant since the engine was written.
+
+Two studies, and they vary different things. `barclays-azure` varies SCALE — 30+ nodes, three nesting
+levels, a five-band row. `spark-topology` varies the SHAPE of the composition: two band rows rather
+than one, a repeated unit three levels deep, a counted-token leaf, and a channel running against the
+flow. A capability claimed on one row only is an untested claim about the second — which is how the
+`stretch` surplus bug survived its first fixture.
+
+Neither pass is visual sign-off. For a content-sized node (code, table, memory, list, tile, chip),
+"renders correctly" includes *measuring* it, not just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
 means the sizer is under-reserving. A fixture whose content lands exactly on the min floor is the one
 that catches it — comfortable content hides the bug. For `list`, whose body WRAPS, the check is
 `body.scrollHeight > body.clientHeight` on each card, and the slack worth watching is the other way

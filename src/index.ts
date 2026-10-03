@@ -11,7 +11,7 @@ export { SceneView } from './SceneView'
 // engine exists to prevent. A new theme is added HERE and inherited by every repo on the next minor.
 export type { ThemeKey } from './themes'
 
-// DELIBERATELY NOT EXPORTED: computeLayout, collectEdges, Placed, NODE_W, NODE_H, PATTERNS,
+// DELIBERATELY NOT EXPORTED: computeLayout, collectEdges, Placed, the *Metrics modules, PATTERNS,
 // PatternStyle, THEMES, Theme, ThemePattern, patternOf, NODE_KINDS. Inside one repo an unused export was harmless; as a shared package every export is a
 // promise. Shipping the layout internals would ship a supported way to hand-compute positions, and
 // the invariant that keeps scenes deterministic — authors never write x/y — dies at that point.

@@ -86,8 +86,45 @@ export interface SceneNode {
   label: string
   pattern?: PatternKey // the card's colour role. Optional for a code node (which paints a neutral IDE surface); defaults to 'service' everywhere it is read.
   sub?: string // optional second line (e.g. "PostgreSQL"); on a code node it trails as a `# …` comment line
-  icon?: string // named lucide glyph key (see lucideIcons.ts); overrides the pattern's default glyph
-  variant?: 'card' | 'tile' // 'card' (default): wide icon-left rectangle. 'tile': compact icon-over-label.
+  // Named lucide glyph key (see lucideIcons.ts) or a vendor service key; overrides the pattern's
+  // default glyph. The literal 'none' suppresses the glyph entirely — for a container whose identity
+  // is its number and its name, where the pattern's fallback would put a generic shape in the gutter
+  // purely because the lookup chain always resolves to something.
+  icon?: string
+  /**
+   * Draw this leaf's border and fill instead of leaving it unframed. INHERITED: set it on a scene or
+   * a container and everything beneath takes it, which is the level the decision belongs at — if two
+   * cards in a band need separating from each other, they all do, and a deck where some are framed
+   * and some are not has spent its contrast saying nothing. A node-level value overrides its
+   * ancestors; reaching for one is usually a sign the whole group wanted it.
+   *
+   * Default false, because a leaf inside a container is already bounded by that container and two
+   * nested rectangles spend contrast saying the same thing twice. The case the default does NOT
+   * cover, and what this field is for: a leaf with INTERNAL STRUCTURE standing on the bare canvas. A
+   * `list` card is a header, a hairline and a body — unframed and unbounded, the hairline runs to
+   * nothing and the card stops reading as one object. Frame those.
+   *
+   * Costs no geometry. Every sizer already reserves the FOCUS border width on both axes so a node
+   * does not reflow when it lights up, so a drawn border fills space that was reserved either way.
+   *
+   * Applies to the two leaves 0.10.0 unframed — the prose card and the `list` card. A `chip` is
+   * always framed (that IS a chip) and a `tile` never is (the vendor logo is its own tile); neither
+   * reads this.
+   */
+  framed?: boolean
+  // A short ordinal painted in the gutter ahead of the label, dimmed in the node's own accent: '01',
+  // '2', 'A'. It ORDERS a set of peer bands so a reader can follow them in sequence — which is why
+  // it is a separate field and not just a prefix on the label. As a prefix it wraps with the title,
+  // takes the title's weight and colour, and cannot be told from the name of the thing. Keep it to a
+  // few characters; the gutter is sized from its length.
+  badge?: string
+  // 'card' (default): a wide icon-left block of prose, unframed until it takes focus — see
+  // proseMetrics.ts for why the frame came off. 'tile': compact icon-over-label, a fixed box.
+  // 'chip': a small FRAMED token that hugs its own text — see chipMetrics.ts. A chip is for a thing
+  // that is counted rather than described (Task 1 … Task 4, four partitions, three replicas): the
+  // frame is what makes "four of them" legible at a glance, which is the one case where framing a
+  // leaf earns the contrast it spends.
+  variant?: 'card' | 'tile' | 'chip'
   // A CODE node renders as a small IDE-editor card — window chrome + a filename tab + gutter-numbered,
   // syntax-highlighted source — instead of a pattern card. `label` carries the source (newline-separated
   // lines); `filename` names the tab. Python is code-first, so most scenes are one big code card. Size
@@ -143,6 +180,18 @@ export interface SceneNode {
   // nesting — "AWS Cloud ⊃ services", a Region ⊃ its AZs — instead of faking peers as a flow chain.
   children?: SceneNode[]
   cols?: number // for an edgeless container: wrap children into this many columns (a grid). Default 1.
+  // How this node's children sit ACROSS the flow — the axis the flow does not run along. 'center'
+  // (default) centres each layer against the widest, which is right for a teaching frame where a
+  // short stage should sit on the tall one's midline. 'start' rules every layer to a common top (an
+  // LR flow) or left (a TB one), which is what a BAND diagram wants: five columns that begin on one
+  // line read as a grid, five columns centred on each other read as a drift.
+  align?: 'center' | 'start'
+  // Grow every child to the full extent of the widest layer across the flow, so a row of bands ends
+  // on one line as well as beginning on one. Only meaningful with `align: 'start'` — stretching
+  // centred children would just centre bigger boxes — and only on containers, whose renderer paints
+  // at 100% of whatever box the layout hands it. A leaf is sized to its own content and is left
+  // alone, so a mixed layer stretches its boxes and leaves its cards.
+  stretch?: boolean
   // Edges AMONG this container's children. With edges the children FLOW (longest-path) instead of
   // stacking/gridding — so a container can show a mini actor→targets fan (e.g. You → AWS). Ignored
   // (children stack/grid per `cols`) when absent. Reference child ids only.
@@ -166,6 +215,15 @@ export interface SceneEdge {
   // relationship (VPC peering, a public subnet's in-and-out internet access) rather than a one-way
   // flow. Default false (single arrow, source → target).
   bidirectional?: boolean
+  // The path shape. 'curve' (default) is the bezier every scene has drawn so far — right for a flow
+  // between stages. 'step' is an orthogonal run of horizontal and vertical segments, which is what a
+  // dense BAND diagram wants: a curve between two boxes four columns apart sweeps across everything
+  // in between, where a step goes out, along and in.
+  route?: 'curve' | 'step'
+  // Draw the path dashed. For an edge that is not the subject's main flow — a status report, an
+  // acknowledgement, a control signal travelling back against the data. Solid is the default and
+  // should stay the majority: a diagram where half the edges are dashed has said nothing by it.
+  dashed?: boolean
   // Override the arrow ROUTING for this one edge (which node faces it leaves/enters), independent of
   // the container/scene flow — e.g. two side-by-side nodes in a TB flow whose edge should run 'LR'.
   // Positioning is unaffected; only the drawn arrow's handles change. Defaults to the flow direction.
@@ -180,6 +238,12 @@ export interface Scene {
   // For an edgeless scene (top-level nodes are peers): wrap them into this many columns (a grid) so a
   // wide/short layout fills a landscape pane. Default 1 (a vertical stack). Ignored when edges exist.
   cols?: number
+  /** Frame every leaf in the scene — the deck-level default. See SceneNode.framed. */
+  framed?: boolean
+  // The scene's top-level cross-axis alignment and stretch. Same meaning as a container's — see
+  // SceneNode.align / SceneNode.stretch.
+  align?: 'center' | 'start'
+  stretch?: boolean
   // Direction of the scene's top-level flow (with `edges`): 'TB' (default) · 'LR' · 'BT' (bottom→top,
   // e.g. an outbound flow with the internet drawn at the top) · 'RL'. Same as a container's `flow`.
   flow?: 'TB' | 'LR' | 'BT' | 'RL'

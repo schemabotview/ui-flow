@@ -10,31 +10,17 @@
 
 import type { Scene, SceneNode, SceneEdge } from './types'
 import { kindOf } from './kinds'
+import { headerHeight, headerMinWidth, HEADER_MIN } from './headerMetrics'
+import { proseSize } from './proseMetrics'
+import { chipSize } from './chipMetrics'
+import { tileSize } from './tileMetrics'
 
-export const NODE_W = 210
-export const NODE_H = 96
-export const TILE_W = 128 // compact icon-over-label node (hugs the content)
-export const TILE_H = 96
-const GAP_X = 44 // horizontal gap between nodes in a layer
-const GAP_Y = 90 // vertical gap between FLOW layers (room for the arrows)
+const GAP_X = 24 // horizontal gap between nodes in a layer
+const GAP_Y = 72 // vertical gap between FLOW layers (room for the arrows)
 const STACK_GAP_Y = 28 // vertical gap in an edgeless STACK (a labelled list — tighter, no arrows)
 const TILE_GAP_X = 20 // tighter gaps for a grid/stack of tiles — they pack neatly
 const TILE_GAP_Y = 16
 const PAD = 14 // container inner padding around its children
-const HEADER = 52 // MINIMUM container header height (holds the corner-anchored label + its sub line)
-
-// Estimate the header height a container needs so its (wrapping) label + sub never overlap the
-// children below — mirrors ContainerNode's header: icon (22) + gap (10) at left:12, label at 16px /
-// 1.2 line-height, optional sub at 12px. Narrow boxes wrap the text over more lines and so need a
-// taller header; wide/short-label boxes compute ≤ HEADER and stay at the fixed minimum (so existing
-// scenes are unchanged). Text width is generous by design — better a hair too tall than an overlap.
-function headerHeight(label: string, sub: string | undefined, boxW: number): number {
-  const textW = Math.max(40, boxW - 12 - 22 - 10 - 12) // box minus left inset, icon, gap, right margin
-  const lines = (text: string, charW: number) => Math.max(1, Math.ceil((text.length * charW) / textW))
-  const labelH = lines(label, 8.3) * 19.2 // 16px @ 1.2
-  const subH = sub ? lines(sub, 6.2) * 15 + 1 : 0 // 12px + marginTop
-  return Math.max(HEADER, Math.ceil(10 + labelH + subH + 10)) // top inset + text + bottom breathing
-}
 
 export interface Placed {
   id: string
@@ -76,7 +62,21 @@ function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<stri
     }
   }
   for (const n of nodes) if (!order.includes(n.id)) order.push(n.id)
-  for (const u of order) for (const v of adj.get(u)!) depth.set(v, Math.max(depth.get(v)!, depth.get(u)! + 1))
+  // A BACK EDGE is drawn but does not RANK. Relaxing every edge against this order would let a
+  // feedback arrow — an executor's status returning to the driver, an ack, a heartbeat — push its own
+  // target forward past the node it points back at: in a four-stage Spark topology the one edge
+  // `workers → driver` moved the driver from layer 1 to layer 3 and sat it beside the cluster
+  // manager. The flow is what the LAYOUT is, and a channel running against it is an annotation on
+  // that flow, not a stage of it. So an edge whose target already precedes its source in the
+  // topological order is skipped here — and only here. SceneView still draws it, with its own
+  // handles and (usually) `dashed`, which is how a reader tells the two apart.
+  const pos = new Map(order.map((id, i) => [id, i]))
+  for (const u of order) {
+    for (const v of adj.get(u)!) {
+      if (pos.get(v)! <= pos.get(u)!) continue
+      depth.set(v, Math.max(depth.get(v)!, depth.get(u)! + 1))
+    }
+  }
   return depth
 }
 
@@ -87,22 +87,31 @@ function layoutSubtree(
   edges: SceneEdge[],
   cols = 1,
   dir: 'TB' | 'LR' | 'BT' | 'RL' = 'TB',
+  align: 'center' | 'start' = 'center',
+  stretch = false,
 ): { placed: Placed[]; w: number; h: number } {
   // Size each node — recurse into containers first so we know their box size.
-  const sized = new Map<string, { w: number; h: number; kids?: Placed[]; header?: number }>()
+  const sized = new Map<string, { w: number; h: number; kids?: Placed[]; header?: number; inset?: number }>()
   for (const n of nodes) {
     const kind = kindOf(n) // a CONTENT node (code/memory/table/plot) sizes itself from its content
     if (n.children?.length) {
-      const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB') // flow if edges
-      const boxW = inner.w + 2 * PAD
-      const header = headerHeight(n.label, n.sub, boxW) // grows to fit a wrapping label + sub
-      sized.set(n.id, { w: boxW, h: inner.h + header + PAD, kids: inner.placed, header })
+      const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB', n.align ?? 'center', n.stretch ?? false) // flow if edges
+      // A container is sized by what it CONTAINS — and by its own header, which is content too: a
+      // box narrower than its title's longest word breaks that word mid-syllable. See headerMinWidth.
+      const boxW = Math.max(inner.w + 2 * PAD, headerMinWidth(n))
+      const header = headerHeight(n, boxW) // grows to fit a wrapping label + sub
+      // When the HEADER set the width, the children no longer fill the box — centre them in it, or
+      // they sit hard against the left edge with all the slack pooled on the right.
+      const inset = PAD + (boxW - 2 * PAD - inner.w) / 2
+      sized.set(n.id, { w: boxW, h: inner.h + header + PAD, kids: inner.placed, header, inset })
     } else if (kind) {
       sized.set(n.id, kind.size(n))
+    } else if (n.variant === 'chip') {
+      sized.set(n.id, chipSize(n))
     } else if (n.variant === 'tile') {
-      sized.set(n.id, { w: TILE_W, h: TILE_H })
+      sized.set(n.id, tileSize(n))
     } else {
-      sized.set(n.id, { w: NODE_W, h: NODE_H })
+      sized.set(n.id, proseSize(n))
     }
   }
 
@@ -148,9 +157,11 @@ function layoutSubtree(
   // descendants already carry their own parentId + relative position, so they pass through unchanged.
   const attachKids = (parent: SceneNode, kids?: Placed[]) => {
     if (!kids) return
-    const header = sized.get(parent.id)?.header ?? HEADER // this container's own (possibly grown) header
+    const s = sized.get(parent.id)
+    const header = s?.header ?? HEADER_MIN // this container's own (possibly grown) header
+    const inset = s?.inset ?? PAD // PAD, unless the header widened the box and the kids were centred
     for (const c of kids) {
-      if (c.parentId === undefined) placed.push({ ...c, x: PAD + c.x, y: header + c.y, parentId: parent.id })
+      if (c.parentId === undefined) placed.push({ ...c, x: inset + c.x, y: header + c.y, parentId: parent.id })
       else placed.push(c)
     }
   }
@@ -174,10 +185,39 @@ function layoutSubtree(
   // Total extent along the flow — precomputed so a reversed flow can mirror positions against it.
   const totalAlong = sortedD.reduce((sum, d) => sum + layerAlong.get(d)!, 0) + gapAlong * Math.max(0, sortedD.length - 1)
 
+  // STRETCH runs every LAYER out to the full cross-extent, so a row of bands ends on one line as well
+  // as beginning on one. The surplus is SHARED among the layer's stretchable members, not handed to
+  // each of them: a layer of one band takes all of it (the four-band row, where every layer is a
+  // single column), but a layer of two takes half each. Giving each member the whole extent is the
+  // bug this shape caught — the Spark study's lower row is two bands in one layer, and each grew to
+  // the width of the four-band row above, doubling the scene.
+  //
+  // Containers only: a leaf is sized to its own content, and painting it at a sibling's height would
+  // just float its text in dead space — so a mixed layer stretches its boxes and leaves its cards.
+  // Resolved BEFORE placement because it changes the size the cursor walks over, and a no-op under
+  // 'center', where a bigger box would simply be centred too.
+  if (stretch && align === 'start') {
+    for (const d of sortedD) {
+      const arr = layers.get(d)!
+      const boxes = arr.filter((n) => n.children?.length)
+      if (!boxes.length) continue
+      const surplus = maxAcross - layerAcross.get(d)!
+      if (surplus <= 0) continue
+      const share = surplus / boxes.length
+      for (const n of boxes) {
+        const s = sized.get(n.id)!
+        if (horizontal) s.h += share
+        else s.w += share
+      }
+    }
+  }
+
   let cursorAlong = 0
   for (const d of sortedD) {
     const arr = layers.get(d)!
-    let cursorAcross = (maxAcross - layerAcross.get(d)!) / 2 // centre a narrow layer against the widest
+    // 'center' sets a narrow layer on the widest one's midline — right for a teaching frame. 'start'
+    // rules every layer to the same edge, which is what makes a band diagram read as a grid.
+    let cursorAcross = align === 'start' ? 0 : (maxAcross - layerAcross.get(d)!) / 2
     for (const n of arr) {
       const s = sized.get(n.id)!
       // Map (along, across) back onto (x, y): the across-cursor picks the spot in the layer; the
@@ -190,7 +230,7 @@ function layoutSubtree(
       const y = horizontal ? cursorAcross : alongPos
       placed.push({ id: n.id, x, y, w: s.w, h: s.h, node: n })
       attachKids(n, s.kids)
-      cursorAcross += across(n) + gapCross
+      cursorAcross += (horizontal ? s.h : s.w) + gapCross
     }
     cursorAlong += layerAlong.get(d)! + gapAlong
   }
@@ -198,7 +238,7 @@ function layoutSubtree(
 }
 
 export function computeLayout(scene: Scene): Placed[] {
-  return layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB').placed
+  return layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB', scene.align ?? 'center', scene.stretch ?? false).placed
 }
 
 // An edge to draw, tagged with the flow direction of the container it belongs to (scene-level edges

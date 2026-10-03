@@ -83,3 +83,44 @@ test runner — the harness is where a layout regression is caught before it rea
 `python` today; every other GraphL content repo (`aws`, `sql`, `linux`, …) as they migrate off their
 bundled copy. They pin a version, so an engine change never breaks them all at once — each upgrades
 when it is ready to re-verify.
+
+### The 0.10.0 look (unreleased)
+
+The engine inverted where contrast is spent. Through 0.9.0 every leaf was framed and tinted in its
+role and the container around them was a grey hairline; now the **container carries the colour** —
+a full-accent outline from its own `pattern`, a faint fill of the same hue, its title in that accent
+— and a leaf is **unframed prose** until it takes focus. The band is what the eye indexes first, and
+its members are quiet text inside it. The type scale went up to match (card title 20, caption 16,
+icon 40; container title 22, sub 16), flow gaps came in, and `NODE_W`/`NODE_H` are gone: a card is
+sized from its wrapped content like every other node, which also fixes the old silent clip when a
+long label overran the fixed 96px.
+
+New in the scene model, each defaulting to what 0.9.0 did:
+
+| field | on | what it does |
+| --- | --- | --- |
+| `badge` | any node | a short ordinal in the header gutter, dimmed in the node's accent (`'01'`) |
+| `icon: 'none'` | any node | suppress the glyph, instead of falling through to the pattern's default |
+| `variant: 'chip'` | leaf | a small framed token that hugs its text — for things COUNTED, not described |
+| `framed` | scene · container · leaf | draw the leaf borders back on; inherited, and costs no geometry |
+| `align: 'start'` | scene · container | rule every layer to a common edge instead of centring it |
+| `stretch` | scene · container | grow containers to the full cross-extent, so bands end on one line too |
+| `route: 'step'` | edge | orthogonal routing instead of a bezier |
+| `dashed` | edge | a path that is not the subject's main flow |
+
+A container is coloured by its `pattern` and by nothing else. An unreleased draft read the accent
+from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`; it was removed and
+must not return — it is per-repo theming through a side door, and one variable cannot paint four
+bands in four hues anyway, which is the shape every architecture diagram actually wants.
+
+Text is measured, not estimated. `textMetrics.ts` carries the real IBM Plex Sans advances per
+character at weights 400 and 600, rounded up, so a sizer can only over-reserve and only by a fraction
+of a pixel per character — replacing the single mean advance plus safety margin that used to count
+lines the browser never drew. It stays a table rather than a DOM measurement because `computeLayout`
+must be pure: same scene in, same coordinates out, or a capture stops reproducing. **Remeasure if the
+font changes**, the same standing requirement `CODE_CHAR_W` carries.
+
+Verification is `npm run check` (geometry + determinism, then a headless sweep that measures real
+text rectangles against node bounds in both themes at 1920, 3840 and 390) plus reading the fixtures
+at `npm run dev`. Builds and geometry checks alone are not visual sign-off. These changes are not
+published; consuming repositories keep their installed package until an explicit release.

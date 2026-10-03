@@ -96,6 +96,52 @@ export const edges: Scene = {
     replicas('default'),
     replicas('overridden', 'LR'),
     {
+      // ROUTE + DASHED, the same seven edges drawn twice, because a claim about a PATH is only
+      // readable against the path it replaces. A FAN is the shape that separates them: a bezier
+      // leaving one face and arriving at another two layers down and across bows into a diagonal,
+      // and four diagonals crossing in the same band is the mush a dense diagram turns into. A step
+      // leaves square, runs along, and arrives square, so the four paths share lanes instead of
+      // crossing. The return edge is `dashed` in both: it is an acknowledgement travelling back
+      // against the data, not part of the flow — and the pulse still rides it, because what is
+      // dashed is the channel, not the traffic.
+      id: 'curved',
+      label: "route: 'curve' — the default",
+      sub: 'the fan bows into four diagonals',
+      pattern: 'group',
+      children: [
+        { id: 'c-in', label: 'Ingest', pattern: 'network' },
+        { id: 'c-a', label: 'Shard A', pattern: 'storage' },
+        { id: 'c-b', label: 'Shard B', pattern: 'storage' },
+        { id: 'c-out', label: 'Reducer', pattern: 'service' },
+      ],
+      edges: [
+        { source: 'c-in', target: 'c-a' },
+        { source: 'c-in', target: 'c-b' },
+        { source: 'c-a', target: 'c-out' },
+        { source: 'c-b', target: 'c-out' },
+        { source: 'c-out', target: 'c-in', label: 'ack', dashed: true },
+      ],
+    },
+    {
+      id: 'stepped',
+      label: "route: 'step' — orthogonal",
+      sub: 'the same fan, sharing lanes instead of crossing',
+      pattern: 'group',
+      children: [
+        { id: 'k-in', label: 'Ingest', pattern: 'network' },
+        { id: 'k-a', label: 'Shard A', pattern: 'storage' },
+        { id: 'k-b', label: 'Shard B', pattern: 'storage' },
+        { id: 'k-out', label: 'Reducer', pattern: 'service' },
+      ],
+      edges: [
+        { source: 'k-in', target: 'k-a', route: 'step' },
+        { source: 'k-in', target: 'k-b', route: 'step' },
+        { source: 'k-a', target: 'k-out', route: 'step' },
+        { source: 'k-b', target: 'k-out', route: 'step' },
+        { source: 'k-out', target: 'k-in', label: 'ack', route: 'step', dashed: true },
+      ],
+    },
+    {
       id: 'spacer',
       label: 'Label width is not clamped',
       sub: 'the pill is sized to its text — the row below is the same label, four ways',
