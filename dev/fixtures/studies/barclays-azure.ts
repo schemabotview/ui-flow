@@ -71,33 +71,54 @@ const ingestion: SceneNode = {
   sub: 'batch & streaming',
   pattern: 'network',
   icon: 'none',
+  // The two MODES are boxes, each holding the one service that implements it. A wrapper per child is
+  // normally the thing the list node exists to avoid — but here the box and the card name different
+  // facts: the box is the ingestion mode (a concept the architecture has either way, and the thing
+  // the reference groups by), the card is the Azure service that happens to implement it today. The
+  // mode moved OFF each service's `sub` to pay for the level, so nothing is stated twice.
   children: [
     {
-      id: 'adf',
-      kind: 'list',
-      label: 'Azure Data Factory',
-      sub: 'batch ingestion',
-      pattern: 'service',
-      icon: 'datafactory',
-      items: [
-        'Copy Activity, 100+ native connectors',
-        'Reference data full-refresh; transactions incremental',
-        'Watermark held in an Azure SQL control table',
-        'Credentials from Key Vault — never hardcoded',
+      id: 'batch-in',
+      label: 'Batch ingestion',
+      pattern: 'network',
+      icon: 'clock',
+      children: [
+        {
+          id: 'adf',
+          kind: 'list',
+          label: 'Azure Data Factory',
+          sub: 'scheduled pipelines — REST, SFTP, DB, files',
+          pattern: 'service',
+          icon: 'datafactory',
+          items: [
+            'Copy Activity, 100+ native connectors',
+            'Reference data full-refresh; transactions incremental',
+            'Watermark held in an Azure SQL control table',
+            'Credentials from Key Vault — never hardcoded',
+          ],
+        },
       ],
     },
     {
-      id: 'eventhubs',
-      kind: 'list',
-      label: 'Azure Event Hubs',
-      sub: 'real-time ingestion',
-      pattern: 'service',
-      icon: 'eventhubs',
-      items: [
-        'Kafka protocol — consumer code unchanged',
-        'Topics raw → enriched → dlq, replication factor 3',
-        '16 partitions for ~300K events/hour',
-        'Avro via the Event Hubs Schema Registry',
+      id: 'rt-in',
+      label: 'Real-time ingestion',
+      pattern: 'network',
+      icon: 'waves',
+      children: [
+        {
+          id: 'eventhubs',
+          kind: 'list',
+          label: 'Azure Event Hubs',
+          sub: 'transactions, payments, fraud alerts',
+          pattern: 'service',
+          icon: 'eventhubs',
+          items: [
+            'Kafka protocol — consumer code unchanged',
+            'Topics raw → enriched → dlq, replication factor 3',
+            '16 partitions for ~300K events/hour',
+            'Avro via the Event Hubs Schema Registry',
+          ],
+        },
       ],
     },
   ],
@@ -176,49 +197,38 @@ const storage: SceneNode = {
         { source: 'silver', target: 'gold' },
       ],
     },
+    // The two Databricks jobs are PEERS of the lake, not children of a "Processing" box. The box's
+    // whole claim — separate pipeline code, sharing only the storage layer — is a statement about
+    // their relationship to the LAKE, and nesting them under a wrapper is the one arrangement that
+    // cannot show it: a sibling row can, because the thing they share is sitting next to them. It is
+    // also what the reference draws, three rows under the band rather than two.
     {
-      id: 'processing',
-      label: 'Processing',
-      sub: 'separate pipeline code; shares only the storage layer',
+      id: 'batch-proc',
+      kind: 'list',
+      label: 'Batch processing',
+      sub: 'Azure Databricks — PySpark, SQL, Delta',
       pattern: 'service',
       icon: 'databricks',
-      flow: 'LR',
-      align: 'start',
-      // STACKED, not side by side. Side by side the pair came out 794 wide under a 1291-wide lake
-      // and left the whole composition at 2.4:1 against a 1.7:1 window — width-bound, with ~30% of
-      // the frame empty below it. Stacking spends that empty height instead: the fitView zoom is
-      // identical (width still binds) but the diagram now fills the pane. It is also what the
-      // reference drawing does — the two tracks are full rows under the lake, not columns beside it.
-      children: [
-        {
-          id: 'batch-proc',
-          kind: 'list',
-          label: 'Batch processing',
-          sub: 'Azure Databricks — PySpark, SQL, Delta',
-          pattern: 'service',
-          icon: 'databricks',
-          items: [
-            'Great Expectations validates Bronze first',
-            'Business-rule mapping on product and status',
-            'Scala Spark Partitioner removes a 3M-row shuffle',
-            'Writes Silver and Gold in Delta',
-          ],
-        },
-        {
-          id: 'rt-proc',
-          kind: 'list',
-          label: 'Real-time processing',
-          sub: 'Azure Databricks — Structured Streaming',
-          pattern: 'service',
-          icon: 'waves',
-          items: [
-            'Consumes from Event Hubs',
-            'Validation and dedup on trade_id + event_version',
-            '10-minute watermark for late events',
-            'Windowed exposure against broadcast limits',
-            'Checkpointed to ADLS for exactly-once',
-          ],
-        },
+      items: [
+        'Great Expectations validates Bronze first',
+        'Business-rule mapping on product and status',
+        'Scala Spark Partitioner removes a 3M-row shuffle',
+        'Writes Silver and Gold in Delta',
+      ],
+    },
+    {
+      id: 'rt-proc',
+      kind: 'list',
+      label: 'Real-time processing',
+      sub: 'Azure Databricks — Structured Streaming',
+      pattern: 'service',
+      icon: 'waves',
+      items: [
+        'Consumes from Event Hubs',
+        'Validation and dedup on trade_id + event_version',
+        '10-minute watermark for late events',
+        'Windowed exposure against broadcast limits',
+        'Checkpointed to ADLS for exactly-once',
       ],
     },
   ],
@@ -233,40 +243,68 @@ const serving: SceneNode = {
   sub: 'reporting · reconciliation · access',
   pattern: 'service',
   icon: 'none',
+  // Grouped by CAPABILITY, with the service that provides it inside — the same two-level naming the
+  // ingestion band uses and for the same reason: the capability is what the architecture owes its
+  // consumers and survives a change of vendor, the card is what currently delivers it. Each capability
+  // moved off its service's `sub` to pay for the level.
   children: [
     {
-      id: 'powerbi',
-      kind: 'list',
-      label: 'Power BI',
-      sub: 'analytics & reporting',
+      id: 'analytics',
+      label: 'Analytics & reporting',
       pattern: 'user',
-      icon: 'powerbi',
-      items: ['Connects to Synapse Gold over JDBC', 'Risk and regulatory reporting dashboards'],
-    },
-    {
-      id: 'fabric',
-      kind: 'list',
-      label: 'Microsoft Fabric',
-      sub: 'regulatory reconciliation',
-      pattern: 'service',
-      icon: 'sigma',
-      items: [
-        'Source freshness checks and relationship tests',
-        'Reconciliation models replaced the spreadsheets',
-        'Exception datasets; variance > 0.01% blocks publication',
+      icon: 'barchart',
+      children: [
+        {
+          id: 'powerbi',
+          kind: 'list',
+          label: 'Power BI',
+          sub: 'dashboards for risk and the regulator',
+          pattern: 'user',
+          icon: 'powerbi',
+          items: ['Connects to Synapse Gold over JDBC', 'Risk and regulatory reporting dashboards'],
+        },
       ],
     },
     {
-      id: 'direct',
-      kind: 'list',
-      label: 'Hot path & direct read',
-      sub: 'Cosmos DB · Gold Delta',
+      id: 'reconciliation',
+      label: 'Regulatory reconciliation',
+      pattern: 'service',
+      icon: 'circlecheck',
+      children: [
+        {
+          id: 'fabric',
+          kind: 'list',
+          label: 'Microsoft Fabric',
+          sub: 'the control that replaced the spreadsheets',
+          pattern: 'service',
+          icon: 'sigma',
+          items: [
+            'Source freshness checks and relationship tests',
+            'Reconciliation models replaced the spreadsheets',
+            'Exception datasets; variance > 0.01% blocks publication',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'access',
+      label: 'Data access',
       pattern: 'storage',
-      icon: 'cosmos',
-      items: [
-        'Cosmos DB, sub-5ms reads on /counterparty_id',
-        'Session consistency, RUs sized for peak booking',
-        'Data Science reads Gold Delta via notebooks',
+      icon: 'database',
+      children: [
+        {
+          id: 'direct',
+          kind: 'list',
+          label: 'Cosmos DB & Gold Delta',
+          sub: 'hot path, and the direct read behind it',
+          pattern: 'storage',
+          icon: 'cosmos',
+          items: [
+            'Cosmos DB, sub-5ms reads on /counterparty_id',
+            'Session consistency, RUs sized for peak booking',
+            'Data Science reads Gold Delta via notebooks',
+          ],
+        },
       ],
     },
   ],
@@ -283,10 +321,34 @@ const consumers: SceneNode = {
   pattern: 'user',
   icon: 'none',
   children: [
-    { id: 'c-risk', label: 'Risk Operations', sub: 'Intraday exposure', pattern: 'user', icon: 'gauge' },
-    { id: 'c-reg', label: 'Regulatory Reporting', sub: 'FCA / PRA submissions', pattern: 'user', icon: 'scroll' },
-    { id: 'c-biz', label: 'Business users', sub: 'Power BI dashboards', pattern: 'user', icon: 'users' },
-    { id: 'c-ds', label: 'Data Science', sub: 'Gold Delta notebooks', pattern: 'user', icon: 'brain' },
+    {
+      id: 'c-risk',
+      label: 'Risk Operations',
+      sub: 'Intraday exposure',
+      pattern: 'user',
+      icon: 'gauge',
+    },
+    {
+      id: 'c-reg',
+      label: 'Regulatory Reporting',
+      sub: 'FCA / PRA submissions',
+      pattern: 'user',
+      icon: 'scroll',
+    },
+    {
+      id: 'c-biz',
+      label: 'Business users',
+      sub: 'Power BI dashboards',
+      pattern: 'user',
+      icon: 'users',
+    },
+    {
+      id: 'c-ds',
+      label: 'Data Science',
+      sub: 'Gold Delta notebooks',
+      pattern: 'user',
+      icon: 'brain',
+    },
   ],
 }
 
@@ -300,12 +362,48 @@ const governance: SceneNode = {
   icon: 'shieldcheck',
   cols: 6,
   children: [
-    { id: 'gv-purview', label: 'Microsoft Purview', sub: 'Catalog & lineage', pattern: 'user', icon: 'purview' },
-    { id: 'gv-kv', label: 'Azure Key Vault', sub: 'Keys · TLS 1.2+', pattern: 'user', icon: 'key' },
-    { id: 'gv-unity', label: 'Unity Catalog', sub: 'RBAC · column masking', pattern: 'user', icon: 'tree' },
-    { id: 'gv-fabric', label: 'Fabric workspace', sub: 'Integrated catalogs', pattern: 'user', icon: 'share' },
-    { id: 'gv-audit', label: 'Audit logging', sub: '7-year retention', pattern: 'user', icon: 'scroll' },
-    { id: 'gv-dq', label: 'Data quality', sub: 'GE · dbt · 0.01%', pattern: 'user', icon: 'circlecheck' },
+    {
+      id: 'gv-purview',
+      label: 'Microsoft Purview',
+      sub: 'Catalog & lineage',
+      pattern: 'user',
+      icon: 'purview',
+    },
+    {
+      id: 'gv-kv',
+      label: 'Azure Key Vault',
+      sub: 'Keys · TLS 1.2+',
+      pattern: 'user',
+      icon: 'key',
+    },
+    {
+      id: 'gv-unity',
+      label: 'Unity Catalog',
+      sub: 'RBAC · column masking',
+      pattern: 'user',
+      icon: 'tree',
+    },
+    {
+      id: 'gv-fabric',
+      label: 'Fabric workspace',
+      sub: 'Integrated catalogs',
+      pattern: 'user',
+      icon: 'share',
+    },
+    {
+      id: 'gv-audit',
+      label: 'Audit logging',
+      sub: '7-year retention',
+      pattern: 'user',
+      icon: 'scroll',
+    },
+    {
+      id: 'gv-dq',
+      label: 'Data quality',
+      sub: 'GE · dbt · 0.01%',
+      pattern: 'user',
+      icon: 'circlecheck',
+    },
   ],
 }
 
@@ -319,12 +417,48 @@ const devops: SceneNode = {
   icon: 'braces',
   cols: 6,
   children: [
-    { id: 'do-airflow', label: 'Apache Airflow', sub: 'Scheduler · DAGs', pattern: 'service', icon: 'workflow' },
-    { id: 'do-adf', label: 'Azure Data Factory', sub: 'Execution engine', pattern: 'service', icon: 'datafactory' },
-    { id: 'do-stages', label: 'Four workflows', sub: 'Independently run', pattern: 'service', icon: 'layers' },
-    { id: 'do-git', label: 'DAGs in Git', sub: 'Python · reviewed', pattern: 'service', icon: 'gitbranch' },
-    { id: 'do-tf', label: 'Terraform modules', sub: 'Clusters · services', pattern: 'service', icon: 'braces' },
-    { id: 'do-alert', label: 'Retry & alerting', sub: 'Service Bus → Slack', pattern: 'warn', icon: 'bell' },
+    {
+      id: 'do-airflow',
+      label: 'Apache Airflow',
+      sub: 'Scheduler · DAGs',
+      pattern: 'service',
+      icon: 'workflow',
+    },
+    {
+      id: 'do-adf',
+      label: 'Azure Data Factory',
+      sub: 'Execution engine',
+      pattern: 'service',
+      icon: 'datafactory',
+    },
+    {
+      id: 'do-stages',
+      label: 'Four workflows',
+      sub: 'Independently run',
+      pattern: 'service',
+      icon: 'layers',
+    },
+    {
+      id: 'do-git',
+      label: 'DAGs in Git',
+      sub: 'Python · reviewed',
+      pattern: 'service',
+      icon: 'gitbranch',
+    },
+    {
+      id: 'do-tf',
+      label: 'Terraform modules',
+      sub: 'Clusters · services',
+      pattern: 'service',
+      icon: 'braces',
+    },
+    {
+      id: 'do-alert',
+      label: 'Retry & alerting',
+      sub: 'Service Bus → Slack',
+      pattern: 'warn',
+      icon: 'bell',
+    },
   ],
 }
 
@@ -351,10 +485,19 @@ export const barclaysAzure: Scene = {
       children: [sources, ingestion, storage, serving, consumers],
       // Orthogonal: between bands this wide a bezier bows out through the gap and reads as a pipe
       // with slack in it. A step goes out, along and in, which is what a band diagram draws.
+      // Anchored at the BOXES the flow actually joins, not at the bands. Layout is unaffected — every
+      // endpoint remaps to the band that owns it, so the five columns rank exactly as before — but the
+      // drawn arrows land where the architecture puts them: the feeds split into the two ingestion
+      // modes, batch lands in the lake while streaming goes straight to the stream job, and the lake
+      // is what both serving capabilities read. Band to band those four facts collapse into one arrow
+      // that says only "then".
       edges: [
-        { source: 'sources', target: 'ingestion', route: 'step' },
-        { source: 'ingestion', target: 'storage', route: 'step' },
-        { source: 'storage', target: 'serving', route: 'step' },
+        { source: 'sources', target: 'batch-in', route: 'step' },
+        { source: 'sources', target: 'rt-in', route: 'step' },
+        { source: 'batch-in', target: 'adls', route: 'step' },
+        { source: 'rt-in', target: 'rt-proc', route: 'step' },
+        { source: 'adls', target: 'analytics', route: 'step' },
+        { source: 'adls', target: 'access', route: 'step' },
         { source: 'serving', target: 'consumers', route: 'step' },
       ],
     },
