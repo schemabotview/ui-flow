@@ -117,7 +117,20 @@ is the working notes.
   through a side door (the thing the 0.2.0 brand-orange override was dropped for), and one variable
   paints every container in a scene the same colour anyway — whereas what an architecture diagram
   wants is four bands in four hues, which `pattern` already gives per node from the theme's table.
-- **`variant: 'chip'` is the ONE framed leaf, and that is a rule about meaning.** The frame came off
+- **`framed` is INHERITED, and that is the whole point of it.** 0.10.0 unframed the leaves because a
+  leaf inside a container is already bounded by that container. The case that argument does not cover
+  is a leaf with INTERNAL STRUCTURE on the bare canvas: a `list` card is a header, a hairline and a
+  body, and with nothing around it the hairline runs out into space and the three stop reading as one
+  object. `framed` is the opt-in — set on a scene or a container, applying to everything beneath.
+  It is deliberately NOT a per-node decoration: as one, every author frames the node they happen to
+  care about and the deck is back at 0.9.0's wash, a dozen rectangles competing with the band that
+  groups them. If two cards need separating from each other, they all do. A node-level override
+  exists and is a smell — `focus` is the tool for "this one". It costs no geometry, which is what
+  makes it safe: every sizer already reserves the FOCUS border width on both axes so a node does not
+  reflow when it lights up, so a drawn border fills space that was reserved either way. Read only by
+  the two leaves 0.10.0 unframed (the prose card and `list`); a `chip` is always framed and a `tile`
+  never is.
+- **`variant: 'chip'` is the ONE framed leaf BY DEFAULT, and that is a rule about meaning.** The frame came off
   the prose card because a leaf inside a container is already bounded by it. A chip is the case that
   argument does not cover: it is a thing COUNTED, not described (Task 1 … Task 4), and what the reader
   must take from the row is its cardinality. Four outlines carry that; four runs of text do not. The

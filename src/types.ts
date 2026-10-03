@@ -91,6 +91,27 @@ export interface SceneNode {
   // is its number and its name, where the pattern's fallback would put a generic shape in the gutter
   // purely because the lookup chain always resolves to something.
   icon?: string
+  /**
+   * Draw this leaf's border and fill instead of leaving it unframed. INHERITED: set it on a scene or
+   * a container and everything beneath takes it, which is the level the decision belongs at — if two
+   * cards in a band need separating from each other, they all do, and a deck where some are framed
+   * and some are not has spent its contrast saying nothing. A node-level value overrides its
+   * ancestors; reaching for one is usually a sign the whole group wanted it.
+   *
+   * Default false, because a leaf inside a container is already bounded by that container and two
+   * nested rectangles spend contrast saying the same thing twice. The case the default does NOT
+   * cover, and what this field is for: a leaf with INTERNAL STRUCTURE standing on the bare canvas. A
+   * `list` card is a header, a hairline and a body — unframed and unbounded, the hairline runs to
+   * nothing and the card stops reading as one object. Frame those.
+   *
+   * Costs no geometry. Every sizer already reserves the FOCUS border width on both axes so a node
+   * does not reflow when it lights up, so a drawn border fills space that was reserved either way.
+   *
+   * Applies to the two leaves 0.10.0 unframed — the prose card and the `list` card. A `chip` is
+   * always framed (that IS a chip) and a `tile` never is (the vendor logo is its own tile); neither
+   * reads this.
+   */
+  framed?: boolean
   // A short ordinal painted in the gutter ahead of the label, dimmed in the node's own accent: '01',
   // '2', 'A'. It ORDERS a set of peer bands so a reader can follow them in sequence — which is why
   // it is a separate field and not just a prefix on the label. As a prefix it wraps with the title,
@@ -217,6 +238,8 @@ export interface Scene {
   // For an edgeless scene (top-level nodes are peers): wrap them into this many columns (a grid) so a
   // wide/short layout fills a landscape pane. Default 1 (a vertical stack). Ignored when edges exist.
   cols?: number
+  /** Frame every leaf in the scene — the deck-level default. See SceneNode.framed. */
+  framed?: boolean
   // The scene's top-level cross-axis alignment and stretch. Same meaning as a container's — see
   // SceneNode.align / SceneNode.stretch.
   align?: 'center' | 'start'

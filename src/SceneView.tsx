@@ -36,6 +36,20 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
   const t = THEMES[theme] ?? THEMES.dark
   const { nodes, edges } = useMemo(() => {
     const placed = computeLayout(scene)
+    // `framed` is INHERITED: a leaf takes its own value, else the nearest ancestor container's, else
+    // the scene's, else false. Resolved here rather than in the renderers because a renderer only
+    // ever sees its own node — and resolved here rather than in layout.ts because it costs no
+    // geometry: every sizer already reserves the focus border width on both axes, so a drawn border
+    // fills space that was reserved either way. `!== undefined` on purpose, so an explicit
+    // `framed: false` under a framed container turns the frame OFF rather than falling through.
+    const byId = new Map(placed.map((p) => [p.id, p]))
+    const framedOf = (p: (typeof placed)[number]): boolean => {
+      for (let cur = p; cur; cur = cur.parentId ? byId.get(cur.parentId)! : undefined!) {
+        if (cur.node.framed !== undefined) return cur.node.framed
+        if (!cur.parentId) break
+      }
+      return scene.framed ?? false
+    }
     // Placed is a flat, parent-first list of every node (containers + their descendants). Each keeps
     // its own size; children carry `parentId` + a parent-relative position, as react-flow expects.
     const nodes: Node[] = placed.map((p) => ({
@@ -44,7 +58,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
       // tile → card). Containers win over `variant` because a node with children IS a box.
       type: kindOf(p.node)?.type ?? (p.node.children?.length ? 'container' : p.node.variant === 'chip' ? 'chip' : p.node.variant === 'tile' ? 'tile' : 'scene'),
       position: { x: p.x, y: p.y },
-      data: { ...p.node, __focus: p.node.id === focusId },
+      data: { ...p.node, __focus: p.node.id === focusId, __framed: framedOf(p) },
       style: { width: p.w, height: p.h },
       ...(p.parentId ? { parentId: p.parentId, extent: 'parent' as const } : {}),
       draggable: false,

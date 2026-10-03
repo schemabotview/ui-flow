@@ -30,10 +30,12 @@ import {
 import type { SceneNode as SceneNodeData } from './types'
 
 export function ListNode({ data }: NodeProps) {
-  const d = data as unknown as SceneNodeData & { __focus?: boolean }
+  const d = data as unknown as SceneNodeData & { __focus?: boolean; __framed?: boolean }
   const t = useFlowTheme()
   const p = patternOf(t, d.pattern, 'service')
-  const borderless = !d.__focus // the frame is what focus adds — see proseMetrics.ts
+  // A list card is the leaf that most often WANTS a frame: it is a header, a hairline and a body, and
+  // standing on the bare canvas the hairline runs to nothing and the three stop reading as one card.
+  const borderless = !d.__focus && !d.__framed
   const items = d.items ?? []
   return (
     <div

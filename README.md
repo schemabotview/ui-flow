@@ -102,6 +102,7 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `badge` | any node | a short ordinal in the header gutter, dimmed in the node's accent (`'01'`) |
 | `icon: 'none'` | any node | suppress the glyph, instead of falling through to the pattern's default |
 | `variant: 'chip'` | leaf | a small framed token that hugs its text — for things COUNTED, not described |
+| `framed` | scene · container · leaf | draw the leaf borders back on; inherited, and costs no geometry |
 | `align: 'start'` | scene · container | rule every layer to a common edge instead of centring it |
 | `stretch` | scene · container | grow containers to the full cross-extent, so bands end on one line too |
 | `route: 'step'` | edge | orthogonal routing instead of a bezier |

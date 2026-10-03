@@ -20,9 +20,12 @@ import {
 import type { SceneNode as SceneNodeData } from './types'
 
 export function SceneNode({ data }: NodeProps) {
-  const d = data as unknown as SceneNodeData & { __focus?: boolean }
+  const d = data as unknown as SceneNodeData & { __focus?: boolean; __framed?: boolean }
   const t = useFlowTheme()
-  const framed = d.__focus // a card is unframed until it takes focus — see proseMetrics.ts
+  // Unframed by default — see proseMetrics.ts for why the frame came off. Focus always frames (that
+  // is what focus IS), and `framed`, inherited from the scene or an ancestor container, frames the
+  // rest of the time. Either way the box is the same size: the sizer reserves the focus width.
+  const framed = d.__focus || d.__framed
   const p = patternOf(t, d.pattern, 'service')
   return (
     <div
