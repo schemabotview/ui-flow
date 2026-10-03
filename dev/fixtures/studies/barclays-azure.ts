@@ -27,10 +27,14 @@ import type { Scene, SceneNode } from '../../../src'
 // ── Layer 0 · the feeds (Step 1). Two load regimes, and the doc names both.
 const sources: SceneNode = {
   id: 'sources',
+  align: 'start',
   label: 'Data sources',
   sub: 'core banking & reference',
-  pattern: 'group',
-  icon: 'server',
+  // `external` because that is what they are — systems outside the platform. A band's colour is its
+  // ROLE, never its position in the row: a grey lead band is correct here, and reaching for a
+  // livelier hue just to open the diagram warmly is how green stops meaning storage.
+  pattern: 'external',
+  icon: 'none',
   children: [
     {
       id: 'core-src',
@@ -61,10 +65,12 @@ const sources: SceneNode = {
 // ── Layer 1 · ingestion (Step 1, and Section B's broker configuration).
 const ingestion: SceneNode = {
   id: 'ingestion',
-  label: '1 · Ingestion layer',
+  align: 'start',
+  badge: '01',
+  label: 'Ingestion layer',
   sub: 'batch & streaming',
-  pattern: 'group',
-  icon: 'datafactory',
+  pattern: 'network',
+  icon: 'none',
   children: [
     {
       id: 'adf',
@@ -102,10 +108,13 @@ const ingestion: SceneNode = {
 // the document is explicit that they never share pipeline code — only this storage layer.
 const storage: SceneNode = {
   id: 'storage',
-  label: '2 · Storage & processing',
+  align: 'start',
+  stretch: true,
+  badge: '02',
+  label: 'Storage & processing',
   sub: 'medallion architecture',
-  pattern: 'group',
-  icon: 'adls',
+  pattern: 'storage',
+  icon: 'none',
   children: [
     {
       id: 'adls',
@@ -114,6 +123,7 @@ const storage: SceneNode = {
       pattern: 'storage',
       icon: 'adls',
       flow: 'LR',
+      align: 'start',
       children: [
         {
           id: 'bronze',
@@ -170,9 +180,10 @@ const storage: SceneNode = {
       id: 'processing',
       label: 'Processing',
       sub: 'separate pipeline code; shares only the storage layer',
-      pattern: 'group',
+      pattern: 'service',
       icon: 'databricks',
-      flow: "LR",
+      flow: 'LR',
+      align: 'start',
       // STACKED, not side by side. Side by side the pair came out 794 wide under a 1291-wide lake
       // and left the whole composition at 2.4:1 against a 1.7:1 window — width-bound, with ~30% of
       // the frame empty below it. Stacking spends that empty height instead: the fitView zoom is
@@ -216,10 +227,12 @@ const storage: SceneNode = {
 // ── Layer 3 · serving (Steps 5, 7, 10 and Section B's hot path).
 const serving: SceneNode = {
   id: 'serving',
-  label: '3 · Serving layer',
+  align: 'start',
+  badge: '03',
+  label: 'Serving layer',
   sub: 'reporting · reconciliation · access',
-  pattern: 'group',
-  icon: 'powerbi',
+  pattern: 'service',
+  icon: 'none',
   children: [
     {
       id: 'powerbi',
@@ -264,10 +277,11 @@ const serving: SceneNode = {
 // this draft fixes: a body with nothing to put in it.
 const consumers: SceneNode = {
   id: 'consumers',
+  align: 'start',
   label: 'Business consumers',
   sub: 'risk · regulatory · science',
-  pattern: 'group',
-  icon: 'users',
+  pattern: 'user',
+  icon: 'none',
   children: [
     { id: 'c-risk', label: 'Risk Operations', sub: 'Intraday exposure', pattern: 'user', icon: 'gauge' },
     { id: 'c-reg', label: 'Regulatory Reporting', sub: 'FCA / PRA submissions', pattern: 'user', icon: 'scroll' },
@@ -279,9 +293,10 @@ const consumers: SceneNode = {
 // ── Band 4 · Step 9, plus Step 8's quality framework. One line each, so: cards, not lists.
 const governance: SceneNode = {
   id: 'governance',
-  label: '4 · Governance, security & monitoring',
+  badge: '04',
+  label: 'Governance, security & monitoring',
   sub: 'Unity Catalog + Microsoft Fabric workspace integration — built for FCA/PRA scrutiny',
-  pattern: 'group',
+  pattern: 'user',
   icon: 'shieldcheck',
   cols: 6,
   children: [
@@ -297,9 +312,10 @@ const governance: SceneNode = {
 // ── Band 5 · the Action list's last paragraph and Step 6's orchestration + alerting.
 const devops: SceneNode = {
   id: 'devops',
-  label: '5 · Orchestration, DevOps & infrastructure',
+  badge: '05',
+  label: 'Orchestration, DevOps & infrastructure',
   sub: 'Airflow dependency graphs over ADF · reusable Terraform modules — environment build ~2 weeks to under a day',
-  pattern: 'group',
+  pattern: 'network',
   icon: 'braces',
   cols: 6,
   children: [
@@ -324,14 +340,22 @@ export const barclaysAzure: Scene = {
       label: 'End-to-end data architecture — batch & real-time',
       sub: 'banking · Azure · reconciled, auditable, regulator ready',
       pattern: 'group',
-      icon: 'cloud',
+      icon: 'none',
       flow: 'LR',
+      // The five bands are a GRID, not a procession of boxes on a midline. `align: 'start'` rules
+      // them to one top edge and `stretch` runs them to one bottom edge; without both, a tall band
+      // beside a short one leaves the row looking like it drifted. See the note at the head of this
+      // file — this is the one thing the engine could not express when the fixture was written.
+      align: 'start',
+      stretch: true,
       children: [sources, ingestion, storage, serving, consumers],
+      // Orthogonal: between bands this wide a bezier bows out through the gap and reads as a pipe
+      // with slack in it. A step goes out, along and in, which is what a band diagram draws.
       edges: [
-        { source: 'sources', target: 'ingestion' },
-        { source: 'ingestion', target: 'storage' },
-        { source: 'storage', target: 'serving' },
-        { source: 'serving', target: 'consumers' },
+        { source: 'sources', target: 'ingestion', route: 'step' },
+        { source: 'ingestion', target: 'storage', route: 'step' },
+        { source: 'storage', target: 'serving', route: 'step' },
+        { source: 'serving', target: 'consumers', route: 'step' },
       ],
     },
     governance,

@@ -19,10 +19,10 @@
 import type { SceneNode } from './types'
 
 // ── Type scale ─────────────────────────────────────────────────────────────────────────────────
-export const LIST_TITLE_FONT = 18 // matches a plain card's label, so the two read as one family
-export const LIST_TITLE_LINE_H = 23
-export const LIST_SUB_FONT = 13 // matches a plain card's sub
-export const LIST_SUB_LINE_H = 17
+export const LIST_TITLE_FONT = 20 // matches PROSE_TITLE_FONT, so a list and a card read as one family
+export const LIST_TITLE_LINE_H = 26
+export const LIST_SUB_FONT = 16 // matches PROSE_CAPTION_FONT
+export const LIST_SUB_LINE_H = 23
 export const LIST_ITEM_FONT = 14
 export const LIST_ITEM_LINE_H = 21
 export const LIST_ITEM_GAP = 7 // vertical gap BETWEEN items (not between wrapped lines of one)
@@ -33,7 +33,7 @@ export const LIST_HEAD_PAD_TOP = 14
 export const LIST_HEAD_PAD_BOTTOM = 12
 export const LIST_BODY_PAD_Y = 12 // above the first item and below the last
 export const LIST_RULE_H = 1 // the hairline under the header
-export const LIST_ICON = 26 // icon box, same as a plain card's
+export const LIST_ICON = 40 // icon box, same as PROSE_ICON
 export const LIST_ICON_GAP = 13
 export const LIST_BULLET_W = 15 // the dot's gutter track, so wrapped lines align under each other
 // The card's own border, counted on BOTH axes. ListNode sets box-sizing: border-box, so the border
@@ -47,7 +47,7 @@ export const LIST_BORDER = 2.5
 // would otherwise render its text noticeably larger. The cap is a READING MEASURE — past ~320px at
 // 14px the eye loses the line, and an uncapped card would also let one long bullet stretch the box
 // and squash every sibling in the layer.
-export const LIST_MIN_W = 206
+export const LIST_MIN_W = 259
 export const LIST_MAX_W = 320
 
 /**
@@ -63,6 +63,30 @@ export const LIST_MAX_W = 320
  * the browser does, so the usual undercount (a long word pushed to the next line) cannot happen.
  */
 export const SANS_ADVANCE = 0.525
+
+/**
+ * Px advance of one character of a SINGLE WORD, as a fraction of the font size — a DIFFERENT
+ * statistic from SANS_ADVANCE, and the reason this constant exists separately.
+ *
+ * SANS_ADVANCE is calibrated on mixed-case PHRASES, where the spaces (narrow) and the mix of letter
+ * widths pull the per-character mean down to ~0.49. Measure one word instead and the spaces are gone
+ * and the mean rises: at 22px/600 in Plex Sans, "between" runs 0.578, "Consumers" 0.580,
+ * "managementgroup" 0.585, "DevOps" 0.596 — every one of them ABOVE 0.525. Anywhere a sizer measures
+ * the LONGEST WORD rather than a whole string (headerMinWidth, tileSize, the badge gutter) the
+ * phrase constant therefore under-reserves, and the symptom is a word broken mid-syllable by the
+ * `overflow-wrap: anywhere` the renderers set — "Same label betwee / n tiles". It is not a clip, so
+ * nothing catches it; it just reads as broken.
+ *
+ * 0.62 covers the worst real word measured with headroom. It is deliberately NOT set for the
+ * pathological case: "WWWWWW" runs 0.95 and "mmmmmm" 0.89, and reserving for those would widen every
+ * narrow box in every deck to protect against a label nobody writes. This is a WIDTH floor, where
+ * over-reserving costs geometry on every box; under-reserving costs one ugly break.
+ */
+export const SANS_WORD_ADVANCE = 0.62
+
+/** Px width of the longest WORD in `text` at `font`, with the single-word margin above. */
+export const longestWordWidth = (text: string, font: number): number =>
+  Math.max(0, ...text.split(/\s+/).map((w) => w.length * font * SANS_WORD_ADVANCE))
 
 const advance = (font: number) => font * SANS_ADVANCE
 

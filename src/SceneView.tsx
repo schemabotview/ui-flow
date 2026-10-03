@@ -8,17 +8,20 @@ import { computeLayout, collectEdges } from './layout'
 import { SceneNode } from './SceneNode'
 import { ContainerNode } from './ContainerNode'
 import { TileNode } from './TileNode'
+import { ChipNode } from './ChipNode'
 import { FlowEdge } from './FlowEdge'
 import { THEMES, patternOf, type ThemeKey } from './themes'
 import { FlowThemeProvider } from './themeContext'
 import { NODE_KINDS, kindOf } from './kinds'
 
-// The three STRUCTURAL types (whose size is a constant in layout.ts) plus every content kind from
-// the registry — so a new kind registers its renderer by being in NODE_KINDS, not by being added here.
+// The four STRUCTURAL types (sized by layout.ts itself rather than by an entry in NODE_KINDS) plus
+// every content kind from the registry — so a new KIND registers its renderer by being in
+// NODE_KINDS, not by being added here. A VARIANT is structural and does belong in this list.
 const nodeTypes = {
   scene: SceneNode,
   container: ContainerNode,
   tile: TileNode,
+  chip: ChipNode,
   ...Object.fromEntries(Object.values(NODE_KINDS).map((k) => [k.type, k.component])),
 }
 const edgeTypes = { flow: FlowEdge }
@@ -39,7 +42,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
       id: p.id,
       // A content kind names its own react-flow type; everything else is structural (container →
       // tile → card). Containers win over `variant` because a node with children IS a box.
-      type: kindOf(p.node)?.type ?? (p.node.children?.length ? 'container' : p.node.variant === 'tile' ? 'tile' : 'scene'),
+      type: kindOf(p.node)?.type ?? (p.node.children?.length ? 'container' : p.node.variant === 'chip' ? 'chip' : p.node.variant === 'tile' ? 'tile' : 'scene'),
       position: { x: p.x, y: p.y },
       data: { ...p.node, __focus: p.node.id === focusId },
       style: { width: p.w, height: p.h },
@@ -68,8 +71,11 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         label: e.label,
         type: 'flow',
         // Pulse tinted to the destination service so arriving at a node lights up in its accent.
-        data: { pulse: p.color, bidirectional: !!e.bidirectional },
-        style: { stroke: t.edge.stroke, strokeWidth: 2 },
+        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve' },
+        // A dashed path marks an edge that is not the subject's main flow (a status report, an
+        // acknowledgement travelling back). The DASH is on the line only — the pulse still rides the
+        // same path, because what is dashed is the channel, not the traffic.
+        style: { stroke: t.edge.stroke, strokeWidth: 2, ...(e.dashed ? { strokeDasharray: '7 6' } : {}) },
         markerEnd: marker,
         // A two-way edge also gets an arrowhead at the source end.
         ...(e.bidirectional ? { markerStart: marker } : {}),

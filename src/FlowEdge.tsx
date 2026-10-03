@@ -7,7 +7,7 @@
 // freezes it at one position; the base line + arrow always render, so static capture degrades
 // cleanly. Getting the motion into the composited video is a capture-pipeline concern, not here.
 
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
 import { useFlowTheme } from './themeContext'
 
 export function FlowEdge({
@@ -23,17 +23,15 @@ export function FlowEdge({
   data,
   label,
 }: EdgeProps) {
-  // getBezierPath also hands back the path's midpoint — where the label rides.
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-  })
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean } | undefined
+  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step' } | undefined
+  // Both builders also hand back the path's midpoint — where the label rides. The STEP route is for
+  // a dense band diagram: between two boxes four columns apart a bezier sweeps across everything in
+  // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just
+  // enough to match the node radii; a hard 90° corner reads as a different drawing tool.
+  const geometry = { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }
+  const [edgePath, labelX, labelY] =
+    d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
   const pulse = d?.pulse ?? t.edge.pulse
 
   return (

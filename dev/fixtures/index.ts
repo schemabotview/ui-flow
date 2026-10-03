@@ -68,6 +68,7 @@ import { azureGallery } from './icons/azure-gallery'
 import { flow } from './layouts/flow'
 import { padding } from './others/padding'
 import { focus } from './others/focus'
+import { prose, proseSizing } from './others/prose'
 import { barclaysAzure } from './studies/barclays-azure'
 
 export const CATEGORIES = ['nodes', 'edges', 'containers', 'content', 'icons', 'layouts', 'others', 'studies'] as const
@@ -80,7 +81,7 @@ export const fixtures: Record<Category, Scene[]> = {
   content: [code, table, memory, plot, plotMl, list],
   icons: [vendorIcons, iconGallery, azureGallery],
   layouts: [flow],
-  others: [padding, focus],
+  others: [padding, focus, prose, proseSizing],
   studies: [barclaysAzure],
 }
 

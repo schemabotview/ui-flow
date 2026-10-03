@@ -10,8 +10,19 @@
 import { type NodeProps } from '@xyflow/react'
 import { patternOf } from './themes'
 import { useFlowTheme } from './themeContext'
-import { NodeIcon } from './NodeIcon'
+import { NodeIcon, hasIcon } from './NodeIcon'
 import { NodeHandles } from './Handles'
+import {
+  TILE_LABEL_FONT,
+  TILE_LABEL_LINE_H,
+  TILE_SUB_FONT,
+  TILE_SUB_LINE_H,
+  TILE_SUB_GAP,
+  TILE_ICON,
+  TILE_ICON_GAP,
+  TILE_PAD_X,
+  TILE_PAD_Y,
+} from './tileMetrics'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function TileNode({ data }: NodeProps) {
@@ -27,7 +38,8 @@ export function TileNode({ data }: NodeProps) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 9,
+        gap: hasIcon(d.icon) ? TILE_ICON_GAP : 0,
+        padding: `${TILE_PAD_Y}px ${TILE_PAD_X}px`,
         color: t.ink,
         fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
         boxSizing: 'border-box',
@@ -37,10 +49,15 @@ export function TileNode({ data }: NodeProps) {
       }}
     >
       <NodeHandles />
-      <NodeIcon icon={d.icon} pattern={p} size={46} />
-      <div style={{ textAlign: 'center', minWidth: 0 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.15 }}>{d.label}</div>
-        {d.sub && <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{d.sub}</div>}
+      <NodeIcon icon={d.icon} pattern={p} size={TILE_ICON} />
+      {/* `overflowWrap: anywhere` is not a safety net here, it is the CONTRACT: tileMetrics counts a
+          word wider than the measure as broken across rows, and a renderer that refused to break it
+          would overflow a box sized on the assumption that it does. */}
+      <div style={{ textAlign: 'center', minWidth: 0, overflowWrap: 'anywhere' }}>
+        <div style={{ fontSize: TILE_LABEL_FONT, fontWeight: 600, lineHeight: `${TILE_LABEL_LINE_H}px` }}>{d.label}</div>
+        {d.sub && (
+          <div style={{ fontSize: TILE_SUB_FONT, lineHeight: `${TILE_SUB_LINE_H}px`, opacity: 0.6, marginTop: TILE_SUB_GAP }}>{d.sub}</div>
+        )}
       </div>
     </div>
   )

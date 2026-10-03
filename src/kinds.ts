@@ -46,6 +46,9 @@ export const NODE_KINDS: Record<string, NodeKind> = {
   list: { type: 'list', size: listCardSize, component: ListNode }, // a service + its properties: widest line × wrapped line count
 }
 
-/** The sizer for a node, or undefined when it is a STRUCTURAL node (card / tile / container) whose
- *  size is a constant in layout.ts rather than a function of its content. */
+/** The sizer for a node, or undefined when it is a STRUCTURAL node (card / tile / container). Those
+ *  are sized by layout.ts itself — the card from proseMetrics, the container from its children plus
+ *  headerMetrics, the tile from a constant — rather than by an entry in this registry. The split is
+ *  no longer constant-vs-content (a card wraps its label and grows): it is that a KIND brings its own
+ *  renderer, while a structural node is drawn by one of the three built into SceneView. */
 export const kindOf = (n: SceneNode): NodeKind | undefined => (n.kind ? NODE_KINDS[n.kind] : undefined)

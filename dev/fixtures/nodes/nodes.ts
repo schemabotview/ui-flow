@@ -54,6 +54,28 @@ export const nodes: Scene = {
       ],
     },
     {
+      // PANEL 3 — `variant: 'chip'`, the one leaf that kept its frame when 0.10.0 took the frame off
+      // the prose card. A chip hugs its own text and never pads to a common width: a row of chips is
+      // read as a SET, and equal boxes around unequal words would be a layout lying about the
+      // content. The short/long pair and the icon/no-icon pair are both here because both are what
+      // the sizer has to get right — the floor on one end, the measured advance on the other.
+      id: 'chips',
+      label: "variant: 'chip' — things counted, not described",
+      sub: 'a chip earns its frame when the row would stop meaning what it means one member short',
+      pattern: 'group',
+      cols: 4,
+      children: [
+        { variant: 'chip' as const, id: 'k1', label: 'Task 1', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k2', label: 'Task 2', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k3', label: 'Task 3', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k4', label: 'Task 4', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k5', label: '3', pattern: 'storage', icon: 'none' },
+        { variant: 'chip' as const, id: 'k6', label: 'Cache / memory', pattern: 'storage', icon: 'database' },
+        { variant: 'chip' as const, id: 'k7', label: 'Local disk', pattern: 'storage', icon: 'server' },
+        { variant: 'chip' as const, id: 'k8', label: 'a chip whose label runs long enough to set its own width', pattern: 'warn' },
+      ],
+    },
+    {
       id: 'ctx',
       label: 'warn — in the flow it constrains',
       sub: 'a limitation reads as one only in context',

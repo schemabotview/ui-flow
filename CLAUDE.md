@@ -83,17 +83,57 @@ is the working notes.
   neither (a consumer, a source system) — a list node with nothing to put in its body is the same
   mistake mirrored.
 - **`SANS_ADVANCE = 0.525` in `listMetrics.ts` is a MARGIN, not a measurement.** Mixed-case Plex Sans
-  runs ~0.503; the constant sits a few percent above because an under-reserved box clips its last
-  line rather than scrolling it. Do not tune it down to the measured value. It was 0.54 and lowered
-  once, after a title one word short of wrapping was counted as two lines and left 25px of dead space
-  under the card's last bullet — that is the whole budget this number trades against.
-- **`wrapLines` packs WORDS, not characters.** `layout.ts:headerHeight` estimates with
-  `ceil(chars × advance / width)`, which assumes text packs with no waste at the end of a line — so
-  it undercounts exactly when a long word is pushed to the next line, the one direction that clips.
-  `listMetrics.wrapLines` runs the browser's greedy algorithm instead, and splits a word wider than
-  the whole measure to match the renderer's `overflow-wrap: anywhere`. If `headerHeight` is ever
-  made exact, this is the function to reuse.
-
+  phrases run ~0.49; the constant sits a few percent above because an under-reserved box clips its
+  last line rather than scrolling it. Do not tune it down to the measured value. It was 0.54 and
+  lowered once, after a title one word short of wrapping was counted as two lines and left 25px of
+  dead space under the card's last bullet — that is the whole budget this number trades against, and
+  the entry below records what it currently costs.
+- **`wrapLines` packs WORDS, not characters.** `headerMetrics.headerHeight` and every other sizer
+  wrap with it rather than `ceil(chars × advance / width)`, which assumes text packs with no waste at
+  the end of a line — so it undercounts exactly when a long word is pushed to the next line, the one
+  direction that clips. It splits a word wider than the whole measure to match the renderers'
+  `overflow-wrap: anywhere`.
+- **`SANS_ADVANCE` (0.525) is for PHRASES; `SANS_WORD_ADVANCE` (0.62) is for a single WORD.** They are
+  different statistics and conflating them is a real defect, found on screen at 0.10.0. A phrase's
+  per-character mean is pulled down by its spaces to ~0.49; one word has no spaces and runs higher —
+  measured in Plex Sans at 22px/600: `between` 0.578, `Consumers` 0.580, `managementgroup` 0.585,
+  `DevOps` 0.596, all above 0.525. Anywhere a sizer measures the LONGEST WORD rather than a whole
+  string (`headerMinWidth`, `tileSize`, the badge gutter) the phrase constant under-reserves, and the
+  symptom is a word broken mid-syllable — "Same label betwee / n tiles". Not a clip, so no check
+  catches it; it just reads as broken. 0.62 covers the worst real word with headroom and deliberately
+  NOT the pathological one (`WWWWWW` runs 0.95): this is a WIDTH floor, where over-reserving costs
+  geometry on every box and under-reserving costs one ugly break.
+- **A CONTAINER is sized by its children AND by its own header.** `layout.ts` sized a box from
+  `inner.w + 2 * PAD` alone, so a panel of two 128px tiles could not seat its own title's longest word
+  and broke it. `headerMinWidth` is the floor that fixes it, capped at `HEADER_MAX_FORCED_W` so a
+  sentence in a title cannot set the geometry of the diagram around it — and when the header is what
+  set the width, `attachKids` re-centres the children, or they sit hard left with the slack pooled on
+  the right.
+- **The CONTAINER carries the colour; a leaf is unframed prose.** Through 0.9.0 it was the reverse —
+  every card framed and tinted in its role, the box around them a hairline — which reads as a wash,
+  with the grouping drawn weakest of all. A container's accent is its `pattern` and nothing else: an
+  unreleased draft read it from a `--flow-container-accent` CSS variable a repo set in its own
+  `theme.css`, and it was removed before release and must not come back. It is per-repo theming
+  through a side door (the thing the 0.2.0 brand-orange override was dropped for), and one variable
+  paints every container in a scene the same colour anyway — whereas what an architecture diagram
+  wants is four bands in four hues, which `pattern` already gives per node from the theme's table.
+- **`variant: 'chip'` is the ONE framed leaf, and that is a rule about meaning.** The frame came off
+  the prose card because a leaf inside a container is already bounded by it. A chip is the case that
+  argument does not cover: it is a thing COUNTED, not described (Task 1 … Task 4), and what the reader
+  must take from the row is its cardinality. Four outlines carry that; four runs of text do not. The
+  test before reaching for one: would the row still mean what it means with a member removed?
+- **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** The default stays
+  `center` — right for a teaching frame, where a short stage should sit on the tall one's midline.
+  `stretch` applies to CONTAINERS only: a leaf is sized to its own content, and painting it at a
+  sibling's height just floats its text in dead space.
+- **A known over-reserve, measured and left alone.** A `list` card in the barclays study reserves
+  ~65px more height than it paints — three items whose real width (phrase advance ~0.49) fits the
+  measure but whose estimate at 0.525 tips them onto a second line. The margin is not tunable down:
+  CLAUDE.md has warned since 0.9.0 that under-reserving CLIPS while over-reserving only costs empty
+  card, and 0.525 is already one step below the original 0.54. The real fix is a per-character width
+  TABLE instead of one mean — still pure, still deterministic, and accurate enough that the margin
+  could shrink. Canvas measurement is NOT the fix: `computeLayout` must stay deterministic or
+  capture stops reproducing.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
   present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
   `dms` and `waf` collide, which is why the Azure side spells them `backupcenter`, `costbudgets`,
@@ -109,8 +149,17 @@ is the working notes.
 No test runner. A change is done when `npm run build` is clean **and** every fixture still renders
 correctly at `npm run dev` (:5174). Adding an engine capability means adding a fixture for it.
 
-For a content-sized node (code, table, memory, list), "renders correctly" includes *measuring* it, not
-just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
+`npm run check` is the floor, and it is two passes: `check-geometry.mjs` (determinism, finite boxes,
+every child inside its parent, and the align/stretch assertions on the study) and `check-visual.mjs`,
+which loads EVERY fixture in the registry in both themes at 1920 / 3840 / 390 and measures the real
+client rectangles of every text node against the bounds of the node that owns it. The sweep is
+exhaustive on purpose: the fixture that fails is never the one you suspect, because the defect lives
+wherever content lands exactly on a width floor, and which fixture that is changes every time a
+metric moves. Its first full run found a clip in `azure-gallery` — two Azure keys overrunning a tile
+that had been a flat 128 × 96 constant since the engine was written.
+
+Neither pass is visual sign-off. For a content-sized node (code, table, memory, list, tile, chip),
+"renders correctly" includes *measuring* it, not just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
 means the sizer is under-reserving. A fixture whose content lands exactly on the min floor is the one
 that catches it — comfortable content hides the bug. For `list`, whose body WRAPS, the check is
 `body.scrollHeight > body.clientHeight` on each card, and the slack worth watching is the other way

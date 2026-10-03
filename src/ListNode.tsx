@@ -33,6 +33,7 @@ export function ListNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
   const t = useFlowTheme()
   const p = patternOf(t, d.pattern, 'service')
+  const borderless = !d.__focus // the frame is what focus adds — see proseMetrics.ts
   const items = d.items ?? []
   return (
     <div
@@ -43,8 +44,8 @@ export function ListNode({ data }: NodeProps) {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 14,
-        border: `${d.__focus ? 2.5 : 1.5}px solid ${p.color}`,
-        background: p.bg,
+        border: `${d.__focus ? 2.5 : 1.5}px solid ${borderless ? 'transparent' : p.color}`,
+        background: borderless ? 'transparent' : p.bg,
         color: t.ink,
         fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
         overflow: 'hidden',
@@ -69,7 +70,7 @@ export function ListNode({ data }: NodeProps) {
         <div style={{ flex: 'none', width: LIST_ICON, height: LIST_ICON, display: 'flex', alignItems: 'center' }}>
           <NodeIcon icon={d.icon} pattern={p} size={LIST_ICON} />
         </div>
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1, overflowWrap: 'anywhere' }}>
           <div
             style={{
               fontSize: LIST_TITLE_FONT,
