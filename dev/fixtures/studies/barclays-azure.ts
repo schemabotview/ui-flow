@@ -35,29 +35,40 @@ const sources: SceneNode = {
   // livelier hue just to open the diagram warmly is how green stops meaning storage.
   pattern: 'external',
   icon: 'none',
+  // CARDS, NOT A LIST — and it is the same call the consumers band makes at the other end of the row.
+  // The first draft modelled each group as one list node with its feeds as bullets, which reads as
+  // "here is a system, and these are facts about it". They are not facts about it: each feed is a
+  // thing in its own right, a separate extract on its own schedule that an edge could legitimately
+  // point at. A bullet cannot be any of that. The rule in CLAUDE.md names both ends of this row
+  // together — a consumer and a source system are the two cases that genuinely have neither points
+  // nor neighbours — and a band of bullets facing a band of cards was the asymmetry that gave it away.
+  //
+  // The two GROUPS stay boxes because they carry a real fact the feeds do not: how each is loaded.
   children: [
     {
       id: 'core-src',
-      kind: 'list',
       label: 'Core banking systems',
       sub: 'watermark incremental',
       pattern: 'external',
       icon: 'database',
-      items: [
-        'Trade-finance transactions',
-        'Exposure data and movements',
-        'Counterparty hierarchies',
-        'Credit limits from the limit engine',
+      children: [
+        { id: 'src-trades', label: 'Trade-finance transactions', pattern: 'external', icon: 'receipt' },
+        { id: 'src-exposure', label: 'Exposure data and movements', pattern: 'external', icon: 'gauge' },
+        { id: 'src-counterparty', label: 'Counterparty hierarchies', pattern: 'external', icon: 'tree' },
+        { id: 'src-limits', label: 'Credit limits', sub: 'from the limit engine', pattern: 'external', icon: 'scale' },
       ],
     },
     {
       id: 'ref-src',
-      kind: 'list',
       label: 'Reference & other',
       sub: 'full refresh',
       pattern: 'external',
       icon: 'tag',
-      items: ['Counterparty master, LEI codes', 'Product hierarchy', 'Collateral positions and valuations'],
+      children: [
+        { id: 'src-master', label: 'Counterparty master', sub: 'LEI codes', pattern: 'external', icon: 'fingerprint' },
+        { id: 'src-product', label: 'Product hierarchy', pattern: 'external', icon: 'layers' },
+        { id: 'src-collateral', label: 'Collateral positions', sub: 'and valuations', pattern: 'external', icon: 'package' },
+      ],
     },
   ],
 }
