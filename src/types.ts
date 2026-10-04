@@ -81,6 +81,60 @@ export interface PlotSpec {
   equal?: boolean
 }
 
+/**
+ * One stage of an EVOLUTION node — a generation, a release, a tier: the thing being compared.
+ *
+ * `value` is the only number an author writes, and it is DATA (the same licence `kind: 'plot'` has,
+ * for the same reason). It sets how far this column rises above its neighbours; the engine owns
+ * every pixel of that rise, so nothing here can nudge a column by hand.
+ */
+export interface EvolutionStage {
+  /** The thing itself — "Core i7-4790K", "Spark 3.0", "GPT-4". Painted as the column's title. */
+  label: string
+  /** An eyebrow above the title: the maker, the family, the vendor ("Intel", "Databricks"). */
+  sub?: string
+  /** The era this stage belongs to — "2014", "Q3 '22", "v3". Painted on the axis BELOW the column,
+   *  where a category label belongs, which is what makes the row read as a timeline and not a
+   *  stack of cards that happen to differ in height. */
+  at?: string
+  /** What the column's height encodes, in the unit named by `EvolutionSpec.unit`. */
+  value: number
+  /** How that number is WRITTEN at the column's cap — "4.4 GHz", "$0.12", "1.8×". Defaults to the
+   *  raw `value`. A unit belongs here or in `unit`, never in both. */
+  valueLabel?: string
+  /** The specs that distinguish this stage from its neighbours — "Haswell R", "TDP 88 W", "22 nm".
+   *  Keep the SAME keys in the SAME order across every stage: a comparison row is read across, and
+   *  a line that moves between columns cannot be. */
+  items?: string[]
+  /** Named lucide key or vendor service key, drawn above the title — the stage's portrait. */
+  icon?: string
+  /** Override the figure's accent for this one stage. The row is deliberately MONOCHROME by default
+   *  (see evolutionMetrics.ts): the columns are peers of one kind, so a hue per column would be
+   *  colour carrying no information, and this engine's hues already mean something. Use it for the
+   *  one stage the slide is actually about — usually the newest. */
+  pattern?: PatternKey
+}
+
+/** The EVOLUTION node's figure: the stages, and the axis their heights are measured against. */
+export interface EvolutionSpec {
+  /** The stages, OLDEST FIRST. Drawn left→right in this order — the engine does not sort them,
+   *  because an evolution is not always chronological (tiers, plan sizes, model classes). */
+  stages: EvolutionStage[]
+  /**
+   * The value the columns rise FROM. Default 0, which makes the column heights a true zero-based
+   * comparison — two columns' heights differ in exact proportion to their values.
+   *
+   * Raise it to truncate the axis, which is what the poster version of this chart always does: four
+   * CPUs at 3.8 → 6.0 GHz differ by 1.6×, and zero-based they are four near-identical columns with
+   * no story in them. `baseline: 3` makes the rise proportional to (value − 3) and the staircase
+   * appears. That is a real distortion, so the engine does not hide it: the baseline is PAINTED on
+   * the axis, so a reader can see what the columns are standing on.
+   */
+  baseline?: number
+  /** What `value` measures — "Max clock speed (GHz)". Captions the axis the columns rise against. */
+  unit?: string
+}
+
 export interface SceneNode {
   id: string
   label: string
@@ -155,13 +209,21 @@ export interface SceneNode {
   // curve — and a box-and-arrow diagram would only be able to name it. `label` captions the figure
   // and `sub` subtitles it; `plot` carries everything drawn. Size is one deck-wide box (see
   // plotMetrics) and fitView scales it, so every plot in a course shares one tick-label size.
-  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list'
+  // An EVOLUTION node renders the comparison figure every deck eventually wants: N stages in a row,
+  // each a column whose HEIGHT encodes one number, with the stage's identity and specs stacked on
+  // the baseline beneath its own cap. Use it wherever the content is "this got bigger/faster/cheaper
+  // over these generations" and the shape of that growth is the point — four cards in a row can
+  // state four clock speeds, but only a column can show that the last jump was the big one.
+  // `label` captions the figure, `sub` subtitles it, `evolution` carries the stages and the axis.
+  // It is a LEAF, sized from its own content (see evolutionMetrics), so it flows and grids like a card.
+  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution'
   columns?: TableColumn[] // table, schema mode: the table's columns
   headers?: string[] // table, data mode: the header row
   values?: string[][] // table, data mode: the body rows, each a list of cells
   items?: string[] // list node only: the bullet lines, in reading order
   slots?: MemorySlot[] // memory node only: the cells, top→bottom in address order
   plot?: PlotSpec // plot node only: the axes and the series drawn against them
+  evolution?: EvolutionSpec // evolution node only: the stages and the axis they rise against
   filename?: string // the tab label on a code node (e.g. "list.py")
   // Opt a code card OUT of the CODE_MIN_COLS width floor, sizing it to its own longest line instead.
   // The floor exists so a card that IS the scene renders its type at the deck-wide size; but for a card

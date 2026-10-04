@@ -25,11 +25,12 @@ const scene: Scene = {
 
 ## The public surface
 
-Seven exports, and nothing else resolves — `exports` in package.json declares a single entry point.
+One component, the scene model's types and `ThemeKey`. Nothing else resolves — `exports` in
+package.json declares a single entry point.
 
 | Export | |
 |---|---|
-| `Scene`, `SceneNode`, `SceneEdge`, `PatternKey`, `MemorySlot`, `TableColumn` | the scene model an author writes |
+| `Scene`, `SceneNode`, `SceneEdge`, `PatternKey`, `MemorySlot`, `TableColumn`, `PlotSpec`, `PlotAxis`, `PlotSeries`, `PlotPoint`, `EvolutionSpec`, `EvolutionStage` | the scene model an author writes |
 | `SceneView` | the component that renders it |
 
 The layout internals (`computeLayout`, `Placed`, `PATTERNS`, …) are deliberately **not** exported.
@@ -74,7 +75,8 @@ npm run watch    # rebuild the library on change, for a linked content repo
 ```
 
 The **fixtures** under `dev/fixtures/` are the visual spec: flow direction, grids, containers, code
-nodes, the memory figure, table nodes in both modes, list nodes (a service and its properties), tiles,
+nodes, the memory figure, table nodes in both modes, list nodes (a service and its properties),
+evolution nodes (the stepped comparison row), tiles,
 padding, the two icon registries, the `warn` role, and a gallery of every icon key. There is no
 test runner — the harness is where a layout regression is caught before it reaches a content repo.
 

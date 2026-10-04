@@ -7,8 +7,9 @@ is the working notes.
 
 - **Scenes are declarative — never write x/y.** Authors list nodes, edges and nesting; `layout.ts`
   assigns every position and size. Deterministic layout is what makes capture reproducible.
-- **The public surface is eight exports.** Adding one is a promise to every content repo. The layout
-  internals stay withheld on purpose — see the comment block at the foot of `src/index.ts`.
+- **The public surface is one component plus the scene model's types.** Adding one is a promise to
+  every content repo. The layout internals stay withheld on purpose — see the comment block at the
+  foot of `src/index.ts`.
 - **Peer deps, never deps**, for `react`, `react-dom`, `@xyflow/react`, `lucide-react`. Bundling any
   of them puts a second React in the package and breaks hooks in every consuming app. The `external`
   list in `vite.config.ts` is what enforces it — check it after any dependency change.
@@ -155,6 +156,34 @@ is the working notes.
   38px and the median 23.5px, against ~80px before. Most of what remains is `PROSE_MIN_H` doing its
   job — a one-line card is floored at 96px so a row of them stays a tidy band rather than each box
   shrink-wrapping — and that is deliberate, not an error to chase. Nothing clips.
+- **An EVOLUTION column's height is CAP + rise + BODY, and only the rise is data.** The cap block
+  (the headline figure) and the body block (icon, title, specs) are one height for every stage —
+  the body's being a max over all stages, not each column sizing to its own text. That is what makes
+  the DIFFERENCE between two columns exactly proportional to the difference in their values, which
+  is the only reason the figure may be read as a chart at all. Size the body per-stage and a stage
+  with one extra spec line becomes a taller column, i.e. the figure lies about its own number. It
+  also rules every column's icons, titles and spec lines into common bands, which is the axis a
+  comparison row is actually read along. Verified on the fixtures: value deltas 2.7 · 8.9 · 0.4
+  render as 51 · 165 · 7 px.
+- **`baseline` is a DECLARED axis truncation, and the engine paints it.** Zero-based is the default
+  and four CPUs at 3.8→6.2 GHz are then four near-identical columns — which is honest and useless,
+  so the poster version of this chart always cuts the axis. Rather than pretend otherwise, `baseline`
+  makes the cut explicit and prints it under the figure ("columns rise from 3"). Never make it
+  implicit (auto-fitting the rise to the value RANGE would do exactly that, invisibly): a reader who
+  cannot see the floor cannot read the heights.
+- **The evolution row is MONOCHROME, and a stage's `pattern` is for singling ONE out.** Four CPUs are
+  not a service, a store, a network and a user — a hue per column is colour spent saying nothing, in
+  an engine where green means storage in every deck. The progression rides the one thing that varies
+  (height), with fill weight stepping up across the row inside the single accent. The per-stage
+  override exists for the column the slide is about, usually the newest; a row where every stage sets
+  one is `plot`'s ramp rebuilt by hand, badly.
+- **A sizer's width clamp must come BEFORE the unwrappable floor, never after.** `evoColumnWidth`
+  measures twice: what can wrap (title, eyebrow, spec lines) is a PREFERENCE, clamped to the reading
+  measure because anything past it wraps — `wrapLines` and the renderers' `overflow-wrap: anywhere`
+  agree down to a mid-word break. What cannot wrap (the cap figure, which is `nowrap` because a
+  number split across two lines has stopped being a number, and the era token on the axis) is a hard
+  FLOOR applied after the clamp. Clamping those to the measure does not wrap them, it clips them —
+  and clips them silently, since the card sets `overflow: hidden`.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, so a key
   present in `awsIcons.ts` and `azureIcons.ts` silently renders the AWS tile — `backup`, `budgets`,
   `dms` and `waf` collide, which is why the Azure side spells them `backupcenter`, `costbudgets`,
@@ -185,7 +214,7 @@ than one, a repeated unit three levels deep, a counted-token leaf, and a channel
 flow. A capability claimed on one row only is an untested claim about the second — which is how the
 `stretch` surplus bug survived its first fixture.
 
-Neither pass is visual sign-off. For a content-sized node (code, table, memory, list, tile, chip),
+Neither pass is visual sign-off. For a content-sized node (code, table, memory, list, evolution, tile, chip),
 "renders correctly" includes *measuring* it, not just looking: `scrollWidth > clientWidth` or a text node whose `right` passes the node's own `right`
 means the sizer is under-reserving. A fixture whose content lands exactly on the min floor is the one
 that catches it — comfortable content hides the bug. For `list`, whose body WRAPS, the check is

@@ -62,6 +62,7 @@ import { table } from './content/table'
 import { memory } from './content/memory'
 import { plot, plotMl } from './content/plot'
 import { list } from './content/list'
+import { evolution, evolutionZero } from './content/evolution'
 import { vendorIcons } from './icons/vendor-icons'
 import { iconGallery } from './icons/icon-gallery'
 import { azureGallery } from './icons/azure-gallery'
@@ -79,7 +80,7 @@ export const fixtures: Record<Category, Scene[]> = {
   nodes: [nodesFixture],
   edges: [edgesFixture],
   containers: [containersFixture],
-  content: [code, table, memory, plot, plotMl, list],
+  content: [code, table, memory, plot, plotMl, list, evolution, evolutionZero],
   icons: [vendorIcons, iconGallery, azureGallery],
   layouts: [flow],
   others: [padding, focus, prose, proseSizing],
