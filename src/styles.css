@@ -38,3 +38,48 @@
    That is why there is exactly one set of .tok-* rules and no [data-flow-theme] override below: the
    surface a code card presents is dark in BOTH themes the engine ships. A future theme that paints a
    light code card is the one that would need its own block. */
+
+/* --- selectable text ---------------------------------------------------------------------------
+   react-flow's own stylesheet sets `user-select: none` on `.react-flow__node` (it assumes an editor,
+   where a drag on a node moves it). The engine's nodes are not draggable and, as of this version,
+   the viewport is locked too — no pan, no zoom (see SceneView) — so a drag across a card has nothing
+   to do but select the text under it, which is what a reader wants: a term from a diagram, a line
+   out of a code card. Overriding it here rather than per renderer because it is ONE react-flow rule,
+   and because every node type inherits the fix for free.
+
+   `.react-flow__node` wins over `.react-flow__node-*` only on source order, so this block must stay
+   AFTER the @import of react-flow's stylesheet at the top of this file. */
+.react-flow__node {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* The same, for the layer the edge LABELS ride in — react-flow sets `user-select: none` on the
+   renderer itself, so the one piece of text that is not inside a node would be the one piece a
+   reader could not copy. The layer stays `pointer-events: none` (react-flow's own rule); FlowEdge
+   re-enables them on the label pill alone, which is the only thing in it worth hitting. */
+.react-flow__edgelabel-renderer {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* The CARET is the only affordance that says "this is selectable", so give it to the nodes that hold
+   TEXT and withhold it from the three that do not: a tile is an icon with a caption underneath, a
+   plot is a figure whose only text is its tick labels, and a container is mostly the empty band
+   around its children, where a text cursor over bare canvas would be a lie. CodeNode keeps
+   `user-select: none` on its line-number gutter inline — deliberately, so a copied snippet pastes as
+   source, not as source with numbers down the left. */
+.react-flow__node-container,
+.react-flow__node-plot,
+.react-flow__node-tile {
+  cursor: default;
+}
+.react-flow__node-scene,
+.react-flow__node-chip,
+.react-flow__node-code,
+.react-flow__node-table,
+.react-flow__node-memory,
+.react-flow__node-list,
+.react-flow__node-evolution {
+  cursor: text;
+}

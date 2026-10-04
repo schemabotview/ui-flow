@@ -7,6 +7,23 @@ is the working notes.
 
 - **Scenes are declarative — never write x/y.** Authors list nodes, edges and nesting; `layout.ts`
   assigns every position and size. Deterministic layout is what makes capture reproducible.
+- **The VIEWPORT is locked and the TEXT is selectable — one decision, not two.** `panOnDrag`,
+  `zoomOnScroll`, `zoomOnPinch` and `zoomOnDoubleClick` sat at react-flow's defaults (all true)
+  through 1.1.0, so a stray trackpad gesture could shift or rescale a scene that `fitView` had
+  already framed, with no control to put it back. They are off now, and that is what BUYS the
+  selection: it is d3-zoom that claims the mousedown on the pane, so while `panOnDrag` is on a drag
+  across a card pans the canvas and no amount of `user-select` produces a selection. The reader
+  gets the one interaction a picture owes them — copying a term out of a diagram or a line out of a
+  code card — and the frame stays the frame. Three pieces hold it up and all three are load-bearing:
+  `user-select: text` in `styles.css` (react-flow sets `none` on `.react-flow__node` and on the edge
+  label layer), `pointerEvents: 'all'` in each node's `style` in SceneView (NodeWrapper writes
+  `pointer-events: none` on any node that is not selectable, draggable or handled, which sends every
+  pointer to the pane and leaves the text as nothing the browser can hit — `node.style` is spread
+  after it, which is why one key there beats it without `!important`), and `preventScrolling={false}`
+  (react-flow preventDefaults every wheel over the pane before it consults its own filter, so without
+  it a scroll with the cursor over the scene scrolls nothing at all — felt on mobile portrait, where
+  the scene is most of the page). CodeNode keeps `user-select: none` on its line-number gutter, so a
+  copied snippet pastes as source rather than source with numbers down the left.
 - **The public surface is one component plus the scene model's types.** Adding one is a promise to
   every content repo. The layout internals stay withheld on purpose — see the comment block at the
   foot of `src/index.ts`.

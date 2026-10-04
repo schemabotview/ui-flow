@@ -51,7 +51,10 @@ export function FlowEdge({
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              pointerEvents: 'none',
+              // The label layer is pointer-events:none by default (EdgeLabelRenderer), which would
+              // leave the one bit of text NOT inside a node unselectable. `auto` is safe here
+              // because the pane has no pan/zoom handlers left to steal the drag.
+              pointerEvents: 'auto',
               padding: '2px 8px',
               borderRadius: 6,
               // The scene canvas, from the THEME. Through 0.7.0 this was hardcoded '#1a1d23' — the
