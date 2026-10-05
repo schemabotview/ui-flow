@@ -72,7 +72,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', barclaysAzure, 'Azure trade-finance and risk platform at architecture scale.', ['azure', 'architecture', 'nested'], 'study'),
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
   entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
-  entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1: barclays band structure, spark-topology leaves — cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'nested', 'bands', 'chips'], 'study'),
+  entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1, document-only: single-column bands, cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'delta', 'bands', 'chips'], 'study'),
 ]
 
 /** Compatibility views used by the harness and existing geometry/visual checks. */
