@@ -36,6 +36,47 @@ try {
   browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
   await mkdir('visual-artifacts', { recursive: true })
+  // The authoring gallery must show every category without tabs and preserve readable scale.
+  await page.setViewport({ width: 1920, height: 1080 })
+  await page.goto('http://127.0.0.1:5179/#/nodes', { waitUntil: 'networkidle0' })
+  await page.evaluate(() => document.fonts.ready)
+  await page.waitForFunction(() => {
+    const viewport = document.querySelector('.gallery-preview .react-flow__viewport')
+    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 1
+  })
+  const gallery = await page.evaluate(() => ({
+    categories: document.querySelectorAll('.gallery-category').length,
+    sidebarLinks: document.querySelectorAll('.rail a').length,
+    sidebarChildren: document.querySelectorAll('.rail ul').length,
+    nodeExamples: document.querySelectorAll('#fixture-nodes .gallery-example').length,
+  }))
+  if (gallery.categories !== 11 || gallery.sidebarLinks !== 11 || gallery.sidebarChildren !== 0 || gallery.nodeExamples !== 6) {
+    throw new Error(`Unexpected gallery structure: ${JSON.stringify(gallery)}`)
+  }
+  const overflow = await page.evaluate(() => [...document.querySelectorAll('.preview-scroll')]
+    .some(preview => preview.scrollWidth > preview.clientWidth + 1))
+  if (overflow) throw new Error('Gallery preview requires horizontal scrolling')
+  await page.screenshot({ path: 'visual-artifacts/gallery-nodes.png' })
+  await page.click('.rail a[href="#/plot"]')
+  await page.waitForFunction(() => {
+    const target = document.getElementById('category-charts')
+    const gallery = document.querySelector('.gallery')
+    return target && gallery && Math.abs(target.getBoundingClientRect().top - gallery.getBoundingClientRect().top - 24) < 4
+  })
+  await page.click('.rail a[href="#/edges"]')
+  await page.waitForFunction(() => {
+    const viewport = document.querySelector('#fixture-edges .react-flow__viewport')
+    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a > 0.1
+  })
+  await page.screenshot({ path: 'visual-artifacts/gallery-edges.png' })
+  for (const width of [1280, 900]) {
+    await page.setViewport({ width, height: 900 })
+    await page.waitForFunction(() => [...document.querySelectorAll('.gallery-preview')]
+      .every(preview => preview.getBoundingClientRect().width <= preview.parentElement.clientWidth + 1))
+    const overflow = await page.evaluate(() => [...document.querySelectorAll('.preview-scroll')]
+      .some(preview => preview.scrollWidth > preview.clientWidth + 1))
+    if (overflow) throw new Error(`Gallery preview overflows at ${width}px`)
+  }
   for (const size of [{ width: 1920, height: 1080 }, { width: 3840, height: 2160 }, { width: 390, height: 844 }]) {
     await page.setViewport(size)
     for (const theme of ['dark', 'light']) {
@@ -44,7 +85,7 @@ try {
         // the only mode that exposes the focus picker — and FOCUS is a geometry state, not just a
         // colour: it widens every border, and a sizer that forgot that clips on focus alone.
         const full = fixture.startsWith('barclays') ? 'full=1&' : ''
-        await page.goto(`http://127.0.0.1:5179/?${full}theme=${theme}#/${fixture}`, { waitUntil: 'networkidle0' })
+        await page.goto(`http://127.0.0.1:5179/?capture=1&${full}theme=${theme}#/${fixture}`, { waitUntil: 'networkidle0' })
         await page.evaluate(() => document.fonts.ready)
         const selects = await page.$$('select')
         if (selects.length > 1 && fixture === 'prose-hierarchy') await selects[selects.length - 1].select('controller')

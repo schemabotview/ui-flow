@@ -1,4 +1,5 @@
-// Fixture browser: a rail of scenes grouped by capability on the left, one 16:9 stage on the right.
+// Fixture browser: main categories on the left, a readable scrolling gallery on the right.
+// ?capture=1 retains the single 16:9 stage used by regression captures.
 // Hash-routed so a fixture is linkable (#/flow-tb) and a reload keeps its place.
 //
 // FULL-WINDOW mode (`?full=1`) drops the rail, the bar and the 16:9 stage and gives SceneView the
@@ -12,15 +13,25 @@
 // harness never passed it — so the one prop a content repo uses to say "this is the node this section
 // narrates" had no way to be looked at here. Two renderers were found ignoring it in production as a
 // result. It resets to none on every scene change: focus is a per-section choice, not a sticky mode.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SceneView } from '../src'
+import { computeLayout } from '../src/layout'
 import type { Scene, SceneNode, ThemeKey } from '../src'
-import { CATEGORIES, fixtures, allFixtures, categoryOf } from './fixtures'
+import type { Category } from './fixtures'
+import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
 
 // The themes the engine ships. Not exported from the barrel (see index.ts — a fixed set is what keeps
 // every deck in one visual language), so the harness names them; it is inside the package, so this is
 // the one place that is allowed to.
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
+
+const CATEGORY_HEADINGS: Record<Category, string> = {
+  nodes: 'Node types', edges: 'Edge types', containers: 'Container types',
+  tables: 'Table types', charts: 'Chart types', code: 'Code examples',
+  'lists-memory': 'List & memory types', layouts: 'Layout types',
+  icons: 'Icon libraries', 'viewport-focus': 'Viewport & focus examples',
+  studies: 'Architecture studies',
+}
 
 /** This URL with `?full` set or cleared, hash (→ the fixture) and every other param preserved. */
 function fullUrl(on: boolean) {
@@ -52,10 +63,91 @@ function nodeIds(nodes: SceneNode[], depth = 0): { id: string; depth: number }[]
 const countNodes = (nodes: SceneNode[]): number =>
   nodes.reduce((sum, n) => sum + 1 + (n.children?.length ? countNodes(n.children) : 0), 0)
 
+/** Fit gallery previews to the available width, without enlarging sparse examples. */
+function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeKey; focusId?: string }) {
+  const host = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+  const [availableWidth, setAvailableWidth] = useState(0)
+  const size = useMemo(() => {
+    const roots = computeLayout(scene).filter(node => !node.parentId)
+    const width = Math.max(...roots.map(node => node.x + node.w), 0) - Math.min(...roots.map(node => node.x), 0)
+    const height = Math.max(...roots.map(node => node.y + node.h), 0) - Math.min(...roots.map(node => node.y), 0)
+    const margin = 1 + 2 * (scene.padding ?? 0.12)
+    return { width: Math.ceil(width * margin), height: Math.ceil(height * margin) }
+  }, [scene])
+  useEffect(() => {
+    if (!host.current) return
+    const observer = new ResizeObserver(entries => setAvailableWidth(entries[0].contentRect.width))
+    observer.observe(host.current)
+    return () => observer.disconnect()
+  }, [])
+  const scale = availableWidth > 0 ? Math.min(1, availableWidth / Math.max(1, size.width)) : 1
+  const previewHeight = Math.max(180, Math.ceil(size.height * scale))
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisible(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: '600px' })
+    if (host.current) observer.observe(host.current)
+    return () => observer.disconnect()
+  }, [])
+  return (
+    <div className="preview-scroll" ref={host}>
+      <div className="gallery-preview" style={{ maxWidth: size.width, height: previewHeight }}>
+        {visible && <SceneView scene={scene} theme={theme} focusId={focusId} />}
+      </div>
+    </div>
+  )
+}
+
+// Present node forms directly, without a demonstration container around each example.
+const NODE_EXAMPLE_LABELS: Record<string, string> = {
+  cards: 'Card', tiles: 'Tile', chips: 'Chip', unframed: 'Unframed',
+  framed: 'Framed', ctx: 'Warn',
+}
+const NODE_FIXTURE_LABELS: Record<string, string> = {
+  nodes: 'Node forms', 'prose-hierarchy': 'Prose', 'prose-sizing': 'Text wrapping',
+}
+
+function galleryScenes(scene: Scene): Scene[] {
+  if (scene.id === 'nodes') {
+    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
+      title: NODE_EXAMPLE_LABELS[node.id],
+      cols: node.id === 'cards' ? 3 : node.id === 'chips' ? 2 : node.cols ?? 1,
+      flow: node.flow, framed: node.framed ?? scene.framed,
+      nodes: node.children ?? [node], edges: node.edges ?? [],
+    }))
+  }
+  if (['edges', 'flow', 'plot-ml'].includes(scene.id) && scene.edges.length === 0) {
+    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
+      title: node.label, cols: 1, nodes: [node], edges: [],
+    }))
+  }
+  if (scene.id === 'prose-sizing') {
+    return scene.nodes.map((node, index) => ({ ...scene, id: `${scene.id}-${node.id}`,
+      title: ['Wrapping card', 'Long identifier', 'Wrapping container heading'][index],
+      nodes: [node], edges: [],
+    }))
+  }
+  return [scene]
+}
+
 export function App() {
   const id = useHashId(allFixtures[0].id)
   const scene: Scene = allFixtures.find((s) => s.id === id) ?? allFixtures[0]
-  const active = categoryOf(scene.id)
+  const active = categoryOf(scene.id)!
+  const selectedFixture = fixtureCatalog.find(fixture => fixture.scene.id === scene.id)!
+  const [query, setQuery] = useState('')
+  const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
+  const visibleFixtures = fixtureCatalog.filter(fixture => {
+    const text = [fixture.scene.id, fixture.scene.title, CATEGORY_LABELS[fixture.category],
+      fixture.description, fixture.purpose, ...fixture.tags].join(' ').toLowerCase()
+    return terms.every(term => text.includes(term))
+  })
+
+
 
   // Focus is per-scene: switching fixtures clears it rather than carrying a stale id to a scene that
   // has no such node (which would render as "nothing is focused" and look like the bug it is not).
@@ -74,6 +166,14 @@ export function App() {
   useEffect(() => localStorage.setItem('flow-theme', theme), [theme])
   const ids = useMemo(() => nodeIds(scene.nodes), [scene])
   const full = new URLSearchParams(window.location.search).has('full')
+  const capture = new URLSearchParams(window.location.search).has('capture')
+
+  useEffect(() => {
+    if (full || capture) return
+    const first = fixtureCatalog.find(fixture => fixture.category === active)!
+    const target = first.scene.id === scene.id ? `category-${active}` : `fixture-${scene.id}`
+    document.getElementById(target)?.scrollIntoView({ block: 'start' })
+  }, [scene.id, active, full, capture])
 
   // Full window: the scene and nothing else. The only chrome is the way back out — and it has to be
   // there, because with the rail gone a link is the only exit that does not mean editing the URL.
@@ -92,41 +192,25 @@ export function App() {
     <div className="layout">
       <nav className="rail">
         <h1>Fixtures</h1>
-        {CATEGORIES.map((cat) => {
-          const items = fixtures[cat]
-          // A category holding ONE fixture collapses to a single flat entry. A heading whose only
-          // child restates it ("Nodes ▸ Nodes — palette, variants…") is indentation pretending to be
-          // structure; the category name is already the fixture's name at that point. Categories are
-          // still declared uniformly in the registry — this is a rendering decision, so a category
-          // grows its heading back automatically the day it gains a second fixture.
-          if (items.length === 1) {
-            const only = items[0]
-            return (
-              <a key={cat} className="solo" href={`#/${only.id}`} data-on={only.id === scene.id ? '1' : '0'}>
-                {cat}
-              </a>
-            )
-          }
+        {CATEGORIES.map(cat => {
+          const first = fixtureCatalog.find(fixture => fixture.category === cat)!
           return (
-            <section key={cat}>
-              <h2 data-on={cat === active ? '1' : '0'}>{cat}</h2>
-              <ul>
-                {items.map((s) => (
-                  <li key={s.id}>
-                    <a href={`#/${s.id}`} data-on={s.id === scene.id ? '1' : '0'}>
-                      {s.title ?? s.id}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <a key={cat} className="category-link" href={`#/${first.scene.id}`}
+              onClick={() => {
+                setQuery('')
+                requestAnimationFrame(() => document.getElementById(`category-${cat}`)?.scrollIntoView({ block: 'start' }))
+              }}
+              data-on={cat === active ? '1' : '0'}
+              aria-current={cat === active ? 'page' : undefined}>
+              {CATEGORY_LABELS[cat]}
+            </a>
           )
         })}
       </nav>
       <main className="main">
         <div className="bar">
           <span>
-            <b>{scene.title ?? scene.id}</b> · {countNodes(scene.nodes)} nodes · {scene.edges.length} edges
+            <b title={`${selectedFixture.description} Tags: ${selectedFixture.tags.join(", ")}`}>{scene.title ?? scene.id}</b> <span className="fixture-purpose">{selectedFixture.purpose}</span> · {countNodes(scene.nodes)} nodes · {scene.edges.length} edges
             {scene.flow ? ` · flow ${scene.flow}` : ''}
             {scene.cols ? ` · cols ${scene.cols}` : ''}
           </span>
@@ -157,11 +241,44 @@ export function App() {
             </a>
           </span>
         </div>
-        <div className="stagewrap">
-          <div className="stage">
+        {capture ? (
+          <div className="stagewrap"><div className="stage">
             <SceneView scene={scene} focusId={focusId || undefined} theme={theme} />
+          </div></div>
+        ) : (
+          <div className="gallery" aria-label="Fixture gallery">
+            <label className="fixture-search gallery-search">
+              <span className="sr-only">Search all fixtures</span>
+              <input type="search" placeholder="Search all fixtures…" value={query}
+                onChange={event => setQuery(event.target.value)} />
+            </label>
+            {CATEGORIES.map(category => {
+              const items = visibleFixtures.filter(fixture => fixture.category === category)
+              if (!items.length) return null
+              return (
+                <section className="gallery-category" id={`category-${category}`} key={category} aria-labelledby={`heading-${category}`}>
+                  <h2 id={`heading-${category}`}>{CATEGORY_HEADINGS[category]}</h2>
+                  {items.map(fixture => (
+                    <article className="gallery-fixture" id={`fixture-${fixture.scene.id}`} key={fixture.scene.id}>
+                      <header className="fixture-heading">
+                        <h3><a href={`#/${fixture.scene.id}`}>{NODE_FIXTURE_LABELS[fixture.scene.id] ?? fixture.scene.title ?? fixture.scene.id}</a></h3>
+                        <p>{fixture.description}</p>
+                      </header>
+                      {galleryScenes(fixture.scene).map(preview => (
+                        <section className="gallery-example" key={preview.id}>
+                          {preview.id !== fixture.scene.id && <h4>{preview.title}</h4>}
+                          <GalleryPreview scene={preview} theme={theme}
+                            focusId={fixture.scene.id === scene.id ? focusId || undefined : undefined} />
+                        </section>
+                      ))}
+                    </article>
+                  ))}
+                </section>
+              )
+            })}
+            {!visibleFixtures.length && <p className="empty-search" role="status">No fixtures match “{query}”.</p>}
           </div>
-        </div>
+        )}
       </main>
     </div>
   )

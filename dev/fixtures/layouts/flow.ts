@@ -6,13 +6,13 @@
 // apart. The four directions especially: they are mirrors of each other, and a mirror is only
 // checkable against the thing it mirrors.
 //
-// ONE THING NOT MERGED: others/padding.ts. `scene.padding` is the fitView MARGIN, a property of the
+// ONE THING NOT MERGED: viewport-focus/padding.ts. `scene.padding` is the fitView MARGIN, a property of the
 // viewport, and a scene has exactly one — so two paddings cannot share a frame.
 //
 // WHAT MERGING COSTS, and where it went: every panel here is a CONTAINER flow, so it exercises
 // `n.flow`, not `scene.flow` — a separate read in collectEdges. Scene-level TB is covered by
 // containers/deep-edge and LR by four other fixtures, so neither needed a fixture kept alive for it;
-// scene-level BT now rides on others/padding.ts. RL is uncovered at scene level and stays that way: it is
+// scene-level BT now rides on viewport-focus/padding.ts. RL is uncovered at scene level and stays that way: it is
 // the same expression as BT with a different string.
 //
 // The scene's own `cols: 3` is not incidental — it IS the top-level grid-wrapping case, wrapping the

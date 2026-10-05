@@ -6,7 +6,7 @@
 // overrunning its gap is a RATIO between two things in layout space, and fitView scales both by the
 // same factor — a label that covers the cards at zoom 1.0 still covers them at 0.4. The reasoning
 // that does hold is the one about CONTENT nodes, where the defect is a sizer reserving fewer pixels
-// than the renderer draws; that one is absolute, and it is why content/ is still not merged.
+// than the renderer draws; that one is absolute, and it is why content-sizing fixtures are still not merged.
 //
 // Read left to right, top to bottom: normal → arrowheads → routing → the failure.
 //

@@ -74,11 +74,25 @@ npm run build    # dist/index.js + dist/index.d.ts + dist/styles.css
 npm run watch    # rebuild the library on change, for a linked content repo
 ```
 
-The **fixtures** under `dev/fixtures/` are the visual spec: flow direction, grids, containers, code
-nodes, the memory figure, table nodes in both modes, list nodes (a service and its properties),
-evolution nodes (the stepped comparison row), tiles,
-padding, the two icon registries, the `warn` role, and a gallery of every icon key. There is no
-test runner — the harness is where a layout regression is caught before it reaches a content repo.
+The **fixtures** under `dev/fixtures/` are the visual spec, grouped by renderer capability:
+nodes, edges, containers, tables, charts, code, lists & memory, layouts, icons, viewport & focus,
+and studies. The sidebar shows only large main-category links.
+The main window is a vertically scrolling gallery of all categories, with headings and descriptions.
+Nodes appear as separate Card, Tile, Chip, Unframed, Framed and Warn examples, followed by
+Prose and individual text-wrapping examples. Preview dimensions follow layout bounds
+so elements stay readable and shrink to fit the browser width without horizontal scrolling.
+Independent edge, layout and ML plot panels also appear as separate vertical examples. Sidebar links jump to the category's
+first fixture, and search filters the gallery. `?capture=1` retains a single 16:9 scene for regression
+captures; `?full=1` retains the full-window view. Existing hash links remain stable.
+
+`dev/fixtures/index.ts` owns the harness-only catalog. Add a scene with a category, description,
+capability tags and purpose (`example`, `regression`, `gallery` or `study`). Categorize by what the
+fixture exercises, rather than the domain it depicts. Keep sizing-sensitive fixtures separate;
+use studies for complete architectures and galleries for icon lookup. Charts currently cover
+line/scatter plots and evolution; bar charts require renderer support before adding fixtures.
+
+Run `npm run check` for geometry/determinism and text bounds across both themes and three viewports.
+Review the harness visually for navigation and scene composition.
 
 ## Consumed by
 

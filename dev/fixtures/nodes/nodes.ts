@@ -13,7 +13,7 @@
 // PANEL 3 — `warn` IN CONTEXT. It is in the swatch too, but a limitation only reads as a limitation
 //   when it is sitting in the flow it constrains, which is the thing that cannot be shown in a grid.
 //
-// NOT MERGED: others/focus.ts, which sits in its own category. Focus is a per-node STATE driven from
+// NOT MERGED: viewport-focus/focus.ts, which sits in its own category. Focus is a per-node STATE driven from
 // the harness bar rather than anything the scene declares, and its fixture needs one of every
 // renderer family (card · tile · container · code · table · plot) so focus can be stepped through all
 // six — those content nodes would dominate this frame.

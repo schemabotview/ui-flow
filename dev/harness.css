@@ -1,53 +1,44 @@
-/* Chrome for the harness only — deliberately plain, so nothing here can be mistaken for engine
-   styling. The stage is locked to 16:9 because that is the capture aspect the engine targets.
-
-   The stage background is #1a1d23 on purpose, NOT white. SceneView does not paint its own canvas:
-   it draws Background dots at #2a2f38 and its node fills and label colours all assume a dark surface
-   behind them. The host app supplies that (ui-shell's stylesheet sets --bg: #1a1d23). On a light
-   stage tile labels render nearly invisible — so a harness with the wrong background silently lies
-   about every fixture. This is a real part of the engine's contract, same as styles.css.
-
-   It is also the seam a light theme has to close: FlowEdge fills its label pill with a hardcoded
-   #1a1d23 to match this surface, across a package boundary it cannot see. See edges/labels.ts. */
+/* Harness chrome only. The stage uses the engine's 16:9 capture aspect;
+   SceneView owns its themed canvas, so the stage background is a loading fallback. */
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #0f1115; color: #e6e8ec; }
 .layout { display: grid; grid-template-columns: 240px 1fr; height: 100vh; }
 
 .rail { padding: 22px 0 40px; overflow-y: auto; border-right: 1px solid #23272f; }
 
-/* THREE levels, and they have to be told apart at a glance — the rail is read peripherally while the
-   eye is on the stage. Before 0.8.0 the title was 13px/600 and a category 12px/600, one pixel and no
-   weight apart, so they read as one flat list. The separation now comes from three axes at once:
-     title      15px · regular case · brightest · sits above a rule, so it is a header, not an item
-     category   11px · UPPERCASE · tracked · dimmest — small caps is what makes a short label read as
-                a label rather than a link, which is why every docs sidebar does it
-     fixture    13px · regular case · mid — the only thing here that is actually content
-   A single-fixture category renders at CATEGORY level (it is one), so it is uppercase too. */
 .rail h1 {
-  font-size: 15px; font-weight: 600; color: #f0f2f5; letter-spacing: -0.01em;
-  margin: 0 20px 4px; padding-bottom: 15px; border-bottom: 1px solid #23272f;
+  font-size: 20px; font-weight: 600; color: #f0f2f5;
+  margin: 0 20px 14px; padding-bottom: 15px; border-bottom: 1px solid #23272f;
 }
-.rail section { margin: 0; }
-.rail h2, .rail a.solo {
-  display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
-  color: #78828f; margin: 20px 0 7px; padding: 0 20px; border-left: 0;
-  text-decoration: none; /* a.solo is an anchor — without this it takes the browser's underline */
+.category-link {
+  display: block; padding: 11px 20px; border-left: 3px solid transparent;
+  color: #c6cedb; font-size: 18px; font-weight: 600; text-decoration: none;
 }
-.rail h2[data-on='1'] { color: #aab4c4; }
-.rail a.solo:hover { color: #c6cedb; }
-.rail a.solo[data-on='1'] { color: #4c8dff; }
+.category-link:hover { background: #171a21; color: #f0f2f5; }
+.category-link[data-on='1'] { color: #6ca2ff; border-left-color: #6ca2ff; background: #171d29; }
+.fixture-search input {
+  width: 260px; max-width: 100%; padding: 9px 12px; border: 1px solid #2c323d;
+  border-radius: 5px; background: #171a21; color: #e6e8ec; font: inherit; font-size: 15px;
+}
+.gallery { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; }
+.gallery-search { display: block; margin-bottom: 24px; }
+.gallery-category { margin-bottom: 64px; scroll-margin-top: 24px; }
+.gallery-category > h2 { margin: 0 0 24px; font-size: 30px; color: #f0f2f5; }
+.gallery-fixture { scroll-margin-top: 24px; margin-bottom: 40px; }
+.fixture-heading h3 { margin: 0 0 8px; font-size: 22px; font-weight: 600; }
+.fixture-heading a { color: #e6e8ec; text-decoration: none; }
+.fixture-heading a:hover { color: #6ca2ff; }
+.fixture-heading p { margin: 0 0 20px; color: #b6bfcd; font-size: 16px; }
+.gallery-example { margin: 0 0 28px; }
+.gallery-example h4 { margin: 0 0 12px; color: #c6cedb; font-size: 19px; font-weight: 600; }
+.preview-scroll { overflow: hidden; border: 1px solid #2c323d; border-radius: 8px; background: #1a1d23; }
+.gallery-preview { width: 100%; margin-inline: auto; }
+.empty-search { margin: 12px 0; font-size: 14px; color: #b6bfcd; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.fixture-purpose { font-size: 10px; color: #aab4c4; border: 1px solid #2c323d; border-radius: 4px; padding: 2px 5px; }
+.rail :focus-visible, .gallery :focus-visible { outline: 2px solid #4c8dff; outline-offset: 2px; }
 
-.rail ul { list-style: none; margin: 0; padding: 0 0 0 20px; border-left: 1px solid #23272f; }
-.rail li { margin: 0; }
-.rail li a {
-  display: block; padding: 5px 16px 5px 12px; margin-left: -1px;
-  color: #98a2b1; text-decoration: none; font-size: 13px; line-height: 1.4;
-  border-left: 2px solid transparent;
-}
-.rail li a:hover { color: #e6e8ec; }
-.rail li a[data-on='1'] { color: #4c8dff; font-weight: 500; border-left-color: #4c8dff; }
-
-.main { display: flex; flex-direction: column; min-width: 0; }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .bar {
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
   padding: 12px 20px; border-bottom: 1px solid #262a33; font-size: 13px; color: #7d8696;
