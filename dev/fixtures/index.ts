@@ -21,6 +21,8 @@ import { focus } from './viewport-focus/focus'
 import { prose, proseSizing } from './nodes/prose'
 import { barclaysAzure } from './studies/barclays-azure'
 import { sparkTopology } from './studies/spark-topology'
+import { edfAwsCodex } from './studies/edf-aws-codex'
+import { edfAwsClaude } from './studies/edf-aws-claude'
 
 export const CATEGORIES = [
   'nodes', 'edges', 'containers', 'tables', 'charts', 'code',
@@ -69,6 +71,8 @@ export const fixtureCatalog: Fixture[] = [
   entry('viewport-focus', focus, 'Select a node or container using the focus control.', ['focus', 'interaction'], 'example'),
   entry('studies', barclaysAzure, 'Azure trade-finance and risk platform at architecture scale.', ['azure', 'architecture', 'nested'], 'study'),
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
+  entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
+  entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1: barclays band structure, spark-topology leaves — cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'nested', 'bands', 'chips'], 'study'),
 ]
 
 /** Compatibility views used by the harness and existing geometry/visual checks. */
