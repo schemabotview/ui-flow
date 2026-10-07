@@ -23,6 +23,7 @@ import { barclaysAzure } from './studies/barclays-azure'
 import { sparkTopology } from './studies/spark-topology'
 import { edfAwsCodex } from './studies/edf-aws-codex'
 import { edfAwsClaude } from './studies/edf-aws-claude'
+import { skyGcpCodex } from './studies/sky-gcp-codex'
 
 export const CATEGORIES = [
   'nodes', 'edges', 'containers', 'tables', 'charts', 'code',
@@ -73,6 +74,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
   entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
   entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1, document-only: single-column bands, cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'delta', 'bands', 'chips'], 'study'),
+  entry('studies', skyGcpCodex, 'Sky GCP case study 3: primary batch analytics, supplementary network streaming and shared controls.', ['sky', 'gcp', 'architecture', 'dataproc', 'bigquery', 'snowflake', 'pubsub', 'batch', 'streaming'], 'study'),
 ]
 
 /** Compatibility views used by the harness and existing geometry/visual checks. */
