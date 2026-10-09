@@ -77,6 +77,10 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 - **`dev/fixtures/index.ts`** is the harness catalog and the source of truth for both check scripts —
   a fixture added there is swept without touching either script. Categorize by the capability
   exercised, not the domain depicted, and keep scene ids stable (consumer links depend on them).
+  **One PANEL per category**, not one fixture per case: `dev/fixtures/panel.ts` composes scenes into a
+  single board (each becomes a labelled container; ids are prefixed `<scene>:`, so a check finds
+  `prose-hierarchy:plan`, not `plan`). A new capability is a sub-scene added to its category's panel,
+  not a new catalog entry — except a whole-scene option (`padding`), which a panel cannot show.
 
 ## Invariants (do not break)
 

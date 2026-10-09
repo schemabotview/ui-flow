@@ -80,9 +80,10 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
     // ports.ts — so the arrow leaves and enters the correct faces (down for TB, up for BT, right for
     // LR, left for RL).
     const flowEdges = collectEdges(scene)
-    // Opt-in per scene: spread edges that share a face along it instead of stacking them at its
-    // midpoint. Off by default, so a scene that does not ask draws exactly as before.
-    const ports = scene.edgePorts === 'spread' ? portOffsets(placed, flowEdges) : undefined
+    // Opt-in (`edgePorts`, per scene or per container): spread edges that share a face along it
+    // instead of stacking them at its midpoint. Off by default, so a scene that does not ask draws
+    // exactly as before.
+    const ports = flowEdges.some((e) => e.ports === 'spread') ? portOffsets(placed, flowEdges) : undefined
     const edges: Edge[] = flowEdges.map((e, i) => {
       const p = patternOf(t, patternOf_.get(e.target), 'external')
       const h = HANDLES[e.dir] ?? HANDLES.TB

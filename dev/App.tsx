@@ -15,7 +15,7 @@
 // result. It resets to none on every scene change: focus is a per-section choice, not a sticky mode.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SceneView } from '../src'
-import { computeLayout } from '../src/layout'
+import { computeLayout, collectEdges } from '../src/layout'
 import type { Scene, SceneNode, ThemeKey } from '../src'
 import type { Category } from './fixtures'
 import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
@@ -102,38 +102,6 @@ function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeK
   )
 }
 
-// Present node forms directly, without a demonstration container around each example.
-const NODE_EXAMPLE_LABELS: Record<string, string> = {
-  cards: 'Card', tiles: 'Tile', chips: 'Chip', unframed: 'Unframed',
-  framed: 'Framed', ctx: 'Warn',
-}
-const NODE_FIXTURE_LABELS: Record<string, string> = {
-  nodes: 'Node forms', 'prose-hierarchy': 'Prose', 'prose-sizing': 'Text wrapping',
-}
-
-function galleryScenes(scene: Scene): Scene[] {
-  if (scene.id === 'nodes') {
-    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: NODE_EXAMPLE_LABELS[node.id],
-      cols: node.id === 'cards' ? 3 : node.id === 'chips' ? 2 : node.cols ?? 1,
-      flow: node.flow, framed: node.framed ?? scene.framed,
-      nodes: node.children ?? [node], edges: node.edges ?? [],
-    }))
-  }
-  if (['edges', 'flow', 'plot-ml'].includes(scene.id) && scene.edges.length === 0) {
-    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: node.label, cols: 1, nodes: [node], edges: [],
-    }))
-  }
-  if (scene.id === 'prose-sizing') {
-    return scene.nodes.map((node, index) => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: ['Wrapping card', 'Long identifier', 'Wrapping container heading'][index],
-      nodes: [node], edges: [],
-    }))
-  }
-  return [scene]
-}
-
 export function App() {
   const id = useHashId(allFixtures[0].id)
   const scene: Scene = allFixtures.find((s) => s.id === id) ?? allFixtures[0]
@@ -210,7 +178,7 @@ export function App() {
       <main className="main">
         <div className="bar">
           <span>
-            <b title={`${selectedFixture.description} Tags: ${selectedFixture.tags.join(", ")}`}>{scene.title ?? scene.id}</b> <span className="fixture-purpose">{selectedFixture.purpose}</span> · {countNodes(scene.nodes)} nodes · {scene.edges.length} edges
+            <b title={`${selectedFixture.description} Tags: ${selectedFixture.tags.join(", ")}`}>{scene.title ?? scene.id}</b> <span className="fixture-purpose">{selectedFixture.purpose}</span> · {countNodes(scene.nodes)} nodes · {collectEdges(scene).length} edges
             {scene.flow ? ` · flow ${scene.flow}` : ''}
             {scene.cols ? ` · cols ${scene.cols}` : ''}
           </span>
@@ -261,16 +229,13 @@ export function App() {
                   {items.map(fixture => (
                     <article className="gallery-fixture" id={`fixture-${fixture.scene.id}`} key={fixture.scene.id}>
                       <header className="fixture-heading">
-                        <h3><a href={`#/${fixture.scene.id}`}>{NODE_FIXTURE_LABELS[fixture.scene.id] ?? fixture.scene.title ?? fixture.scene.id}</a></h3>
+                        <h3><a href={`#/${fixture.scene.id}`}>{fixture.scene.title ?? fixture.scene.id}</a></h3>
                         <p>{fixture.description}</p>
                       </header>
-                      {galleryScenes(fixture.scene).map(preview => (
-                        <section className="gallery-example" key={preview.id}>
-                          {preview.id !== fixture.scene.id && <h4>{preview.title}</h4>}
-                          <GalleryPreview scene={preview} theme={theme}
-                            focusId={fixture.scene.id === scene.id ? focusId || undefined : undefined} />
-                        </section>
-                      ))}
+                      <section className="gallery-example">
+                        <GalleryPreview scene={fixture.scene} theme={theme}
+                          focusId={fixture.scene.id === scene.id ? focusId || undefined : undefined} />
+                      </section>
                     </article>
                   ))}
                 </section>

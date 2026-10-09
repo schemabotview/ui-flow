@@ -36,13 +36,16 @@ try {
   browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
   await mkdir('visual-artifacts', { recursive: true })
-  // The authoring gallery must show every category without tabs and preserve readable scale.
+  // The authoring gallery must show every category without tabs and preserve readable scale. Each
+  // category is ONE panel now, so a panel is fitted to the gallery's width rather than shown at native
+  // size: 0.45 is the floor, set under the architecture studies, which have always rendered at ~0.5
+  // in this same gallery and are read at that scale.
   await page.setViewport({ width: 1920, height: 1080 })
   await page.goto('http://127.0.0.1:5179/#/nodes', { waitUntil: 'networkidle0' })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForFunction(() => {
     const viewport = document.querySelector('.gallery-preview .react-flow__viewport')
-    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 1
+    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 0.45
   })
   const gallery = await page.evaluate(() => ({
     categories: document.querySelectorAll('.gallery-category').length,
@@ -50,7 +53,7 @@ try {
     sidebarChildren: document.querySelectorAll('.rail ul').length,
     nodeExamples: document.querySelectorAll('#fixture-nodes .gallery-example').length,
   }))
-  if (gallery.categories !== 11 || gallery.sidebarLinks !== 11 || gallery.sidebarChildren !== 0 || gallery.nodeExamples !== 6) {
+  if (gallery.categories !== 11 || gallery.sidebarLinks !== 11 || gallery.sidebarChildren !== 0 || gallery.nodeExamples !== 1) {
     throw new Error(`Unexpected gallery structure: ${JSON.stringify(gallery)}`)
   }
   const overflow = await page.evaluate(() => [...document.querySelectorAll('.preview-scroll')]
@@ -88,7 +91,7 @@ try {
         await page.goto(`http://127.0.0.1:5179/?capture=1&${full}theme=${theme}#/${fixture}`, { waitUntil: 'networkidle0' })
         await page.evaluate(() => document.fonts.ready)
         const selects = await page.$$('select')
-        if (selects.length > 1 && fixture === 'prose-hierarchy') await selects[selects.length - 1].select('controller')
+        if (selects.length > 1 && fixture === 'nodes') await selects[selects.length - 1].select('prose-hierarchy:controller')
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
         const failures = await page.evaluate(() => {
           const failures = []
@@ -114,26 +117,29 @@ try {
     }
   }
   // EDGE PORTS, as RENDERED. check-geometry proves the offsets; this proves FlowEdge applied them to
-  // the real SVG paths. Counted as edge ends that land on the same pixel as another edge's end. The
-  // default scene MUST have some — otherwise this measures nothing and would pass on any build —
-  // and the opt-in scene must have none.
+  // the real SVG paths. Both variants sit in the `edges` panel (nested sub-scenes `edge-ports-center`
+  // and `edge-ports-spread`, same graph), counted as edge ends that land on the same point as another
+  // edge's end. Path coordinates are in flow space, so this does not depend on the zoom. The default
+  // sub-scene MUST have some — otherwise this measures nothing and would pass on any build — and the
+  // opt-in one must have none.
   await page.setViewport({ width: 1920, height: 1080 })
-  const coincident = async (fixture) => {
-    await page.goto(`http://127.0.0.1:5179/?capture=1&theme=dark#/${fixture}`, { waitUntil: 'networkidle0' })
-    await page.evaluate(() => document.fonts.ready)
-    return page.evaluate(() => {
-      const ends = []
-      for (const path of document.querySelectorAll('.react-flow__edge-path')) {
-        const len = path.getTotalLength()
-        for (const at of [0, len]) { const q = path.getPointAtLength(at); ends.push(`${Math.round(q.x)},${Math.round(q.y)}`) }
-      }
-      return ends.length - new Set(ends).size
-    })
-  }
-  const stacked = await coincident('edge-ports-center')
-  const spreadStacked = await coincident('edge-ports-spread')
-  if (stacked < 4) throw new Error(`edge-ports-center should stack edge ends at face midpoints (coincident ends: ${stacked}) — the port check would be vacuous`)
-  if (spreadStacked !== 0) throw new Error(`edge-ports-spread still has ${spreadStacked} coincident edge ends`)
+  await page.goto('http://127.0.0.1:5179/?capture=1&theme=dark#/edges', { waitUntil: 'networkidle0' })
+  await page.evaluate(() => document.fonts.ready)
+  const coincident = (prefix) => page.evaluate((prefix) => {
+    const ends = []
+    for (const edge of document.querySelectorAll('.react-flow__edge')) {
+      if (!edge.dataset.id?.includes(prefix)) continue
+      const path = edge.querySelector('.react-flow__edge-path')
+      const len = path.getTotalLength()
+      for (const at of [0, len]) { const q = path.getPointAtLength(at); ends.push(`${Math.round(q.x)},${Math.round(q.y)}`) }
+    }
+    return { count: ends.length, coincident: ends.length - new Set(ends).size }
+  }, prefix)
+  const stacked = await coincident('edge-ports-center:')
+  const spreadStacked = await coincident('edge-ports-spread:')
+  if (stacked.count !== 22 || spreadStacked.count !== 22) throw new Error(`expected 11 edges per ports sub-scene, got ${stacked.count / 2} and ${spreadStacked.count / 2}`)
+  if (stacked.coincident < 4) throw new Error(`the default ports sub-scene should stack edge ends at face midpoints (coincident ends: ${stacked.coincident}) — the port check would be vacuous`)
+  if (spreadStacked.coincident !== 0) throw new Error(`the spread ports sub-scene still has ${spreadStacked.coincident} coincident edge ends`)
   console.log(`Text bounds passed for ${FIXTURES.length} fixtures × 2 themes × 3 viewports.`)
 } finally {
   await browser?.close()

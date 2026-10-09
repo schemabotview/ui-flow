@@ -258,6 +258,8 @@ export interface SceneNode {
   // stacking/gridding — so a container can show a mini actor→targets fan (e.g. You → AWS). Ignored
   // (children stack/grid per `cols`) when absent. Reference child ids only.
   edges?: SceneEdge[]
+  /** Where this container's edges (and its descendants') attach to a face — see Scene.edgePorts. */
+  edgePorts?: 'center' | 'spread'
   // Direction of that child flow. 'TB' (top→bottom, default) or 'LR' (left→right — actor on the left,
   // targets fanned right) are the common two; 'BT' (bottom→top) and 'RL' (right→left) are the reverses
   // — same axis, arrows pointing the other way (e.g. an OUTBOUND flow with the internet at the top).
@@ -310,8 +312,9 @@ export interface Scene {
    * Where an edge attaches along a node's face. 'center' (default) meets every edge on a face at its
    * midpoint — a fan-in lands as one knot, and two edges between the same pair of faces draw on top
    * of each other. 'spread' distributes the edges that share a face along it, ordered by where their
-   * other end sits so the fan does not cross itself. Applies to every edge in the scene, including
-   * container edges. Moves no node: only where the arrows touch.
+   * other end sits so the fan does not cross itself. INHERITED like `framed`: it applies to the
+   * scene's own edges and to the edges of every container, unless a container sets its own.
+   * Moves no node: only where the arrows touch.
    */
   edgePorts?: 'center' | 'spread'
   // Direction of the scene's top-level flow (with `edges`): 'TB' (default) · 'LR' · 'BT' (bottom→top,

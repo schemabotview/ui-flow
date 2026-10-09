@@ -30,10 +30,10 @@ try {
   const short = proseSize({id:'short',label:'Short'})
   const long = proseSize({id:'long',label:'The sentence worth keeping',sub:'The controller decides and never works; processors do the reverse.'})
   assert.ok(long.h > short.h, 'Wrapping prose must reserve more than the legacy height floor')
-  const scene = allFixtures.find(scene => scene.id === 'prose-hierarchy')
+  const scene = allFixtures.find(scene => scene.id === 'nodes')
   const nodes = computeLayout(scene)
-  assert.equal(nodes.find(node => node.id === 'plan').node.kind, undefined, 'Compact must not rewrite cards into another kind')
-  assert.equal(nodes.find(node => node.id === 'properties').node.kind, 'list')
+  assert.equal(nodes.find(node => node.id === 'prose-hierarchy:plan').node.kind, undefined, 'Compact must not rewrite cards into another kind')
+  assert.equal(nodes.find(node => node.id === 'prose-hierarchy:properties').node.kind, 'list')
   // align/stretch: 'start' rules every layer to a common edge, and stretch runs them to a common far
   // edge too. Asserted on the study, which is the only fixture wide enough for the defect to exist.
   const study = allFixtures.find(scene => scene.id === 'barclays-azure')
@@ -58,28 +58,39 @@ try {
   const span = Math.max(...lower.map(n => n.x + n.w)) - Math.min(...lower.map(n => n.x))
   assert.ok(Math.abs(span - runtime.w) < 60, `stretched layer should span the row (${span} vs ${runtime.w})`)
 
-  // EDGE PORTS. The default must leave every edge at its face midpoint, and 'spread' must (a) give
-  // every edge sharing a face a DISTINCT offset, (b) keep each port on its face, (c) order the fan
-  // by where the other end sits so it does not cross itself, and (d) leave a lone edge untouched.
-  // Both scenes are the same graph, so node positions must be identical — ports move no node.
-  const portsOff = allFixtures.find(scene => scene.id === 'edge-ports-center')
-  const portsOn = allFixtures.find(scene => scene.id === 'edge-ports-spread')
-  assert.deepEqual(computeLayout(portsOff).map(({ node, ...p }) => p), computeLayout(portsOn).map(({ node, ...p }) => p), 'edgePorts must not move any node')
-  const placedOn = computeLayout(portsOn)
-  const edgesOn = collectEdges(portsOn)
-  const offs = portOffsets(placedOn, edgesOn)
-  assert.deepEqual(offs, portOffsets(placedOn, edgesOn), 'port offsets must be deterministic')
+  // EDGE PORTS. Both variants live in the `edges` panel as two sub-scenes of the SAME graph, one
+  // inheriting the default and one with `edgePorts: 'spread'` (a container-level, inherited option).
+  // The default must leave every edge at its face midpoint; 'spread' must (a) give every edge sharing
+  // a face a DISTINCT offset, (b) keep each port on its face, (c) centre the ports on the face,
+  // (d) order a fan by where the other end sits so it does not cross itself, and (e) leave a lone
+  // edge untouched. And because it moves no node, the two sub-scenes must lay out identically.
+  const panelEdges = allFixtures.find(scene => scene.id === 'edges')
+  const placedAll = computeLayout(panelEdges)
+  const byId = new Map(placedAll.map(p => [p.id, p]))
+  // Ids are nested (`edge-ports:edge-ports-spread:sink`), so a sub-scene's nodes are those whose id
+  // contains `<sub-scene>:`, and a node's own name is whatever follows it.
+  const tail = (id, prefix) => id.slice(id.indexOf(prefix) + prefix.length)
+  const geom = (prefix) => placedAll.filter(p => p.id.includes(prefix)).map(({ id, node, parentId, ...p }) => ({ id: tail(id, prefix), ...p, parentId: parentId?.includes(prefix) ? tail(parentId, prefix) : undefined }))
+  assert.ok(geom('edge-ports-center:').length >= 15, 'the default ports sub-scene must be in the panel')
+  assert.deepEqual(geom('edge-ports-center:'), geom('edge-ports-spread:'), 'edgePorts must not move any node')
+  const all = collectEdges(panelEdges)
+  const offs = portOffsets(placedAll, all)
+  assert.deepEqual(offs, portOffsets(placedAll, all), 'port offsets must be deterministic')
+  const ownedBy = (e, prefix) => e.source.includes(prefix)
+  all.forEach((e, i) => {
+    if (e.ports !== 'spread') assert.deepEqual(offs[i], { src: 0, tgt: 0 }, `${e.source}->${e.target}: a default edge must stay at the midpoint`)
+  })
+  assert.ok(all.filter(e => ownedBy(e, 'edge-ports-spread:')).every(e => e.ports === 'spread'), "the spread sub-scene's edges must inherit 'spread'")
+  assert.ok(all.filter(e => ownedBy(e, 'edge-ports-center:')).every(e => e.ports === 'center'), 'the other sub-scene must stay at the default')
   const face = (e, end) => end === 'src' ? { TB: 'b', BT: 't', LR: 'r', RL: 'l' }[e.dir] : { TB: 't', BT: 'b', LR: 'l', RL: 'r' }[e.dir]
   const seen = new Map()
-  edgesOn.forEach((e, i) => {
+  all.forEach((e, i) => {
+    if (e.ports !== 'spread') return
     for (const [end, id] of [['src', e.source], ['tgt', e.target]]) {
       const key = `${id}|${face(e, end)}`
-      const list = seen.get(key) ?? []
-      list.push({ i, off: offs[i][end] })
-      seen.set(key, list)
+      seen.set(key, [...(seen.get(key) ?? []), { i, off: offs[i][end] }])
     }
   })
-  const byId = new Map(placedOn.map(p => [p.id, p]))
   let spread = 0
   for (const [key, list] of seen) {
     const [id, f] = key.split('|')
@@ -91,9 +102,10 @@ try {
     for (const m of list) assert.ok(Math.abs(m.off) <= len / 2, `${key}: port must stay on its face`)
     assert.ok(Math.abs(list.reduce((s, m) => s + m.off, 0)) < 0.01, `${key}: ports must be centred on the face`)
   }
-  assert.ok(spread >= 5, `the fixture must exercise fan-in, fan-out, the pair and the LR fan (got ${spread} shared faces)`)
-  // Fan-in: the left-hand producer must take the left-hand port (else the fan crosses itself).
-  const fanIn = edgesOn.map((e, i) => ({ e, i })).filter(({ e }) => e.target === 'sink')
+  assert.ok(spread >= 5, `the panel must exercise fan-in, fan-out, the pair and the LR fan (got ${spread} shared faces)`)
+  // Fan-in: the left-hand producer must take the left-hand port (else the fan crosses itself). Node
+  // positions are parent-relative, so order by the producers' own x within their shared container.
+  const fanIn = all.map((e, i) => ({ e, i })).filter(({ e }) => e.ports === 'spread' && e.target === 'edge-ports:edge-ports-spread:sink')
   const byX = fanIn.slice().sort((a, b) => byId.get(a.e.source).x - byId.get(b.e.source).x)
   assert.deepEqual(byX.map(m => offs[m.i].tgt), byX.map(m => offs[m.i].tgt).slice().sort((a, b) => a - b), 'a fan must not cross itself')
 

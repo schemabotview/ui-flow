@@ -2,7 +2,7 @@
 //
 // Every node has one handle per face, so by default every edge on a face meets at its midpoint — a
 // fan-in lands as one knot, and two edges between the same pair of faces draw on top of each other.
-// `scene.edgePorts: 'spread'` opts a scene into distributing the edges that share a face along it.
+// `edgePorts: 'spread'` (on the scene, or inherited down a container) opts edges into distributing the edges that share a face along it.
 //
 // This is geometry, not layout: node positions never move, and no handle is added to any node. The
 // result is a per-edge OFFSET along the face, which FlowEdge applies to the endpoint react-flow
@@ -58,6 +58,7 @@ export function portOffsets(placed: Placed[], edges: PlacedEdge[]): PortOffsets[
   // (node, face) → the edge ends attached there.
   const groups = new Map<string, { edge: number; end: 'src' | 'tgt'; key: number; labelled: boolean }[]>()
   edges.forEach((e, i) => {
+    if (e.ports !== 'spread') return // only edges that opted in take part; the rest stay at the midpoint
     const h = HANDLES[e.dir] ?? HANDLES.TB
     const ends = [
       { id: e.source, face: h.s[0] as Face, end: 'src' as const, other: e.target },

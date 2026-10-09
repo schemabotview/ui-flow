@@ -286,21 +286,26 @@ export function computeLayout(scene: Scene): Placed[] {
 // are 'TB'). SceneView uses `dir` to pick the handle pair so the arrow routes TB or LR.
 export interface PlacedEdge extends SceneEdge {
   dir: 'TB' | 'LR' | 'BT' | 'RL'
+  ports: 'center' | 'spread' // resolved: the nearest container's (or the scene's) `edgePorts`
 }
 
 // All edges to draw: the scene's own edges plus every container's child edges (any depth). Node ids
 // are global in react-flow, so a container edge renders exactly like a top-level one.
 export function collectEdges(scene: Scene): PlacedEdge[] {
-  const out: PlacedEdge[] = scene.edges.map((e) => ({ ...e, dir: e.dir ?? scene.flow ?? 'TB' }))
-  const walk = (nodes: SceneNode[]) => {
+  const base = scene.edgePorts ?? 'center'
+  const out: PlacedEdge[] = scene.edges.map((e) => ({ ...e, dir: e.dir ?? scene.flow ?? 'TB', ports: base }))
+  // `edgePorts` is inherited down the container tree, the way `framed` is: a container's own value
+  // wins for its edges and for everything beneath it.
+  const walk = (nodes: SceneNode[], inherited: 'center' | 'spread') => {
     for (const n of nodes) {
+      const ports = n.edgePorts ?? inherited
       if (n.edges?.length) {
         const dir = n.flow ?? 'TB'
-        for (const e of n.edges) out.push({ ...e, dir: e.dir ?? dir })
+        for (const e of n.edges) out.push({ ...e, dir: e.dir ?? dir, ports })
       }
-      if (n.children?.length) walk(n.children)
+      if (n.children?.length) walk(n.children, ports)
     }
   }
-  walk(scene.nodes)
+  walk(scene.nodes, base)
   return out
 }

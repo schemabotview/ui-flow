@@ -2,6 +2,7 @@
 // depicted. Keep scene IDs stable: consumer links and visual checks rely on them.
 // Keep content-sizing fixtures separate so clipping remains visible at capture scale.
 import type { Scene } from '../../src'
+import { panel } from './panel'
 
 import { nodes as nodesFixture } from './nodes/nodes'
 import { edges as edgesFixture } from './edges/edges'
@@ -51,27 +52,29 @@ function entry(category: Category, scene: Scene, description: string, tags: stri
   return { category, scene, description, tags, purpose }
 }
 
+// ONE PANEL PER CAPABILITY. Each non-study category is a single board that composes its source
+// scenes (see panel.ts), so the browser shows what an element can do in one place instead of a scroll
+// of near-identical fixtures. The first panel in each category keeps the id its first source scene
+// had (`nodes`, `edges`, `plot`, `list`, `vendor-icons`) because the rail links to it.
 export const fixtureCatalog: Fixture[] = [
-  entry('nodes', nodesFixture, 'Node palette, patterns and card/tile variants.', ['card', 'tile', 'chip', 'patterns']),
-  entry('nodes', prose, 'Text hierarchy, wrapping and focus across node types.', ['prose', 'wrapping', 'focus']),
-  entry('nodes', proseSizing, 'Content-driven card, header and list sizing.', ['prose', 'wrapping', 'minimum-width', 'headers']),
-  entry('edges', edgesFixture, 'Routing, direction overrides, arrowheads and labels.', ['routing', 'directions', 'labels', 'arrowheads']),
-  entry('edges', edgePortsCenter, 'Edge ports at their default: fan-in, fan-out and a request/reply pair all stack at a face midpoint.', ['ports', 'fan-in', 'fan-out', 'default']),
-  entry('edges', edgePortsSpread, "edgePorts: 'spread' on the same graph: edges sharing a face are distributed along it.", ['ports', 'fan-in', 'fan-out', 'opt-in']),
+  entry('nodes', panel('nodes', 'Nodes — palette, variants, framing, prose and wrapping', [
+    { scene: nodesFixture, bare: true }, prose, proseSizing,
+  ], 3), 'Every structural node form: the seven patterns, card / tile / chip, framed and unframed, warn in context, prose hierarchy and wrapping.', ['card', 'tile', 'chip', 'patterns', 'framed', 'prose', 'wrapping', 'headers']),
+  entry('edges', panel('edges', 'Edges — routing, arrowheads, labels, ports', [
+    edgesFixture,
+    panel('edge-ports', "edgePorts — 'center' (default) against 'spread', same graph", [edgePortsCenter, edgePortsSpread], 2),
+  ], 1), "Every edge capability: routing, direction overrides, arrowheads, labels and their failure, and edgePorts 'center' vs 'spread' on the same graph.", ['routing', 'directions', 'labels', 'arrowheads', 'ports', 'fan-in', 'fan-out']),
   entry('containers', containersFixture, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
   entry('tables', table, 'Schema and data tables sized from their content.', ['schema', 'data', 'columns', 'sizing']),
-  entry('charts', plot, 'Cartesian axes, line series and geometric figures.', ['plot', 'line', 'axes', 'cartesian']),
-  entry('charts', plotMl, 'Machine learning figures arranged in a 2×2 grid.', ['plot', 'line', 'scatter', 'machine-learning', 'grid']),
-  entry('charts', evolution, 'Evolution stages with a truncated axis.', ['evolution', 'baseline', 'truncated-axis']),
-  entry('charts', evolutionZero, 'Evolution stages with a zero baseline and wide span.', ['evolution', 'baseline', 'zero-based']),
+  entry('charts', panel('plot', 'Charts — plot and evolution', [plot, plotMl, evolution, evolutionZero], 2),
+    'Cartesian axes, line / scatter series, machine-learning figures, and evolution rows with a truncated and a zero baseline.', ['plot', 'line', 'scatter', 'axes', 'evolution', 'baseline']),
   entry('code', code, 'Code width floor, hugging and raised cards.', ['highlighting', 'minimum-width', 'sizing']),
-  entry('lists-memory', list, 'Service properties sized to their content.', ['list', 'properties', 'wrapping']),
-  entry('lists-memory', memory, 'Memory slots, offsets and groups.', ['memory', 'slots', 'offsets', 'groups']),
+  entry('lists-memory', panel('list', 'Lists and memory', [list, memory], 2),
+    'Service properties sized to their content, and a memory figure with slots, offsets and groups.', ['list', 'properties', 'wrapping', 'memory', 'slots', 'offsets']),
   entry('layouts', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
-  entry('icons', vendorIcons, 'Vendor and Lucide icons with fallback behavior.', ['aws', 'azure', 'lucide', 'fallback']),
-  entry('icons', iconGallery, 'Lookup gallery of supported Lucide icon keys.', ['lucide', 'registry'], 'gallery'),
-  entry('icons', azureGallery, 'Lookup gallery of Azure service icon keys.', ['azure', 'registry'], 'gallery'),
-  entry('viewport-focus', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
+  entry('icons', panel('vendor-icons', 'Icons — vendor, lucide and the full registries', [vendorIcons, iconGallery, azureGallery], 1),
+    'Vendor and Lucide icons with fallback behaviour, then the complete Lucide and Azure registries.', ['aws', 'azure', 'lucide', 'fallback', 'registry'], 'gallery'),
+  entry('viewport-focus', padding, 'Viewport padding on a sparse scene. Kept apart: padding is a whole-scene option, so a panel cannot show it.', ['viewport', 'padding', 'fit']),
   entry('viewport-focus', focus, 'Select a node or container using the focus control.', ['focus', 'interaction'], 'example'),
   entry('studies', barclaysAzure, 'Azure trade-finance and risk platform at architecture scale.', ['azure', 'architecture', 'nested'], 'study'),
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
