@@ -21,6 +21,10 @@ const STACK_GAP_Y = 28 // vertical gap in an edgeless STACK (a labelled list —
 const TILE_GAP_X = 20 // tighter gaps for a grid/stack of tiles — they pack neatly
 const TILE_GAP_Y = 16
 const PAD = 14 // container inner padding around its children
+// A container that declares a BACK edge reserves this much extra on the side the edge runs round (the
+// right in a TB/BT flow, the bottom in LR/RL), so the loop stays INSIDE its box instead of crossing the
+// border. It must hold FlowEdge's detour (40px) plus the label pill; the 14px PAD alone does not.
+const BACK_LANE = 56
 
 export interface Placed {
   id: string
@@ -95,15 +99,18 @@ function sizeNodes(nodes: SceneNode[]): Map<string, Sized> {
   for (const n of nodes) {
     const kind = kindOf(n) // a CONTENT node (code/memory/table/plot) sizes itself from its content
     if (n.children?.length) {
-      const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB', n.align ?? 'center', n.stretch ?? false) // flow if edges
+      const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB', n.align ?? 'center', n.stretch ?? false, n.layout ?? 'layered') // flow if edges
       // A container is sized by what it CONTAINS — and by its own header, which is content too: a
       // box narrower than its title's longest word breaks that word mid-syllable. See headerMinWidth.
-      const boxW = Math.max(inner.w + 2 * PAD, headerMinWidth(n))
+      const lane = n.edges?.some((e) => e.back) ? BACK_LANE : 0 // see BACK_LANE
+      const laneX = n.flow === 'LR' || n.flow === 'RL' ? 0 : lane // the lane lies across the flow's axis…
+      const laneY = lane - laneX // …on the right of a vertical flow, under a horizontal one
+      const boxW = Math.max(inner.w + 2 * PAD + laneX, headerMinWidth(n))
       const header = headerHeight(n, boxW) // grows to fit a wrapping label + sub
       // When the HEADER set the width, the children no longer fill the box — centre them in it, or
       // they sit hard against the left edge with all the slack pooled on the right.
-      const inset = PAD + (boxW - 2 * PAD - inner.w) / 2
-      sized.set(n.id, { w: boxW, h: inner.h + header + PAD, kids: inner.placed, header, inset })
+      const inset = PAD + (boxW - 2 * PAD - laneX - inner.w) / 2
+      sized.set(n.id, { w: boxW, h: inner.h + header + PAD + laneY, kids: inner.placed, header, inset })
     } else if (kind) {
       sized.set(n.id, kind.size(n))
     } else if (n.variant === 'chip') {
@@ -136,10 +143,24 @@ function localEdgesOf(nodes: SceneNode[], edges: SceneEdge[]): SceneEdge[] {
   for (const e of edges) {
     const s = ownerOf.get(e.source)
     const t = ownerOf.get(e.target)
+    if (e.back) continue // a BACK edge is drawn but never ranks — see SceneEdge.back
     if (s && t && s !== t) localEdges.push({ source: s, target: t })
   }
 
   return localEdges
+}
+
+// Attach a container's direct children (parent-relative, offset past the header/padding); deeper
+// descendants already carry their own parentId + relative position, so they pass through unchanged.
+function attachKids(placed: Placed[], sized: Map<string, Sized>, parent: SceneNode, kids?: Placed[]) {
+  if (!kids) return
+  const s = sized.get(parent.id)
+  const header = s?.header ?? HEADER_MIN // this container's own (possibly grown) header
+  const inset = s?.inset ?? PAD // PAD, unless the header widened the box and the kids were centred
+  for (const c of kids) {
+    if (c.parentId === undefined) placed.push({ ...c, x: inset + c.x, y: header + c.y, parentId: parent.id })
+    else placed.push(c)
+  }
 }
 
 // What a placement strategy is handed: the siblings, their already-computed boxes, the edges among
@@ -175,18 +196,6 @@ const layered: Strategy = ({ nodes, sized, localEdges, cols, dir, align, stretch
   const sortedD = [...layers.keys()].sort((a, b) => a - b)
 
   const placed: Placed[] = []
-  // Attach a container's direct children (parent-relative, offset past the header/padding); deeper
-  // descendants already carry their own parentId + relative position, so they pass through unchanged.
-  const attachKids = (parent: SceneNode, kids?: Placed[]) => {
-    if (!kids) return
-    const s = sized.get(parent.id)
-    const header = s?.header ?? HEADER_MIN // this container's own (possibly grown) header
-    const inset = s?.inset ?? PAD // PAD, unless the header widened the box and the kids were centred
-    for (const c of kids) {
-      if (c.parentId === undefined) placed.push({ ...c, x: inset + c.x, y: header + c.y, parentId: parent.id })
-      else placed.push(c)
-    }
-  }
 
   // Each layer's extent ALONG the flow (thickness) and ACROSS it (span). Horizontal flows (LR/RL) run
   // along x; vertical flows (TB/BT) along y. Reversed flows (BT/RL) place layer 0 at the far end and
@@ -251,7 +260,7 @@ const layered: Strategy = ({ nodes, sized, localEdges, cols, dir, align, stretch
       const x = horizontal ? alongPos : cursorAcross
       const y = horizontal ? cursorAcross : alongPos
       placed.push({ id: n.id, x, y, w: s.w, h: s.h, node: n })
-      attachKids(n, s.kids)
+      attachKids(placed, sized, n, s.kids)
       cursorAcross += (horizontal ? s.h : s.w) + gapCross
     }
     cursorAlong += layerAlong.get(d)! + gapAlong
@@ -259,9 +268,50 @@ const layered: Strategy = ({ nodes, sized, localEdges, cols, dir, align, stretch
   return horizontal ? { placed, w: totalAlong, h: maxAcross } : { placed, w: maxAcross, h: totalAlong }
 }
 
+
+// A closed loop: the children, in author order, set clockwise round an ellipse starting at the top.
+// The radii are the smallest that leave every pair of boxes a flow-sized gap (arrows need room), found
+// by growing them in fixed steps — deterministic, and indifferent to how unequal the boxes are. Not
+// ranked, so the edges among the children are drawn but do not place anything.
+const CYCLE_ASPECT = 1.6 // the loop is wider than it is tall: boxes are, and so are the frames it lands in
+const cycle: Strategy = ({ nodes, sized }) => {
+  const placed: Placed[] = []
+  const n = nodes.length
+  if (!n) return { placed, w: 0, h: 0 }
+  const box = (i: number) => sized.get(nodes[i].id)!
+  const centre = (i: number, ry: number) => {
+    const theta = -Math.PI / 2 + (2 * Math.PI * i) / n
+    return { x: ry * CYCLE_ASPECT * Math.cos(theta), y: ry * Math.sin(theta) }
+  }
+  const clear = (ry: number) => {
+    const c = nodes.map((_, i) => centre(i, ry))
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const dx = Math.abs(c[i].x - c[j].x) - (box(i).w + box(j).w) / 2
+        const dy = Math.abs(c[i].y - c[j].y) - (box(i).h + box(j).h) / 2
+        if (dx < GAP_Y && dy < GAP_Y) return false
+      }
+    }
+    return true
+  }
+  let ry = n === 1 ? 0 : 40
+  while (n > 1 && !clear(ry)) ry += 8
+  const c = nodes.map((_, i) => centre(i, ry))
+  const x0 = Math.min(...c.map((p, i) => p.x - box(i).w / 2))
+  const y0 = Math.min(...c.map((p, i) => p.y - box(i).h / 2))
+  const x1 = Math.max(...c.map((p, i) => p.x + box(i).w / 2))
+  const y1 = Math.max(...c.map((p, i) => p.y + box(i).h / 2))
+  nodes.forEach((node, i) => {
+    const s = box(i)
+    placed.push({ id: node.id, x: c[i].x - s.w / 2 - x0, y: c[i].y - s.h / 2 - y0, w: s.w, h: s.h, node })
+    attachKids(placed, sized, node, s.kids)
+  })
+  return { placed, w: x1 - x0, h: y1 - y0 }
+}
+
 // The placement strategies. Sizing and edge remapping are strategy-independent and happen once,
 // before dispatch; a strategy only decides where each already-sized box goes.
-const STRATEGIES: Record<string, Strategy> = { layered }
+const STRATEGIES: Record<'layered' | 'cycle', Strategy> = { layered, cycle }
 
 // Lay out a set of sibling nodes (+ their subtrees). Returns placements RELATIVE to this group's
 // (0,0) top-left, plus the group's overall size. Container children come back with `parentId` set.
@@ -272,20 +322,23 @@ function layoutSubtree(
   dir: Dir = 'TB',
   align: 'center' | 'start' = 'center',
   stretch = false,
+  layout: 'layered' | 'cycle' = 'layered',
 ): { placed: Placed[]; w: number; h: number } {
   const sized = sizeNodes(nodes)
   const localEdges = localEdgesOf(nodes, edges)
-  return STRATEGIES.layered({ nodes, sized, localEdges, cols, dir, align, stretch })
+  return STRATEGIES[layout]({ nodes, sized, localEdges, cols, dir, align, stretch })
 }
 
 export function computeLayout(scene: Scene): Placed[] {
-  return layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB', scene.align ?? 'center', scene.stretch ?? false).placed
+  return layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB', scene.align ?? 'center', scene.stretch ?? false, scene.layout ?? 'layered').placed
 }
 
 // An edge to draw, tagged with the flow direction of the container it belongs to (scene-level edges
 // are 'TB'). SceneView uses `dir` to pick the handle pair so the arrow routes TB or LR.
-export interface PlacedEdge extends SceneEdge {
-  dir: 'TB' | 'LR' | 'BT' | 'RL'
+export interface PlacedEdge extends Omit<SceneEdge, 'dir'> {
+  // 'auto' (the edges of a cycle container): the face is chosen from where the two ends sit — see
+  // resolveDirs in ports.ts. By the time SceneView draws an edge it is always one of the four.
+  dir: 'TB' | 'LR' | 'BT' | 'RL' | 'auto'
   ports: 'center' | 'spread' // resolved: the nearest container's (or the scene's) `edgePorts`
 }
 
@@ -293,14 +346,14 @@ export interface PlacedEdge extends SceneEdge {
 // are global in react-flow, so a container edge renders exactly like a top-level one.
 export function collectEdges(scene: Scene): PlacedEdge[] {
   const base = scene.edgePorts ?? 'center'
-  const out: PlacedEdge[] = scene.edges.map((e) => ({ ...e, dir: e.dir ?? scene.flow ?? 'TB', ports: base }))
+  const out: PlacedEdge[] = scene.edges.map((e) => ({ ...e, dir: e.dir ?? (scene.layout === 'cycle' ? 'auto' : scene.flow ?? 'TB'), ports: base }))
   // `edgePorts` is inherited down the container tree, the way `framed` is: a container's own value
   // wins for its edges and for everything beneath it.
   const walk = (nodes: SceneNode[], inherited: 'center' | 'spread') => {
     for (const n of nodes) {
       const ports = n.edgePorts ?? inherited
       if (n.edges?.length) {
-        const dir = n.flow ?? 'TB'
+        const dir = n.layout === 'cycle' ? 'auto' : n.flow ?? 'TB'
         for (const e of n.edges) out.push({ ...e, dir: e.dir ?? dir, ports })
       }
       if (n.children?.length) walk(n.children, ports)

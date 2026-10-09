@@ -24,7 +24,7 @@ export function FlowEdge({
   label,
 }: EdgeProps) {
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; srcOff?: number; tgtOff?: number } | undefined
+  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; back?: boolean; srcOff?: number; tgtOff?: number } | undefined
   // A PORT offset slides the endpoint along its face (see ports.ts): x on a top/bottom face, y on a
   // left/right one. 0 — the default — is the face midpoint react-flow already gave us.
   const slide = (pos: Position, x: number, y: number, off = 0) =>
@@ -36,8 +36,14 @@ export function FlowEdge({
   // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just
   // enough to match the node radii; a hard 90° corner reads as a different drawing tool.
   const geometry = { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }
-  const [edgePath, labelX, labelY] =
-    d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
+  // A BACK edge leaves and re-enters the SAME side of the figure, with both ends at one level. A
+  // bezier has no control offset between two points that level, so it would draw a flat line along
+  // the faces; a stepped route with a real detour offset is what makes it a loop round the side.
+  const [edgePath, labelX, labelY] = d?.back
+    ? getSmoothStepPath({ ...geometry, borderRadius: 12, offset: 40 }) // 40 must fit BACK_LANE in layout.ts
+    : d?.route === 'step'
+      ? getSmoothStepPath({ ...geometry, borderRadius: 10 })
+      : getBezierPath(geometry)
   const pulse = d?.pulse ?? t.edge.pulse
 
   return (

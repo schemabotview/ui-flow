@@ -12,8 +12,8 @@ const { build } = require(require.resolve('esbuild', { paths: [process.cwd()] })
 const temp = await mkdtemp(join(tmpdir(), 'flow-geometry-'))
 try {
   const output = join(temp, 'fixtures.mjs')
-  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout, collectEdges} from './src/layout'; export {portOffsets} from './src/ports'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
-  const { allFixtures, computeLayout, collectEdges, portOffsets, proseSize } = await import(pathToFileURL(output))
+  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout, collectEdges} from './src/layout'; export {portOffsets, resolveDirs, handlesOf} from './src/ports'; export {backEdges, cycles} from './dev/fixtures/layouts/cycles'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
+  const { allFixtures, computeLayout, collectEdges, portOffsets, resolveDirs, handlesOf, backEdges, cycles, proseSize } = await import(pathToFileURL(output))
   for (const scene of allFixtures) {
     const placed = computeLayout(scene)
     assert.deepEqual(placed, computeLayout(scene), `${scene.id}: nondeterministic layout`)
@@ -108,6 +108,83 @@ try {
   const fanIn = all.map((e, i) => ({ e, i })).filter(({ e }) => e.ports === 'spread' && e.target === 'edge-ports:edge-ports-spread:sink')
   const byX = fanIn.slice().sort((a, b) => byId.get(a.e.source).x - byId.get(b.e.source).x)
   assert.deepEqual(byX.map(m => offs[m.i].tgt), byX.map(m => offs[m.i].tgt).slice().sort((a, b) => a - b), 'a fan must not cross itself')
+
+  // BACK EDGES. `back: true` must (a) not rank — no child lands anywhere it would not were the edge
+  // not there; (b) be what makes a closed cycle rank correctly: the TB container is authored
+  // observe, plan, act, so WITHOUT the flag the loop ranks observe first, WITH it plan → act → observe;
+  // and (c) route round the side: out of and back into the right faces (TB) or the bottom faces (LR).
+  const stripBack = (scene) => ({ ...scene, nodes: scene.nodes.map(n => ({ ...n, edges: n.edges?.filter(e => !e.back) })) })
+  const unflagged = (scene) => ({ ...scene, nodes: scene.nodes.map(n => ({ ...n, edges: n.edges?.map(({ back, ...e }) => e) })) })
+  // Children only, geometry only: `node` embeds the edge list, and a container that declares a back edge
+  // is deliberately larger by its lane (asserted below) — what must not move is anything INSIDE it.
+  const boxes = (scene) => computeLayout(scene).filter(p => p.parentId).map(({ node, ...p }) => p)
+  assert.deepEqual(boxes(backEdges), boxes(stripBack(backEdges)), 'a back edge must not move or re-rank any child')
+  const rankOf = (scene, ids) => { const p = new Map(computeLayout(scene).map(n => [n.id, n])); return ids.slice().sort((a, b) => p.get(a).y - p.get(b).y) }
+  const tbIds = ['observe', 'plan', 'act'] // the TB container's ids; the LR one is prefixed `lr-`
+  assert.deepEqual(rankOf(backEdges, tbIds), ['plan', 'act', 'observe'], 'back: true must rank the loop plan, act, observe')
+  assert.deepEqual(rankOf(unflagged(backEdges), tbIds), ['observe', 'plan', 'act'], 'without the flag this authoring order ranks wrongly — the flag is doing the work')
+  // A container that declares a back edge reserves a lane for it, on the right (TB) or the bottom (LR),
+  // so the loop stays inside the box; one that does not is untouched (the HEAD snapshot proves that).
+  const backBoxes = new Map(computeLayout(backEdges).map(p => [p.id, p]))
+  const rightGap = (box, kids) => backBoxes.get(box).w - Math.max(...kids.map(k => backBoxes.get(k).x + backBoxes.get(k).w))
+  const bottomGap = (box, kids) => backBoxes.get(box).h - Math.max(...kids.map(k => backBoxes.get(k).y + backBoxes.get(k).h))
+  assert.ok(rightGap('tb', tbIds) >= 56 + 14 - 0.01, 'a TB container with a back edge must reserve a lane on its right')
+  assert.ok(bottomGap('lr', ['lr-plan', 'lr-act', 'lr-observe']) >= 56 + 14 - 0.01, 'an LR container with a back edge must reserve a lane under it')
+  const flat = computeLayout({ ...backEdges, nodes: stripBack(backEdges).nodes }).reduce((m, p) => m.set(p.id, p), new Map())
+  assert.ok(flat.get('tb').w < backBoxes.get('tb').w && flat.get('lr').h < backBoxes.get('lr').h, 'the lane is paid for only by a container that has a back edge')
+  assert.deepEqual(handlesOf({ dir: 'TB', back: true }), { s: 'r-s', t: 'r-t' })
+  assert.deepEqual(handlesOf({ dir: 'LR', back: true }), { s: 'b-s', t: 'b-t' })
+  assert.deepEqual(handlesOf({ dir: 'TB' }), { s: 'b-s', t: 't-t' }, 'an ordinary edge keeps its handles')
+
+  // CYCLES. Every child clear of every other by the flow gap in at least one axis; children inside
+  // the box; set clockwise from the top in author order; and each edge's direction resolved by the
+  // axis on which its two boxes are clear of each other. Also the degenerate loops (1, 2, 3 nodes).
+  const around = (nodes) => {
+    const placed = computeLayout({ id: 'around', layout: 'cycle', nodes: nodes.map(id => ({ id, label: id.toUpperCase() })), edges: [] })
+    return placed
+  }
+  const checkLoop = (placed, label) => {
+    const kids = placed.filter(p => !p.parentId)
+    for (let i = 0; i < kids.length; i++) for (let j = i + 1; j < kids.length; j++) {
+      const dx = Math.abs(kids[i].x + kids[i].w / 2 - kids[j].x - kids[j].w / 2) - (kids[i].w + kids[j].w) / 2
+      const dy = Math.abs(kids[i].y + kids[i].h / 2 - kids[j].y - kids[j].h / 2) - (kids[i].h + kids[j].h) / 2
+      assert.ok(dx >= 71.99 || dy >= 71.99, `${label}: ${kids[i].id} and ${kids[j].id} are closer than the flow gap`)
+    }
+    if (kids.length < 3) return
+    const cx = (Math.min(...kids.map(k => k.x)) + Math.max(...kids.map(k => k.x + k.w))) / 2
+    const cy = (Math.min(...kids.map(k => k.y)) + Math.max(...kids.map(k => k.y + k.h))) / 2
+    const angle = k => { const a = Math.atan2(k.y + k.h / 2 - cy, k.x + k.w / 2 - cx) + Math.PI / 2; return (a + 2 * Math.PI) % (2 * Math.PI) }
+    const turns = kids.map(angle)
+    assert.ok(turns[0] < 0.01 || turns[0] > 2 * Math.PI - 0.01, `${label}: the first child must sit at the top`)
+    for (let i = 1; i < turns.length; i++) assert.ok(turns[i] > turns[i - 1], `${label}: children must run clockwise in author order`)
+  }
+  for (const n of [1, 2, 3, 5]) {
+    const placed = around(['a', 'b', 'c', 'd', 'e'].slice(0, n))
+    assert.equal(placed.length, n); checkLoop(placed, `cycle of ${n}`)
+  }
+  const cyclePlaced = computeLayout(cycles)
+  for (const loop of ['agent', 'control']) {
+    const kids = cyclePlaced.filter(p => p.parentId === loop).map(p => ({ ...p, id: p.id }))
+    assert.ok(kids.length >= 4, `${loop}: the loop must be populated`)
+    checkLoop(kids, loop)
+  }
+  const byIdCycle = new Map(cyclePlaced.map(p => [p.id, p]))
+  const abs = (p) => p.parentId ? (() => { const q = abs(byIdCycle.get(p.parentId)); return { x: q.x + p.x, y: q.y + p.y } })() : { x: p.x, y: p.y }
+  const resolved = resolveDirs(cyclePlaced, collectEdges(cycles))
+  assert.ok(resolved.length >= 10 && resolved.every(e => ['TB', 'BT', 'LR', 'RL'].includes(e.dir)), 'every cycle edge must resolve to one of the four directions')
+  for (const e of resolved) {
+    const a = byIdCycle.get(e.source), b = byIdCycle.get(e.target)
+    const A = abs(a), B = abs(b)
+    const dx = B.x + b.w / 2 - A.x - a.w / 2, dy = B.y + b.h / 2 - A.y - a.h / 2
+    const gapX = Math.abs(dx) - (a.w + b.w) / 2, gapY = Math.abs(dy) - (a.h + b.h) / 2
+    const horizontal = e.dir === 'LR' || e.dir === 'RL'
+    assert.equal(horizontal, gapX > gapY, `${e.source}->${e.target}: the face must follow the axis on which the boxes are clear`)
+    assert.ok(horizontal ? (e.dir === 'LR') === dx > 0 : (e.dir === 'TB') === dy > 0, `${e.source}->${e.target}: the arrow must point toward its target`)
+    // The point of choosing by gap: the arrow must not double back. Leaving a face must head AWAY from
+    // the source box and arrive on the side of the target that faces it.
+    if (horizontal) assert.ok(gapX > 0 || gapY <= gapX, `${e.source}->${e.target}: a horizontal arrow between overlapping columns doubles back`)
+  }
+  assert.ok(collectEdges(cycles).every(e => e.dir === 'auto'), 'a cycle container hands its edges to resolveDirs')
 
   console.log(`Geometry and determinism passed for ${allFixtures.length} visual fixtures.`)
 } finally { await rm(temp, {recursive:true,force:true}) }

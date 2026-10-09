@@ -50,5 +50,15 @@ export function panel(id: string, title: string, parts: (Scene | Part)[], cols?:
     if (s.edges.length || s.flow || s.framed !== undefined || s.edgePorts) throw new Error(`panel ${id}: "${s.id}" is not a plain row of boxes, so it cannot be spliced in bare`)
     return s.nodes.map((n) => prefixNode(n, s.id))
   })
+  // Ids are global in react-flow: two nodes with one id render as one, silently. Catch it here.
+  const seen = new Set<string>()
+  const visit = (list: SceneNode[]) => {
+    for (const n of list) {
+      if (seen.has(n.id)) throw new Error(`panel ${id}: duplicate node id "${n.id}" (ids are global within a scene)`)
+      seen.add(n.id)
+      if (n.children) visit(n.children)
+    }
+  }
+  visit(nodes)
   return { id, title, nodes, edges: [], cols }
 }

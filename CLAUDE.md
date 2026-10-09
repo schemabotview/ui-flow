@@ -62,8 +62,10 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   going down, nodes within it spread across and centred. Recursive: a node with `children` is a
   container laid out inside and sized to fit them plus a header. Child positions are relative to the
   immediate parent, top-level ones absolute. An edgeless subtree stacks vertically (or grids by
-  `cols`), so peer boards need no fake edges. Pure and deterministic — same scene in, same
-  coordinates out, which is what makes captures reproducible.
+  `cols`), so peer boards need no fake edges. Placement is a strategy table (`STRATEGIES`): `layered`
+  by default, `layout: 'cycle'` for a closed loop; sizing and edge remapping happen once, before
+  dispatch. Pure and deterministic — same scene in, same coordinates out, which is what makes captures
+  reproducible.
 - **`kinds.ts`** — the node-kind registry, one entry per `SceneNode.kind` pairing the SIZER that
   reserves the box with the RENDERER that paints into it. Adding a kind is: a sizer, a renderer, one
   entry here, and the `kind` union in `types.ts` — nothing in `layout.ts` or `SceneView.tsx` changes.
@@ -130,8 +132,11 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   `HEADER_MAX_FORCED_W`).
 - **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** `stretch` applies to
   CONTAINERS only and *shares* the surplus among a layer's boxes.
-- **A BACK EDGE is drawn but does not RANK** (`depthOf` skips it). **Two edges between the same pair
-  of FACES coincide exactly** — anchor a feedback edge at its real deep endpoints.
+- **A BACK EDGE is drawn but does not RANK** (`depthOf` skips it). `back: true` names one explicitly —
+  the only reliable way to mark the closing edge of a cycle, where "precedes" otherwise falls back to
+  author order — and routes it round the side, in a lane the container reserves (`BACK_LANE`, which
+  must hold `FlowEdge`'s 40px detour). **Two edges between the same pair of FACES coincide exactly** —
+  anchor a feedback edge at its real deep endpoints, or set `edgePorts: 'spread'`.
 - **An EVOLUTION column's height is CAP + rise + BODY, and only the rise is data.** Size the body
   per-stage and the figure lies about its own number. **`baseline` is a declared axis truncation** and
   the engine prints it. **The row is MONOCHROME** — a per-stage `pattern` singles ONE out.

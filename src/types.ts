@@ -265,6 +265,15 @@ export interface SceneNode {
   // — same axis, arrows pointing the other way (e.g. an OUTBOUND flow with the internet at the top).
   // Only meaningful with `edges`.
   flow?: 'TB' | 'LR' | 'BT' | 'RL'
+  /**
+   * How this container's children are PLACED. 'layered' (default) is the longest-path flow described
+   * above. 'cycle' sets the children, in author order, round a closed loop — clockwise from the top —
+   * for a figure whose subject is the loop itself (an agent's plan → act → observe, a control loop, a
+   * training loop). A cycle is not ranked, so it needs no back edge: draw the edges between
+   * consecutive children, last → first included, and each arrow leaves the face that looks at its
+   * target. `cols`, `align`, `stretch` and `flow` do not apply.
+   */
+  layout?: 'layered' | 'cycle'
 }
 
 export interface SceneEdge {
@@ -292,6 +301,16 @@ export interface SceneEdge {
   // the container/scene flow — e.g. two side-by-side nodes in a TB flow whose edge should run 'LR'.
   // Positioning is unaffected; only the drawn arrow's handles change. Defaults to the flow direction.
   dir?: 'TB' | 'LR' | 'BT' | 'RL'
+  /**
+   * Mark this edge as a BACK edge: a feedback, retry or acknowledgement that runs against the flow.
+   * It is drawn but never RANKS — the layout acts as if it were not there — and it is routed round the
+   * SIDE of the figure (out of the right face and back into the right face in a TB/BT flow, out of the
+   * bottom and back in the bottom in LR/RL) instead of cutting back through the nodes in between.
+   * The engine already skips an edge whose target precedes its source in topological order; this says
+   * so explicitly, which is the only reliable way to name the closing edge of a cycle. It implies no
+   * styling — pair it with `dashed` where the channel should read as secondary.
+   */
+  back?: boolean
 }
 
 export interface Scene {
@@ -317,6 +336,8 @@ export interface Scene {
    * Moves no node: only where the arrows touch.
    */
   edgePorts?: 'center' | 'spread'
+  /** Placement of the scene's top-level nodes — see SceneNode.layout. */
+  layout?: 'layered' | 'cycle'
   // Direction of the scene's top-level flow (with `edges`): 'TB' (default) · 'LR' · 'BT' (bottom→top,
   // e.g. an outbound flow with the internet drawn at the top) · 'RL'. Same as a container's `flow`.
   flow?: 'TB' | 'LR' | 'BT' | 'RL'

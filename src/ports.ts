@@ -21,6 +21,44 @@ export const HANDLES = {
   RL: { s: 'l-s', t: 'r-t' },
 } as const
 
+/** …and for a BACK edge, which runs round the side of the figure rather than through it. */
+const BACK_HANDLES = {
+  TB: { s: 'r-s', t: 'r-t' },
+  BT: { s: 'r-s', t: 'r-t' },
+  LR: { s: 'b-s', t: 'b-t' },
+  RL: { s: 'b-s', t: 'b-t' },
+} as const
+
+/** The handle pair an edge uses. `dir` must already be resolved (see resolveDirs). */
+export const handlesOf = (e: { dir: Dir | 'auto'; back?: boolean }): { s: string; t: string } =>
+  (e.back ? BACK_HANDLES : HANDLES)[e.dir === 'auto' ? 'TB' : e.dir] ?? HANDLES.TB
+
+/**
+ * Resolve each `auto` edge's direction: along the axis on which the two BOXES are clear of each other,
+ * so the arrow leaves the face that actually looks at its target. Centre displacement is the wrong
+ * measure — two wide cards one above the other have a far larger horizontal centre offset than their
+ * boxes' vertical gap suggests, and an arrow routed out of the side of one into the side of the other
+ * doubles back on itself. Only a cycle's edges are `auto`; the rest pass through untouched.
+ */
+export function resolveDirs(placed: Placed[], edges: PlacedEdge[]): PlacedEdge[] {
+  if (!edges.some((e) => e.dir === 'auto')) return edges
+  const at = centres(placed)
+  const box = new Map(placed.map((p) => [p.id, p]))
+  return edges.map((e) => {
+    if (e.dir !== 'auto') return e
+    const a = at.get(e.source)
+    const b = at.get(e.target)
+    const sa = box.get(e.source)
+    const sb = box.get(e.target)
+    if (!a || !b || !sa || !sb) return { ...e, dir: 'TB' }
+    const dx = b.x - a.x
+    const dy = b.y - a.y
+    const gapX = Math.abs(dx) - (sa.w + sb.w) / 2 // negative: the boxes overlap along x
+    const gapY = Math.abs(dy) - (sa.h + sb.h) / 2
+    return { ...e, dir: gapX > gapY ? (dx > 0 ? 'LR' : 'RL') : dy > 0 ? 'TB' : 'BT' }
+  })
+}
+
 const SPACING = 22 // preferred distance between neighbouring ports
 const LABELLED_SPACING = 64 // …when an edge on the face carries a label: the pill is wider than 22px,
 // and a label rides the path's MIDPOINT, which is only as far from its neighbour's as the ports are
@@ -59,7 +97,7 @@ export function portOffsets(placed: Placed[], edges: PlacedEdge[]): PortOffsets[
   const groups = new Map<string, { edge: number; end: 'src' | 'tgt'; key: number; labelled: boolean }[]>()
   edges.forEach((e, i) => {
     if (e.ports !== 'spread') return // only edges that opted in take part; the rest stay at the midpoint
-    const h = HANDLES[e.dir] ?? HANDLES.TB
+    const h = handlesOf(e)
     const ends = [
       { id: e.source, face: h.s[0] as Face, end: 'src' as const, other: e.target },
       { id: e.target, face: h.t[0] as Face, end: 'tgt' as const, other: e.source },

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { ReactFlow, Background, MarkerType, type Node, type Edge, type ReactFlowInstance } from '@xyflow/react'
 import type { Scene } from './types'
 import { computeLayout, collectEdges } from './layout'
-import { HANDLES, portOffsets } from './ports'
+import { handlesOf, portOffsets, resolveDirs } from './ports'
 import { SceneNode } from './SceneNode'
 import { ContainerNode } from './ContainerNode'
 import { TileNode } from './TileNode'
@@ -79,14 +79,14 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
     // Which (source-side, target-side) handles an edge uses, per flow direction — see HANDLES in
     // ports.ts — so the arrow leaves and enters the correct faces (down for TB, up for BT, right for
     // LR, left for RL).
-    const flowEdges = collectEdges(scene)
+    const flowEdges = resolveDirs(placed, collectEdges(scene))
     // Opt-in (`edgePorts`, per scene or per container): spread edges that share a face along it
     // instead of stacking them at its midpoint. Off by default, so a scene that does not ask draws
     // exactly as before.
     const ports = flowEdges.some((e) => e.ports === 'spread') ? portOffsets(placed, flowEdges) : undefined
     const edges: Edge[] = flowEdges.map((e, i) => {
       const p = patternOf(t, patternOf_.get(e.target), 'external')
-      const h = HANDLES[e.dir] ?? HANDLES.TB
+      const h = handlesOf(e)
       const marker = { type: MarkerType.ArrowClosed, color: t.edge.stroke }
       return {
         id: `${e.source}->${e.target}#${i}`,
@@ -97,7 +97,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         label: e.label,
         type: 'flow',
         // Pulse tinted to the destination service so arriving at a node lights up in its accent.
-        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve', srcOff: ports?.[i].src ?? 0, tgtOff: ports?.[i].tgt ?? 0 },
+        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve', back: !!e.back, srcOff: ports?.[i].src ?? 0, tgtOff: ports?.[i].tgt ?? 0 },
         // A dashed path marks an edge that is not the subject's main flow (a status report, an
         // acknowledgement travelling back). The DASH is on the line only — the pulse still rides the
         // same path, because what is dashed is the channel, not the traffic.

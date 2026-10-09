@@ -18,6 +18,7 @@ import { vendorIcons } from './icons/vendor-icons'
 import { iconGallery } from './icons/icon-gallery'
 import { azureGallery } from './icons/azure-gallery'
 import { flow } from './layouts/flow'
+import { backEdges, cycles } from './layouts/cycles'
 import { padding } from './viewport-focus/padding'
 import { focus } from './viewport-focus/focus'
 import { prose, proseSizing } from './nodes/prose'
@@ -71,7 +72,8 @@ export const fixtureCatalog: Fixture[] = [
   entry('code', code, 'Code width floor, hugging and raised cards.', ['highlighting', 'minimum-width', 'sizing']),
   entry('lists-memory', panel('list', 'Lists and memory', [list, memory], 2),
     'Service properties sized to their content, and a memory figure with slots, offsets and groups.', ['list', 'properties', 'wrapping', 'memory', 'slots', 'offsets']),
-  entry('layouts', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
+  entry('layouts', panel('flow', 'Layouts — flow, grid, back edges and cycles', [flow, backEdges, cycles], 1),
+    "Flow directions, fan ordering and grid wrapping; back edges that never rank and route round the side; and layout: 'cycle' for a closed loop.", ['TB', 'BT', 'LR', 'RL', 'branching', 'grid', 'back-edge', 'cycle']),
   entry('icons', panel('vendor-icons', 'Icons — vendor, lucide and the full registries', [vendorIcons, iconGallery, azureGallery], 1),
     'Vendor and Lucide icons with fallback behaviour, then the complete Lucide and Azure registries.', ['aws', 'azure', 'lucide', 'fallback', 'registry'], 'gallery'),
   entry('viewport-focus', padding, 'Viewport padding on a sparse scene. Kept apart: padding is a whole-scene option, so a panel cannot show it.', ['viewport', 'padding', 'fit']),
