@@ -113,6 +113,27 @@ try {
       }
     }
   }
+  // EDGE PORTS, as RENDERED. check-geometry proves the offsets; this proves FlowEdge applied them to
+  // the real SVG paths. Counted as edge ends that land on the same pixel as another edge's end. The
+  // default scene MUST have some — otherwise this measures nothing and would pass on any build —
+  // and the opt-in scene must have none.
+  await page.setViewport({ width: 1920, height: 1080 })
+  const coincident = async (fixture) => {
+    await page.goto(`http://127.0.0.1:5179/?capture=1&theme=dark#/${fixture}`, { waitUntil: 'networkidle0' })
+    await page.evaluate(() => document.fonts.ready)
+    return page.evaluate(() => {
+      const ends = []
+      for (const path of document.querySelectorAll('.react-flow__edge-path')) {
+        const len = path.getTotalLength()
+        for (const at of [0, len]) { const q = path.getPointAtLength(at); ends.push(`${Math.round(q.x)},${Math.round(q.y)}`) }
+      }
+      return ends.length - new Set(ends).size
+    })
+  }
+  const stacked = await coincident('edge-ports-center')
+  const spreadStacked = await coincident('edge-ports-spread')
+  if (stacked < 4) throw new Error(`edge-ports-center should stack edge ends at face midpoints (coincident ends: ${stacked}) — the port check would be vacuous`)
+  if (spreadStacked !== 0) throw new Error(`edge-ports-spread still has ${spreadStacked} coincident edge ends`)
   console.log(`Text bounds passed for ${FIXTURES.length} fixtures × 2 themes × 3 viewports.`)
 } finally {
   await browser?.close()

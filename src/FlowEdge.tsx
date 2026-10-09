@@ -7,14 +7,14 @@
 // freezes it at one position; the base line + arrow always render, so static capture degrades
 // cleanly. Getting the motion into the composited video is a capture-pipeline concern, not here.
 
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, Position, type EdgeProps } from '@xyflow/react'
 import { useFlowTheme } from './themeContext'
 
 export function FlowEdge({
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
+  sourceX: sx,
+  sourceY: sy,
+  targetX: tx,
+  targetY: ty,
   sourcePosition,
   targetPosition,
   markerEnd,
@@ -24,7 +24,13 @@ export function FlowEdge({
   label,
 }: EdgeProps) {
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step' } | undefined
+  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; srcOff?: number; tgtOff?: number } | undefined
+  // A PORT offset slides the endpoint along its face (see ports.ts): x on a top/bottom face, y on a
+  // left/right one. 0 — the default — is the face midpoint react-flow already gave us.
+  const slide = (pos: Position, x: number, y: number, off = 0) =>
+    pos === Position.Top || pos === Position.Bottom ? { x: x + off, y } : { x, y: y + off }
+  const { x: sourceX, y: sourceY } = slide(sourcePosition, sx, sy, d?.srcOff)
+  const { x: targetX, y: targetY } = slide(targetPosition, tx, ty, d?.tgtOff)
   // Both builders also hand back the path's midpoint — where the label rides. The STEP route is for
   // a dense band diagram: between two boxes four columns apart a bezier sweeps across everything in
   // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just

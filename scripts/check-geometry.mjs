@@ -12,8 +12,8 @@ const { build } = require(require.resolve('esbuild', { paths: [process.cwd()] })
 const temp = await mkdtemp(join(tmpdir(), 'flow-geometry-'))
 try {
   const output = join(temp, 'fixtures.mjs')
-  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout} from './src/layout'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
-  const { allFixtures, computeLayout, proseSize } = await import(pathToFileURL(output))
+  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout, collectEdges} from './src/layout'; export {portOffsets} from './src/ports'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
+  const { allFixtures, computeLayout, collectEdges, portOffsets, proseSize } = await import(pathToFileURL(output))
   for (const scene of allFixtures) {
     const placed = computeLayout(scene)
     assert.deepEqual(placed, computeLayout(scene), `${scene.id}: nondeterministic layout`)
@@ -57,6 +57,45 @@ try {
   const runtime = computeLayout(spark).find(node => node.id === 'runtime')
   const span = Math.max(...lower.map(n => n.x + n.w)) - Math.min(...lower.map(n => n.x))
   assert.ok(Math.abs(span - runtime.w) < 60, `stretched layer should span the row (${span} vs ${runtime.w})`)
+
+  // EDGE PORTS. The default must leave every edge at its face midpoint, and 'spread' must (a) give
+  // every edge sharing a face a DISTINCT offset, (b) keep each port on its face, (c) order the fan
+  // by where the other end sits so it does not cross itself, and (d) leave a lone edge untouched.
+  // Both scenes are the same graph, so node positions must be identical — ports move no node.
+  const portsOff = allFixtures.find(scene => scene.id === 'edge-ports-center')
+  const portsOn = allFixtures.find(scene => scene.id === 'edge-ports-spread')
+  assert.deepEqual(computeLayout(portsOff).map(({ node, ...p }) => p), computeLayout(portsOn).map(({ node, ...p }) => p), 'edgePorts must not move any node')
+  const placedOn = computeLayout(portsOn)
+  const edgesOn = collectEdges(portsOn)
+  const offs = portOffsets(placedOn, edgesOn)
+  assert.deepEqual(offs, portOffsets(placedOn, edgesOn), 'port offsets must be deterministic')
+  const face = (e, end) => end === 'src' ? { TB: 'b', BT: 't', LR: 'r', RL: 'l' }[e.dir] : { TB: 't', BT: 'b', LR: 'l', RL: 'r' }[e.dir]
+  const seen = new Map()
+  edgesOn.forEach((e, i) => {
+    for (const [end, id] of [['src', e.source], ['tgt', e.target]]) {
+      const key = `${id}|${face(e, end)}`
+      const list = seen.get(key) ?? []
+      list.push({ i, off: offs[i][end] })
+      seen.set(key, list)
+    }
+  })
+  const byId = new Map(placedOn.map(p => [p.id, p]))
+  let spread = 0
+  for (const [key, list] of seen) {
+    const [id, f] = key.split('|')
+    const node = byId.get(id)
+    const len = f === 't' || f === 'b' ? node.w : node.h
+    if (list.length === 1) { assert.equal(list[0].off, 0, `${key}: a lone edge must stay at the midpoint`); continue }
+    spread++
+    assert.equal(new Set(list.map(m => m.off)).size, list.length, `${key}: ports on one face must be distinct`)
+    for (const m of list) assert.ok(Math.abs(m.off) <= len / 2, `${key}: port must stay on its face`)
+    assert.ok(Math.abs(list.reduce((s, m) => s + m.off, 0)) < 0.01, `${key}: ports must be centred on the face`)
+  }
+  assert.ok(spread >= 5, `the fixture must exercise fan-in, fan-out, the pair and the LR fan (got ${spread} shared faces)`)
+  // Fan-in: the left-hand producer must take the left-hand port (else the fan crosses itself).
+  const fanIn = edgesOn.map((e, i) => ({ e, i })).filter(({ e }) => e.target === 'sink')
+  const byX = fanIn.slice().sort((a, b) => byId.get(a.e.source).x - byId.get(b.e.source).x)
+  assert.deepEqual(byX.map(m => offs[m.i].tgt), byX.map(m => offs[m.i].tgt).slice().sort((a, b) => a - b), 'a fan must not cross itself')
 
   console.log(`Geometry and determinism passed for ${allFixtures.length} visual fixtures.`)
 } finally { await rm(temp, {recursive:true,force:true}) }

@@ -306,6 +306,14 @@ export interface Scene {
   // SceneNode.align / SceneNode.stretch.
   align?: 'center' | 'start'
   stretch?: boolean
+  /**
+   * Where an edge attaches along a node's face. 'center' (default) meets every edge on a face at its
+   * midpoint — a fan-in lands as one knot, and two edges between the same pair of faces draw on top
+   * of each other. 'spread' distributes the edges that share a face along it, ordered by where their
+   * other end sits so the fan does not cross itself. Applies to every edge in the scene, including
+   * container edges. Moves no node: only where the arrows touch.
+   */
+  edgePorts?: 'center' | 'spread'
   // Direction of the scene's top-level flow (with `edges`): 'TB' (default) · 'LR' · 'BT' (bottom→top,
   // e.g. an outbound flow with the internet drawn at the top) · 'RL'. Same as a container's `flow`.
   flow?: 'TB' | 'LR' | 'BT' | 'RL'

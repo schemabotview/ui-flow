@@ -5,6 +5,7 @@ import type { Scene } from '../../src'
 
 import { nodes as nodesFixture } from './nodes/nodes'
 import { edges as edgesFixture } from './edges/edges'
+import { edgePortsCenter, edgePortsSpread } from './edges/edge-ports'
 import { containers as containersFixture } from './containers/containers'
 import { code } from './code/code'
 import { table } from './tables/table'
@@ -55,6 +56,8 @@ export const fixtureCatalog: Fixture[] = [
   entry('nodes', prose, 'Text hierarchy, wrapping and focus across node types.', ['prose', 'wrapping', 'focus']),
   entry('nodes', proseSizing, 'Content-driven card, header and list sizing.', ['prose', 'wrapping', 'minimum-width', 'headers']),
   entry('edges', edgesFixture, 'Routing, direction overrides, arrowheads and labels.', ['routing', 'directions', 'labels', 'arrowheads']),
+  entry('edges', edgePortsCenter, 'Edge ports at their default: fan-in, fan-out and a request/reply pair all stack at a face midpoint.', ['ports', 'fan-in', 'fan-out', 'default']),
+  entry('edges', edgePortsSpread, "edgePorts: 'spread' on the same graph: edges sharing a face are distributed along it.", ['ports', 'fan-in', 'fan-out', 'opt-in']),
   entry('containers', containersFixture, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
   entry('tables', table, 'Schema and data tables sized from their content.', ['schema', 'data', 'columns', 'sizing']),
   entry('charts', plot, 'Cartesian axes, line series and geometric figures.', ['plot', 'line', 'axes', 'cartesian']),
