@@ -80,18 +80,18 @@ function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<stri
   return depth
 }
 
-// Lay out a set of sibling nodes (+ their subtrees). Returns placements RELATIVE to this group's
-// (0,0) top-left, plus the group's overall size. Container children come back with `parentId` set.
-function layoutSubtree(
-  nodes: SceneNode[],
-  edges: SceneEdge[],
-  cols = 1,
-  dir: 'TB' | 'LR' | 'BT' | 'RL' = 'TB',
-  align: 'center' | 'start' = 'center',
-  stretch = false,
-): { placed: Placed[]; w: number; h: number } {
-  // Size each node — recurse into containers first so we know their box size.
-  const sized = new Map<string, { w: number; h: number; kids?: Placed[]; header?: number; inset?: number }>()
+interface Sized {
+  w: number
+  h: number
+  kids?: Placed[]
+  header?: number
+  inset?: number
+}
+type Dir = 'TB' | 'LR' | 'BT' | 'RL'
+
+// Size each node — recurse into containers first so we know their box size.
+function sizeNodes(nodes: SceneNode[]): Map<string, Sized> {
+  const sized = new Map<string, Sized>()
   for (const n of nodes) {
     const kind = kindOf(n) // a CONTENT node (code/memory/table/plot) sizes itself from its content
     if (n.children?.length) {
@@ -114,7 +114,10 @@ function layoutSubtree(
       sized.set(n.id, proseSize(n))
     }
   }
+  return sized
+}
 
+function localEdgesOf(nodes: SceneNode[], edges: SceneEdge[]): SceneEdge[] {
   // Remap each edge endpoint to the SIBLING at this level that contains it (itself, or an ancestor of
   // a nested endpoint), dropping endpoints outside all siblings. So an edge pointing deep inside a
   // container — a load balancer fanning to apps nested in AZ ⊃ Region ⊃ AWS boxes — still positions
@@ -136,6 +139,25 @@ function layoutSubtree(
     if (s && t && s !== t) localEdges.push({ source: s, target: t })
   }
 
+  return localEdges
+}
+
+// What a placement strategy is handed: the siblings, their already-computed boxes, the edges among
+// them (endpoints remapped to this level), and the container's own knobs.
+interface Frame {
+  nodes: SceneNode[]
+  sized: Map<string, Sized>
+  localEdges: SceneEdge[]
+  cols: number
+  dir: Dir
+  align: 'center' | 'start'
+  stretch: boolean
+}
+type Strategy = (f: Frame) => { placed: Placed[]; w: number; h: number }
+
+// Longest-path layering: a layer is a row (or column, per `dir`), nodes spread across and aligned.
+// An edgeless group degenerates to a stack / grid via depthOf.
+const layered: Strategy = ({ nodes, sized, localEdges, cols, dir, align, stretch }) => {
   // A grid/stack made entirely of tiles packs with tight gaps; flows and card lists breathe more.
   // Two gaps: ALONG the flow (between layers — needs arrow room when there are edges) and ACROSS it
   // (between siblings in a layer — packs tight for tiles). For TB the along-gap is vertical, for LR
@@ -235,6 +257,25 @@ function layoutSubtree(
     cursorAlong += layerAlong.get(d)! + gapAlong
   }
   return horizontal ? { placed, w: totalAlong, h: maxAcross } : { placed, w: maxAcross, h: totalAlong }
+}
+
+// The placement strategies. Sizing and edge remapping are strategy-independent and happen once,
+// before dispatch; a strategy only decides where each already-sized box goes.
+const STRATEGIES: Record<string, Strategy> = { layered }
+
+// Lay out a set of sibling nodes (+ their subtrees). Returns placements RELATIVE to this group's
+// (0,0) top-left, plus the group's overall size. Container children come back with `parentId` set.
+function layoutSubtree(
+  nodes: SceneNode[],
+  edges: SceneEdge[],
+  cols = 1,
+  dir: Dir = 'TB',
+  align: 'center' | 'start' = 'center',
+  stretch = false,
+): { placed: Placed[]; w: number; h: number } {
+  const sized = sizeNodes(nodes)
+  const localEdges = localEdgesOf(nodes, edges)
+  return STRATEGIES.layered({ nodes, sized, localEdges, cols, dir, align, stretch })
 }
 
 export function computeLayout(scene: Scene): Placed[] {
