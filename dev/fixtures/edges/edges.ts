@@ -16,10 +16,15 @@
 //   boundary. It looks right only because the harness stage paints the same colour; theming has to
 //   fix that first, and this row is where it will show. Two arrowheads is a CLAIM (either side can
 //   initiate), not decoration.
-// ROW 2  the per-edge `dir` override — routing only, never positioning. Both replicas sit in the same
-//   layer of a TB flow; left, the sideways edge inherits TB and loops out of the bottom face back
-//   into the top. Right, `dir: 'LR'` routes it across. Positions are identical; only the arrow moves.
-//   (flow-lr.ts claimed to cover this through 0.7.0 and never did — no edge in it set `dir`.)
+// ROW 2  the per-edge `dir` override — routing only, never positioning. The sideways edge r1 → r2
+//   RANKS r2 below r1 (an edge always does), so the two replicas are stacked, NOT side by side — an
+//   earlier version of this comment said they shared a layer, and the picture never matched it. Left,
+//   the edge inherits TB: it leaves r1's bottom face and enters r2's top. Right, `dir: 'LR'` makes it
+//   leave r1's RIGHT face and enter r2's LEFT, which between stacked boxes is a loop out of the side
+//   and back — the cost of overriding the direction against the layout, shown honestly. Positions are
+//   identical in both; only the arrow moves. Both replicas also set `edgePorts: 'spread'`: the writer
+//   fans to both replicas and r2 receives two edges, and left at the default those coincide on one
+//   line. (Writer → r2 still runs BEHIND r1 — the layout has no routing around a node in a long edge.)
 // ROW 3  THE REGRESSION CASE. snowflake's first authored course shipped a frame where an edge label
 //   was wide enough to cover the two cards it ran between, and `npm run build`, `tsc --noEmit` and
 //   `npm run check` were all green. Guards cannot see this; only a rendered frame can. The same label
@@ -31,9 +36,10 @@ import type { Scene } from '../../../src'
 
 const replicas = (idp: string, edgeDir?: 'LR') => ({
   id: idp,
-  label: edgeDir ? "dir: 'LR' on the sideways edge" : "default — inherits flow 'TB'",
-  sub: edgeDir ? 'same positions, routed across' : 'the arrow loops under the cards',
+  label: edgeDir ? "dir: 'LR' on the sync edge" : "default — inherits flow 'TB'",
+  sub: edgeDir ? 'same positions; out of the right face, in at the left' : 'out of the bottom face, in at the top',
   pattern: 'group' as const,
+  edgePorts: 'spread' as const,
   children: [
     { id: `${idp}-w`, label: 'Writer', pattern: 'service' as const },
     { id: `${idp}-r1`, label: 'Replica A', pattern: 'storage' as const },
@@ -103,7 +109,9 @@ export const edges: Scene = {
       // leaves square, runs along, and arrives square, so the four paths share lanes instead of
       // crossing. The return edge is `dashed` in both: it is an acknowledgement travelling back
       // against the data, not part of the flow — and the pulse still rides it, because what is
-      // dashed is the channel, not the traffic.
+      // dashed is the channel, not the traffic. It is also `back: true`: left to the default handles it
+      // leaves Reducer's bottom face and enters Ingest's top, a straight line through every node
+      // between them. `back` routes it round the side, through the lane its container reserves.
       id: 'curved',
       label: "route: 'curve' — the default",
       sub: 'the fan bows into four diagonals',
@@ -119,7 +127,7 @@ export const edges: Scene = {
         { source: 'c-in', target: 'c-b' },
         { source: 'c-a', target: 'c-out' },
         { source: 'c-b', target: 'c-out' },
-        { source: 'c-out', target: 'c-in', label: 'ack', dashed: true },
+        { source: 'c-out', target: 'c-in', label: 'ack', dashed: true, back: true },
       ],
     },
     {
@@ -138,7 +146,7 @@ export const edges: Scene = {
         { source: 'k-in', target: 'k-b', route: 'step' },
         { source: 'k-a', target: 'k-out', route: 'step' },
         { source: 'k-b', target: 'k-out', route: 'step' },
-        { source: 'k-out', target: 'k-in', label: 'ack', route: 'step', dashed: true },
+        { source: 'k-out', target: 'k-in', label: 'ack', route: 'step', dashed: true, back: true },
       ],
     },
     {
