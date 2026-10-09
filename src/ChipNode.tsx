@@ -42,7 +42,7 @@ export function ChipNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 3px ${p.color}33` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       {hasIcon(d.icon) && <NodeIcon icon={d.icon} pattern={p} size={CHIP_ICON} />}
       <span>{d.label}</span>
     </div>

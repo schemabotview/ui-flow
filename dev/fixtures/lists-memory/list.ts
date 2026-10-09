@@ -81,7 +81,7 @@ export const list: Scene = {
       icon: 'databricks',
       items: ['Basel III / FRTB', 'Historical versioning'],
     },
-    { id: 'titled', kind: 'list', label: 'No items', sub: 'degrades to a titled block', pattern: 'user', icon: 'tree' },
+    { id: 'titled', kind: 'list', items: [], label: 'No items', sub: 'degrades to a titled block', pattern: 'user', icon: 'tree' },
     { id: 'card', label: 'Plain card', sub: 'for size comparison', pattern: 'network', icon: 'server' },
   ],
   edges: [

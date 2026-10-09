@@ -2,7 +2,7 @@
 // content repo can import these names and nothing else — deep imports do not resolve.
 //
 // The scene model an author writes, plus the component that renders it. That is the whole contract.
-export type { Scene, SceneNode, SceneEdge, PatternKey, MemorySlot, TableColumn, PlotSpec, PlotAxis, PlotSeries, PlotPoint, EvolutionSpec, EvolutionStage } from './types'
+export type { Scene, SceneNode, SceneEdge, ScenePort, SceneAnnotation, PatternKey, MemorySlot, TableColumn, PlotSpec, PlotAxis, PlotSeries, PlotPoint, EvolutionSpec, EvolutionStage } from './types'
 export { SceneView } from './SceneView'
 // A theme is the surface, ink and furniture a scene is painted in. `ThemeKey` is exported so an app
 // can type its own picker; the THEMES table itself is NOT exported, for the same reason PATTERNS is

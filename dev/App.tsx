@@ -16,6 +16,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SceneView } from '../src'
 import { computeLayout } from '../src/layout'
+import { resolveSceneLayout } from '../src/resolveLayout'
+import type { LayoutResult } from '../src/layoutResult'
 import type { Scene, SceneNode, ThemeKey } from '../src'
 import type { Category } from './fixtures'
 import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
@@ -68,13 +70,25 @@ function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeK
   const host = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [availableWidth, setAvailableWidth] = useState(0)
+  const [resolved, setResolved] = useState<{ scene: Scene; result?: LayoutResult; error?: Error }>()
+  useEffect(() => {
+    if (!visible || scene.layout !== 'elk') return
+    let active = true
+    resolveSceneLayout(scene).then(
+      result => { if (active) setResolved({ scene, result }) },
+      error => { if (active) setResolved({ scene, error }) },
+    )
+    return () => { active = false }
+  }, [visible, scene])
+  const layout = resolved?.scene === scene ? resolved : undefined
+  if (layout?.error) throw layout.error
   const size = useMemo(() => {
-    const roots = computeLayout(scene).filter(node => !node.parentId)
+    const roots = (layout?.result?.placed ?? computeLayout(scene)).filter(node => !node.parentId)
     const width = Math.max(...roots.map(node => node.x + node.w), 0) - Math.min(...roots.map(node => node.x), 0)
     const height = Math.max(...roots.map(node => node.y + node.h), 0) - Math.min(...roots.map(node => node.y), 0)
     const margin = 1 + 2 * (scene.padding ?? 0.12)
     return { width: Math.ceil(width * margin), height: Math.ceil(height * margin) }
-  }, [scene])
+  }, [scene, layout?.result])
   useEffect(() => {
     if (!host.current) return
     const observer = new ResizeObserver(entries => setAvailableWidth(entries[0].contentRect.width))

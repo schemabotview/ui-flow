@@ -68,7 +68,7 @@ export function ContainerNode({ data }: NodeProps) {
         position: 'relative',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       <div
         style={{
           position: 'absolute',

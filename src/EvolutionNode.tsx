@@ -104,7 +104,7 @@ export function EvolutionNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 4px ${base.color}33, 0 0 28px ${base.color}55` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
 
       {d.label && (
         <div style={{ marginBottom: EVO_TITLE_BLOCK_GAP }}>

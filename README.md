@@ -140,3 +140,70 @@ Verification is `npm run check` (geometry + determinism, then a headless sweep t
 text rectangles against node bounds in both themes at 1920, 3840 and 390) plus reading the fixtures
 at `npm run dev`. Builds and geometry checks alone are not visual sign-off. These changes are not
 published; consuming repositories keep their installed package until an explicit release.
+
+## Scene model and layout additions
+
+Content nodes are now a discriminated union. Each kind requires its own payload: `items` for a
+list (use `[]` for an empty list), `slots` for memory, `plot` for plots, and `evolution` for evolution.
+Tables select either `columns` or a complete `headers` + `values` pair. Content nodes cannot have
+children. Existing nonempty `{ children: [...] }` containers remain supported; use
+`kind: 'container'` for explicit containers, including empty ones. These stricter authoring types
+and runtime validation are a compatibility change to review before publishing a major release.
+Invalid IDs, missing endpoints, incompatible payloads and invalid port references fail with a
+scene-specific error before layout.
+
+```ts
+const scene: Scene = {
+  id: 'authentication',
+  flow: 'TB',
+  nodes: [
+    { id: 'check', kind: 'decision', label: 'Valid token?',
+      ports: [{ id: 'yes', type: 'source', side: 'bottom' }] },
+    { id: 'accept', label: 'Accept' },
+  ],
+  edges: [{ source: 'check', sourcePort: 'yes', target: 'accept', label: 'yes' }],
+  annotations: [{ id: 'note', target: 'check', label: 'Authentication',
+    sub: 'Checks identity before continuing.' }],
+}
+```
+
+Named ports use React Flow handles, distributed along their declared side. Edge `sourcePort` and
+`targetPort` reference those names. `constraint: false` draws an edge without changing node ranks;
+it does not imply dashed styling. Annotations occupy a separate right-hand rail, with nonanimated
+leaders, and are included in fit bounds without moving the ranked nodes. Their IDs are globally
+unique, and targets must be graph nodes. Leaders currently use ordinary stepped paths rather than
+obstacle-aware routing.
+
+The default layout remains `layout: 'simple'`. Set `layout: 'elk'` to opt into the experimental,
+version-pinned ELK adapter. It loads asynchronously in a separate bundle and supplies node
+positions, handle offsets, edge routes and measured label positions. Orthogonal routing is requested,
+but some cross-hierarchy edges in the studies still contain diagonal segments; the comparison check
+reports these rather than claiming all compound routing is resolved. `data-layout-status`
+is `pending` while computing and `ready` after the result is available; capture tools must wait
+for `ready` and the next animation frames. Stale computations are discarded when scenes change.
+Layout errors propagate to the host's React error boundary.
+
+`order: 'author'` requests sibling order preservation within ELK layers; it does not override graph
+ranks. ELK currently lays out the full compound graph, including edgeless groups, so `cols`, `align`
+and `stretch` are simple-layout controls. Non-ranking edges use React Flow's ordinary path builder
+and do not receive obstacle-aware routes. The five architecture studies have separate `-elk`
+fixtures: this prototype currently produces considerably wider compositions and should not replace
+the existing band layouts by default. Port offsets on decision diamonds are best kept at the side
+midpoints (one port of each type per side).
+
+## Testing changes
+
+- `npm run build`: production bundle and public declaration output.
+- `npm run check:types`: source, fixture and compile-time negative cases.
+- `node scripts/check-geometry.mjs`: all fixtures, repeatability, finite boxes, parent containment,
+  model validation, unchanged ranks for non-ranking edges, and annotation spacing.
+- `npm run check:elk`: architecture comparisons, cycles, parallel edges, disconnected nodes,
+  named ports, annotation bounds, repeatability, sibling overlap and route/handle endpoint agreement.
+- `npm run check`: all of the above checks except the build, followed by browser text-bound checks
+  across every fixture × dark/light × 1920/3840/390 viewport widths.
+- `npm run dev`: inspect composition and routing in the fixture gallery. Automated text bounds do
+  not prove that a diagram is visually clear. Desktop captures are saved under `visual-artifacts/`.
+
+New rendering capabilities need registered visual fixtures. Invalid scenes belong in assertion
+checks rather than the gallery, where they would intentionally stop rendering. Compile-time
+rejections live in `tests/model.ts` and are verified with `@ts-expect-error`.

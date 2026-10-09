@@ -135,7 +135,14 @@ export interface EvolutionSpec {
   unit?: string
 }
 
-export interface SceneNode {
+/** A named connection point. Position is semantic; the engine distributes ports along each side. */
+export interface ScenePort {
+  id: string
+  side: 'top' | 'bottom' | 'left' | 'right'
+  type: 'source' | 'target'
+}
+
+interface SceneNodeFields {
   id: string
   label: string
   pattern?: PatternKey // the card's colour role. Optional for a code node (which paints a neutral IDE surface); defaults to 'service' everywhere it is read.
@@ -172,6 +179,9 @@ export interface SceneNode {
   // takes the title's weight and colour, and cannot be told from the name of the thing. Keep it to a
   // few characters; the gutter is sized from its length.
   badge?: string
+  /** Preserve child reading order within ELK layers. */
+  order?: 'author' | 'auto'
+  ports?: ScenePort[]
   // 'card' (default): a wide icon-left block of prose, unframed until it takes focus — see
   // proseMetrics.ts for why the frame came off. 'tile': compact icon-over-label, a fixed box.
   // 'chip': a small FRAMED token that hugs its own text — see chipMetrics.ts. A chip is for a thing
@@ -216,7 +226,7 @@ export interface SceneNode {
   // state four clock speeds, but only a column can show that the last jump was the big one.
   // `label` captions the figure, `sub` subtitles it, `evolution` carries the stages and the axis.
   // It is a LEAF, sized from its own content (see evolutionMetrics), so it flows and grids like a card.
-  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution'
+  kind?: 'decision' | 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution'
   columns?: TableColumn[] // table, schema mode: the table's columns
   headers?: string[] // table, data mode: the header row
   values?: string[][] // table, data mode: the body rows, each a list of cells
@@ -265,7 +275,31 @@ export interface SceneNode {
   flow?: 'TB' | 'LR' | 'BT' | 'RL'
 }
 
+/** Payload fields remain readable by shared renderers, but only the matching kind may supply them. */
+type PayloadKey = 'columns' | 'headers' | 'values' | 'items' | 'slots' | 'plot' | 'evolution' | 'filename' | 'hug' | 'minCols'
+type CommonNode = Omit<SceneNodeFields, PayloadKey | 'kind' | 'children'>
+type WithoutPayload = { [K in PayloadKey]?: never }
+type ContentNode<K extends NonNullable<SceneNodeFields['kind']>, P> =
+  CommonNode & Omit<WithoutPayload, keyof P> & P & { kind: K; children?: never }
+
+/** Existing containers still use children; kind: 'container' makes the intent explicit. */
+export type SceneNode =
+  | (CommonNode & WithoutPayload & { kind?: undefined; children?: SceneNode[] })
+  | (CommonNode & WithoutPayload & { kind: 'container'; children: SceneNode[] })
+  | ContentNode<'decision', Record<never, never>>
+  | ContentNode<'code', { filename?: string; hug?: boolean; minCols?: number }>
+  | ContentNode<'memory', { slots: MemorySlot[] }>
+  | ContentNode<'list', { items: string[] }>
+  | ContentNode<'plot', { plot: PlotSpec }>
+  | ContentNode<'evolution', { evolution: EvolutionSpec }>
+  | ContentNode<'table', { columns: TableColumn[]; headers?: never; values?: never }>
+  | ContentNode<'table', { headers: string[]; values: string[][]; columns?: never }>
+
 export interface SceneEdge {
+  /** Render this relationship without using it to rank nodes. Default true. */
+  constraint?: boolean
+  sourcePort?: string
+  targetPort?: string
   source: string
   target: string
   // Renders as a small pill riding the path's midpoint, filled with the canvas colour so it
@@ -292,7 +326,20 @@ export interface SceneEdge {
   dir?: 'TB' | 'LR' | 'BT' | 'RL'
 }
 
+/** Explanatory prose anchored to a graph node, outside the ranked flow. */
+export interface SceneAnnotation {
+  id: string
+  target: string
+  label: string
+  sub?: string
+  pattern?: PatternKey
+}
+
 export interface Scene {
+  annotations?: SceneAnnotation[]
+  /** Opt-in prototype; simple remains the default. */
+  layout?: 'simple' | 'elk'
+  order?: 'author' | 'auto'
   id: string
   title?: string
   nodes: SceneNode[]

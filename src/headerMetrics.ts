@@ -35,6 +35,7 @@ export const HEADER_INSET_X = 16 // the text block's left inset and its right ma
 export const HEADER_INSET_Y = 14 // above the text and below it
 // The MINIMUM band. A wide box with a short label computes under this and stays here, so the common
 // case keeps one familiar header depth across a deck rather than each container shrink-wrapping.
+export const HEADER_BORDER = 3 // widest focused border, reserved on both axes
 export const HEADER_MIN = 58
 
 /** Width the badge occupies in the gutter, including the gap after it. Zero when there is no badge.
@@ -63,13 +64,13 @@ export const HEADER_MAX_FORCED_W = 420
 export function headerMinWidth(node: Pick<SceneNode, 'label' | 'badge' | 'icon'>): number {
   const longestWord = longestWordWidth(node.label, HEADER_TITLE_FONT, 600)
   const gutter = headerBadgeWidth(node.badge) + headerIconWidth(node.icon)
-  return Math.min(HEADER_MAX_FORCED_W, Math.ceil(2 * HEADER_INSET_X + gutter + longestWord))
+  return Math.min(HEADER_MAX_FORCED_W, Math.ceil(2 * (HEADER_INSET_X + HEADER_BORDER) + gutter + longestWord))
 }
 
 /** The header text column's width inside a box of `boxW`. Floored so a very narrow container still
  *  wraps against a sane measure rather than dividing by something near zero. */
 export const headerTextWidth = (node: Pick<SceneNode, 'badge' | 'icon'>, boxW: number): number =>
-  Math.max(40, boxW - 2 * HEADER_INSET_X - headerBadgeWidth(node.badge) - headerIconWidth(node.icon))
+  Math.max(40, boxW - 2 * (HEADER_INSET_X + HEADER_BORDER) - headerBadgeWidth(node.badge) - headerIconWidth(node.icon))
 
 /**
  * The header band's height for a given container and box width.
@@ -86,5 +87,5 @@ export function headerHeight(node: Pick<SceneNode, 'label' | 'sub' | 'badge' | '
   const subH = node.sub ? wrapLines(node.sub, textW, HEADER_SUB_FONT) * HEADER_SUB_LINE_H + HEADER_SUB_GAP : 0
   // The icon sets a floor: a one-line label must still leave room for the glyph beside it.
   const content = Math.max(hasIcon(node.icon) ? HEADER_ICON : 0, labelH + subH)
-  return Math.max(HEADER_MIN, Math.ceil(2 * HEADER_INSET_Y + content))
+  return Math.max(HEADER_MIN, Math.ceil(2 * (HEADER_INSET_Y + HEADER_BORDER) + content))
 }

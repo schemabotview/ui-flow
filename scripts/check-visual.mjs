@@ -86,14 +86,23 @@ try {
         // colour: it widens every border, and a sizer that forgot that clips on focus alone.
         const full = fixture.startsWith('barclays') ? 'full=1&' : ''
         await page.goto(`http://127.0.0.1:5179/?capture=1&${full}theme=${theme}#/${fixture}`, { waitUntil: 'networkidle0' })
+        await page.waitForSelector('[data-layout-status="ready"]')
+        const count = nodes => nodes.reduce((sum, node) => sum + 1 + count(node.children ?? []), 0)
+        const scene = allFixtures.find(scene => scene.id === fixture)
+        const expectedCount = count(scene.nodes) + (scene.annotations?.length ?? 0)
+        await page.waitForFunction(expected => document.querySelectorAll('.react-flow__node').length === expected, {}, expectedCount)
         await page.evaluate(() => document.fonts.ready)
         const selects = await page.$$('select')
         if (selects.length > 1 && fixture === 'prose-hierarchy') await selects[selects.length - 1].select('controller')
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve))))))
         const failures = await page.evaluate(() => {
           const failures = []
+          const pane = document.querySelector('.react-flow').getBoundingClientRect()
           for (const node of document.querySelectorAll('.react-flow__node')) {
             const bounds = node.getBoundingClientRect()
+            if (bounds.left < pane.left - 2 || bounds.right > pane.right + 2 || bounds.top < pane.top - 2 || bounds.bottom > pane.bottom + 2) {
+              failures.push(`${node.dataset.id}: outside viewport`)
+            }
             const walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT)
             while (walk.nextNode()) {
               const text = walk.currentNode

@@ -38,7 +38,7 @@ export function MemoryNode({ data }: NodeProps) {
 
   return (
     <div style={{ width: '100%', height: '100%', boxSizing: 'border-box', position: 'relative', fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif" }}>
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
 
       {d.label && (
         <div style={{ height: MEM_TITLE_H, display: 'flex', alignItems: 'center', paddingLeft: axisW, fontSize: 16, fontWeight: 600, color: t.ink }}>{d.label}</div>

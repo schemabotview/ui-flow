@@ -64,7 +64,7 @@ export function TableNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
 
       {/* caption — sans, because it names the table rather than being part of it */}
       <div

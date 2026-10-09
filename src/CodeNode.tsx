@@ -31,7 +31,7 @@ export function CodeNode({ data }: NodeProps) {
         boxShadow: d.__focus ? '0 0 0 4px #5b8cff22, 0 0 28px #5b8cff33' : '0 1px 0 #00000040',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       {/* window chrome */}
       <div
         style={{

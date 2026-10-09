@@ -3,6 +3,7 @@
 // Keep content-sizing fixtures separate so clipping remains visible at capture scale.
 import type { Scene } from '../../src'
 
+import { decision } from './nodes/decision'
 import { nodes as nodesFixture } from './nodes/nodes'
 import { edges as edgesFixture } from './edges/edges'
 import { containers as containersFixture } from './containers/containers'
@@ -16,6 +17,7 @@ import { vendorIcons } from './icons/vendor-icons'
 import { iconGallery } from './icons/icon-gallery'
 import { azureGallery } from './icons/azure-gallery'
 import { flow } from './layouts/flow'
+import { rankingPorts, explicitContainers } from './layouts/ranking-ports'
 import { padding } from './viewport-focus/padding'
 import { focus } from './viewport-focus/focus'
 import { prose, proseSizing } from './nodes/prose'
@@ -54,8 +56,11 @@ export const fixtureCatalog: Fixture[] = [
   entry('nodes', nodesFixture, 'Node palette, patterns and card/tile variants.', ['card', 'tile', 'chip', 'patterns']),
   entry('nodes', prose, 'Text hierarchy, wrapping and focus across node types.', ['prose', 'wrapping', 'focus']),
   entry('nodes', proseSizing, 'Content-driven card, header and list sizing.', ['prose', 'wrapping', 'minimum-width', 'headers']),
+  entry('nodes', decision, 'A branching condition with named outcomes and non-ranking annotations.', ['decision', 'ports', 'annotations']),
+  entry('nodes', { ...decision, id: 'decision-elk', title: 'Decision and annotations — ELK', layout: 'elk' }, 'ELK routes meeting named decision handles, with an annotation rail.', ['decision', 'ports', 'annotations', 'elk']),
   entry('edges', edgesFixture, 'Routing, direction overrides, arrowheads and labels.', ['routing', 'directions', 'labels', 'arrowheads']),
   entry('containers', containersFixture, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
+  entry('containers', explicitContainers, 'Explicit, legacy and empty containers.', ['container', 'compatibility', 'empty']),
   entry('tables', table, 'Schema and data tables sized from their content.', ['schema', 'data', 'columns', 'sizing']),
   entry('charts', plot, 'Cartesian axes, line series and geometric figures.', ['plot', 'line', 'axes', 'cartesian']),
   entry('charts', plotMl, 'Machine learning figures arranged in a 2×2 grid.', ['plot', 'line', 'scatter', 'machine-learning', 'grid']),
@@ -65,6 +70,8 @@ export const fixtureCatalog: Fixture[] = [
   entry('lists-memory', list, 'Service properties sized to their content.', ['list', 'properties', 'wrapping']),
   entry('lists-memory', memory, 'Memory slots, offsets and groups.', ['memory', 'slots', 'offsets', 'groups']),
   entry('layouts', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
+  entry('layouts', rankingPorts, 'Named ports and a status relationship excluded from ranking.', ['ports', 'ranking', 'feedback']),
+  entry('layouts', { ...rankingPorts, id: 'ranking-ports-elk', layout: 'elk' }, 'Named ports and non-ranking status edges with ELK.', ['ports', 'ranking', 'elk']),
   entry('icons', vendorIcons, 'Vendor and Lucide icons with fallback behavior.', ['aws', 'azure', 'lucide', 'fallback']),
   entry('icons', iconGallery, 'Lookup gallery of supported Lucide icon keys.', ['lucide', 'registry'], 'gallery'),
   entry('icons', azureGallery, 'Lookup gallery of Azure service icon keys.', ['azure', 'registry'], 'gallery'),
@@ -75,6 +82,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
   entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1, document-only: single-column bands, cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'delta', 'bands', 'chips'], 'study'),
   entry('studies', skyGcpCodex, 'Sky GCP case study 3: primary batch analytics, supplementary network streaming and shared controls.', ['sky', 'gcp', 'architecture', 'dataproc', 'bigquery', 'snowflake', 'pubsub', 'batch', 'streaming'], 'study'),
+  ...[barclaysAzure, sparkTopology, edfAwsCodex, edfAwsClaude, skyGcpCodex].map(scene => entry('studies', { ...scene, id: `${scene.id}-elk`, title: `${scene.title ?? scene.id} — ELK prototype`, layout: 'elk' }, 'Opt-in ELK comparison using the same architecture content.', ['elk', 'architecture', 'comparison'], 'study')),
 ]
 
 /** Compatibility views used by the harness and existing geometry/visual checks. */

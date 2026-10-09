@@ -19,6 +19,8 @@ import { memoryCardSize } from './memoryMetrics'
 import { tableCardSize } from './tableMetrics'
 import { plotCardSize } from './plotMetrics'
 import { listCardSize } from './listMetrics'
+import { decisionSize } from './decisionMetrics'
+import { DecisionNode } from './DecisionNode'
 import { evoCardSize } from './evolutionMetrics'
 import { CodeNode } from './CodeNode'
 import { MemoryNode } from './MemoryNode'
@@ -40,18 +42,19 @@ export interface NodeKind {
  * Keyed by `SceneNode.kind`. Adding a node kind is: a sizer, a renderer, one entry here, and the
  * `kind` union in types.ts. Nothing in layout.ts or SceneView.tsx changes.
  */
-export const NODE_KINDS: Record<string, NodeKind> = {
+export const NODE_KINDS = {
+  decision: { type: 'decision', size: decisionSize, component: DecisionNode },
   code: { type: 'code', size: codeCardSize, component: CodeNode }, // an IDE card: longest line × line count
   memory: { type: 'memory', size: memoryCardSize, component: MemoryNode }, // a layout figure: widest cell × slot count
   table: { type: 'table', size: tableCardSize, component: TableNode }, // a relation: widest column × line count
   plot: { type: 'plot', size: plotCardSize, component: PlotNode }, // a figure with axes: one deck-wide box
   list: { type: 'list', size: listCardSize, component: ListNode }, // a service + its properties: widest line × wrapped line count
   evolution: { type: 'evolution', size: evoCardSize, component: EvolutionNode }, // a stepped comparison row: shared cap + body, per-stage rise
-}
+} satisfies Record<Exclude<NonNullable<SceneNode['kind']>, 'container'>, NodeKind>
 
 /** The sizer for a node, or undefined when it is a STRUCTURAL node (card / tile / container). Those
  *  are sized by layout.ts itself — the card from proseMetrics, the container from its children plus
  *  headerMetrics, the tile from a constant — rather than by an entry in this registry. The split is
  *  no longer constant-vs-content (a card wraps its label and grows): it is that a KIND brings its own
  *  renderer, while a structural node is drawn by one of the three built into SceneView. */
-export const kindOf = (n: SceneNode): NodeKind | undefined => (n.kind ? NODE_KINDS[n.kind] : undefined)
+export const kindOf = (n: SceneNode): NodeKind | undefined => (n.kind && n.kind !== 'container' ? NODE_KINDS[n.kind] : undefined)

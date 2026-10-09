@@ -10,6 +10,8 @@
 
 import type { Scene, SceneNode, SceneEdge } from './types'
 import { kindOf } from './kinds'
+import { assertValidScene } from './validation'
+import { appendAnnotations } from './annotations'
 import { headerHeight, headerMinWidth, HEADER_MIN } from './headerMetrics'
 import { proseSize } from './proseMetrics'
 import { chipSize } from './chipMetrics'
@@ -94,8 +96,8 @@ function layoutSubtree(
   const sized = new Map<string, { w: number; h: number; kids?: Placed[]; header?: number; inset?: number }>()
   for (const n of nodes) {
     const kind = kindOf(n) // a CONTENT node (code/memory/table/plot) sizes itself from its content
-    if (n.children?.length) {
-      const inner = layoutSubtree(n.children, n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB', n.align ?? 'center', n.stretch ?? false) // flow if edges
+    if (n.kind === 'container' || n.children?.length) {
+      const inner = layoutSubtree(n.children ?? [], n.edges ?? [], n.cols ?? 1, n.flow ?? 'TB', n.align ?? 'center', n.stretch ?? false) // flow if edges
       // A container is sized by what it CONTAINS — and by its own header, which is content too: a
       // box narrower than its title's longest word breaks that word mid-syllable. See headerMinWidth.
       const boxW = Math.max(inner.w + 2 * PAD, headerMinWidth(n))
@@ -133,7 +135,7 @@ function layoutSubtree(
   for (const e of edges) {
     const s = ownerOf.get(e.source)
     const t = ownerOf.get(e.target)
-    if (s && t && s !== t) localEdges.push({ source: s, target: t })
+    if (e.constraint !== false && s && t && s !== t) localEdges.push({ source: s, target: t })
   }
 
   // A grid/stack made entirely of tiles packs with tight gaps; flows and card lists breathe more.
@@ -238,12 +240,14 @@ function layoutSubtree(
 }
 
 export function computeLayout(scene: Scene): Placed[] {
-  return layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB', scene.align ?? 'center', scene.stretch ?? false).placed
+  assertValidScene(scene)
+  return appendAnnotations(scene, layoutSubtree(scene.nodes, scene.edges, scene.cols ?? 1, scene.flow ?? 'TB', scene.align ?? 'center', scene.stretch ?? false).placed)
 }
 
 // An edge to draw, tagged with the flow direction of the container it belongs to (scene-level edges
 // are 'TB'). SceneView uses `dir` to pick the handle pair so the arrow routes TB or LR.
 export interface PlacedEdge extends SceneEdge {
+  annotation?: boolean
   dir: 'TB' | 'LR' | 'BT' | 'RL'
 }
 
@@ -261,5 +265,6 @@ export function collectEdges(scene: Scene): PlacedEdge[] {
     }
   }
   walk(scene.nodes)
+  for (const note of scene.annotations ?? []) out.push({ source: note.target, target: note.id, dir: 'LR', constraint: false, dashed: true, route: 'step', annotation: true })
   return out
 }

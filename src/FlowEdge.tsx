@@ -8,6 +8,7 @@
 // cleanly. Getting the motion into the composited video is a capture-pipeline concern, not here.
 
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
+import type { RoutedEdge } from './layoutResult'
 import { useFlowTheme } from './themeContext'
 
 export function FlowEdge({
@@ -24,22 +25,25 @@ export function FlowEdge({
   label,
 }: EdgeProps) {
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step' } | undefined
+  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; computed?: RoutedEdge; annotation?: boolean } | undefined
   // Both builders also hand back the path's midpoint — where the label rides. The STEP route is for
   // a dense band diagram: between two boxes four columns apart a bezier sweeps across everything in
   // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just
   // enough to match the node radii; a hard 90° corner reads as a different drawing tool.
   const geometry = { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }
-  const [edgePath, labelX, labelY] =
+  const [fallbackPath, fallbackX, fallbackY] =
     d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
+  const edgePath = d?.computed?.path ?? fallbackPath
+  const labelX = d?.computed?.labelX ?? fallbackX
+  const labelY = d?.computed?.labelY ?? fallbackY
   const pulse = d?.pulse ?? t.edge.pulse
 
   return (
     <>
       <BaseEdge path={edgePath} markerEnd={markerEnd} markerStart={markerStart} style={style} />
-      <circle r={4.5} fill={pulse} opacity={0.9} filter="url(#flow-pulse-glow)">
+      {!d?.annotation && <circle r={4.5} fill={pulse} opacity={0.9} filter="url(#flow-pulse-glow)">
         <animateMotion dur="2.4s" repeatCount="indefinite" path={edgePath} rotate="auto" />
-      </circle>
+      </circle>}
       {/* The edge's label, as a pill riding the path midpoint. It renders in EdgeLabelRenderer — a
           DOM layer ABOVE the nodes — so a label can never be hidden behind a container box, and it
           pans/zooms with the viewport like everything else (DOM text, so still crisp at 4K). The fill

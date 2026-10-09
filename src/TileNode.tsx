@@ -48,7 +48,7 @@ export function TileNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 3px ${p.color}66, 0 0 24px ${p.color}44` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       <NodeIcon icon={d.icon} pattern={p} size={TILE_ICON} />
       {/* `overflowWrap: anywhere` is not a safety net here, it is the CONTRACT: tileMetrics counts a
           word wider than the measure as broken across rows, and a renderer that refused to break it

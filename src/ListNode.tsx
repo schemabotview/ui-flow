@@ -54,7 +54,7 @@ export function ListNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
 
       {/* Header — the service this card IS. `alignItems: flex-start` so a two-line title grows
           downward past the icon instead of re-centring it, which is what the sizer measured. */}

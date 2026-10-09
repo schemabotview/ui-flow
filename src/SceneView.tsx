@@ -4,7 +4,7 @@
 // the `user-select` block in styles.css): the scene carries real prose and real code, and a locked
 // viewport is what makes a drag mean "select" rather than "pan".
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlow, Background, MarkerType, type Node, type Edge, type ReactFlowInstance } from '@xyflow/react'
 import type { Scene } from './types'
 import { computeLayout, collectEdges } from './layout'
@@ -16,6 +16,8 @@ import { FlowEdge } from './FlowEdge'
 import { THEMES, patternOf, type ThemeKey } from './themes'
 import { FlowThemeProvider } from './themeContext'
 import { NODE_KINDS, kindOf } from './kinds'
+import { edgeId, type LayoutResult } from './layoutResult'
+import { resolveSceneLayout } from './resolveLayout'
 
 // The four STRUCTURAL types (sized by layout.ts itself rather than by an entry in NODE_KINDS) plus
 // every content kind from the registry — so a new KIND registers its renderer by being in
@@ -36,9 +38,21 @@ const edgeTypes = { flow: FlowEdge }
  * are byte-identical to 0.7.0's hardcoded ones — so a repo that does not pass it sees no change.
  */
 export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; focusId?: string; theme?: ThemeKey }) {
+  const [resolved, setResolved] = useState<{ scene: Scene; result?: LayoutResult; error?: Error }>()
+  useEffect(() => {
+    if (scene.layout !== 'elk') return
+    let active = true
+    resolveSceneLayout(scene).then(
+      result => { if (active) setResolved({ scene, result }) },
+      error => { if (active) setResolved({ scene, error: error instanceof Error ? error : new Error(String(error)) }) },
+    )
+    return () => { active = false }
+  }, [scene])
+  const layout = scene.layout === 'elk' && resolved?.scene === scene ? resolved : undefined
+  if (layout?.error) throw layout.error
   const t = THEMES[theme] ?? THEMES.dark
   const { nodes, edges } = useMemo(() => {
-    const placed = computeLayout(scene)
+    const placed = layout?.result?.placed ?? computeLayout(scene)
     // `framed` is INHERITED: a leaf takes its own value, else the nearest ancestor container's, else
     // the scene's, else false. Resolved here rather than in the renderers because a renderer only
     // ever sees its own node — and resolved here rather than in layout.ts because it costs no
@@ -59,9 +73,9 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
       id: p.id,
       // A content kind names its own react-flow type; everything else is structural (container →
       // tile → card). Containers win over `variant` because a node with children IS a box.
-      type: kindOf(p.node)?.type ?? (p.node.children?.length ? 'container' : p.node.variant === 'chip' ? 'chip' : p.node.variant === 'tile' ? 'tile' : 'scene'),
+      type: p.node.kind === 'container' || p.node.children?.length ? 'container' : kindOf(p.node)?.type ?? (p.node.variant === 'chip' ? 'chip' : p.node.variant === 'tile' ? 'tile' : 'scene'),
       position: { x: p.x, y: p.y },
-      data: { ...p.node, __focus: p.node.id === focusId, __framed: framedOf(p) },
+      data: { ...p.node, __handlePositions: layout?.result?.handles?.[p.id], __focus: p.node.id === focusId, __framed: framedOf(p) },
       // `pointerEvents: 'all'` is what makes the text in a node SELECTABLE, and it has to be set
       // here. react-flow's NodeWrapper computes `pointerEvents: isSelectable || isDraggable ||
       // <a mouse handler>` and writes it inline — so a node that is none of those (ours: read-only)
@@ -88,26 +102,26 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
       const h = HANDLES[e.dir] ?? HANDLES.TB
       const marker = { type: MarkerType.ArrowClosed, color: t.edge.stroke }
       return {
-        id: `${e.source}->${e.target}#${i}`,
+        id: edgeId(e.source, e.target, i),
         source: e.source,
         target: e.target,
-        sourceHandle: h.s,
-        targetHandle: h.t,
+        sourceHandle: e.sourcePort ? `port:${e.sourcePort}` : h.s,
+        targetHandle: e.targetPort ? `port:${e.targetPort}` : h.t,
         label: e.label,
         type: 'flow',
         // Pulse tinted to the destination service so arriving at a node lights up in its accent.
-        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve' },
+        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve', computed: layout?.result?.routes[edgeId(e.source, e.target, i)], annotation: e.annotation },
         // A dashed path marks an edge that is not the subject's main flow (a status report, an
         // acknowledgement travelling back). The DASH is on the line only — the pulse still rides the
         // same path, because what is dashed is the channel, not the traffic.
         style: { stroke: t.edge.stroke, strokeWidth: 2, ...(e.dashed ? { strokeDasharray: '7 6' } : {}) },
-        markerEnd: marker,
+        markerEnd: e.annotation ? undefined : marker,
         // A two-way edge also gets an arrowhead at the source end.
         ...(e.bidirectional ? { markerStart: marker } : {}),
       }
     })
     return { nodes, edges }
-  }, [scene, focusId, t])
+  }, [scene, focusId, t, layout?.result])
 
   // Re-fit whenever the pane's real size changes. `fitView` alone only runs on mount, and it can
   // measure the container before the flex layout has settled (so a wide scene overflows past the
@@ -119,8 +133,10 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
   // never artificially capped); a sparse scene that would fill too aggressively gets more padding so
   // its elements match the rest of the deck. Because padding is a fraction, it behaves identically at
   // 1080p (dev), 1920 (reels) and 2160 (4K capture) — no absolute-zoom scaling, no per-resolution math.
-  const FIT = { padding: scene.padding ?? 0.12, minZoom: 0.05, maxZoom: 8 }
-  const fit = () => rf.current?.fitView(FIT)
+  const FIT = { padding: scene.padding ?? 0.12, minZoom: 0.001, maxZoom: 8 }
+  const fitOptions = useRef(FIT)
+  fitOptions.current = FIT
+  const fit = () => rf.current?.fitView(fitOptions.current)
   useEffect(() => {
     const el = wrap.current
     if (!el) return
@@ -129,6 +145,14 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
     return () => ro.disconnect()
   }, [])
 
+  useEffect(() => {
+    let second = 0
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => fit())
+    })
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second) }
+  }, [scene, layout?.result])
+
   // THE ENGINE PAINTS ITS OWN CANVAS as of 0.8.0. Through 0.7.0 the shell painted it (--bg) and
   // SceneView only ASSUMED a dark surface behind its dots — which meant a theme could not change the
   // background, and FlowEdge had to hardcode the shell's colour to fill its label pill. Owning the
@@ -136,7 +160,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
   // element so the .tok-* syntax colours in styles.css can key off it.
   return (
     <FlowThemeProvider value={t}>
-      <div ref={wrap} data-flow-theme={t.key} style={{ width: '100%', height: '100%', background: t.surface }}>
+      <div ref={wrap} data-flow-theme={t.key} data-layout-status={scene.layout !== 'elk' || layout?.result ? 'ready' : 'pending'} style={{ width: '100%', height: '100%', background: t.surface }}>
       {/* react-flow paints .react-flow__nodes AFTER .react-flow__edgelabel-renderer and sets no
           z-index on either, so an edge label is covered by any node/container it overlaps — a label
           on a short edge between two cards simply disappears. Lift the label layer above the nodes.
@@ -195,7 +219,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         // Default minZoom (0.5) clamps fitView, so a wide scene-level grid (e.g. §3's 2×2 LR bands)
         // overflows a narrow portrait/mobile frame instead of scaling to fit. Allow a much smaller
         // zoom so fitView can always shrink the whole scene into the pane.
-        minZoom={0.05}
+        minZoom={FIT.minZoom}
         fitViewOptions={FIT}
         proOptions={{ hideAttribution: true }}
       >

@@ -47,7 +47,7 @@ export function SceneNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       <div style={{ flex: 'none', width: PROSE_ICON }}><NodeIcon icon={d.icon} pattern={p} size={PROSE_ICON} /></div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: PROSE_TITLE_FONT, fontWeight: 600, lineHeight: `${PROSE_TITLE_LINE_H}px`, overflowWrap: 'anywhere' }}>{d.label}</div>

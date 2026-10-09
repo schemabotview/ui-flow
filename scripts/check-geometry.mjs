@@ -12,8 +12,8 @@ const { build } = require(require.resolve('esbuild', { paths: [process.cwd()] })
 const temp = await mkdtemp(join(tmpdir(), 'flow-geometry-'))
 try {
   const output = join(temp, 'fixtures.mjs')
-  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout} from './src/layout'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
-  const { allFixtures, computeLayout, proseSize } = await import(pathToFileURL(output))
+  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout} from './src/layout'; export {proseSize} from './src/proseMetrics'; export {assertValidScene} from './src/validation'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
+  const { allFixtures, computeLayout, proseSize, assertValidScene } = await import(pathToFileURL(output))
   for (const scene of allFixtures) {
     const placed = computeLayout(scene)
     assert.deepEqual(placed, computeLayout(scene), `${scene.id}: nondeterministic layout`)
@@ -27,6 +27,32 @@ try {
       }
     }
   }
+  const invalid = (nodes, edges = []) => ({ id: 'invalid', nodes, edges })
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X' }, { id: 'x', label: 'X' }])), /duplicate/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X' }], [{ source: 'x', target: 'missing' }])), /missing node/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', kind: 'code', children: [] }])), /cannot have children/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', kind: 'plot' }])), /requires plot/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', kind: 'table', headers: ['a'] }])), /headers/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', kind: 'table', headers: ['a'], values: [['a', 'b']] }])), /row/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', ports: [{ id: 'p', side: 'left', type: 'target' }] }],
+    [{ source: 'x', target: 'x', sourcePort: 'p' }])), /source port/)
+  assert.throws(() => assertValidScene(invalid([{ id: 'x', label: 'X', kind: 'unknown' }])), /unknown kind/)
+  const ranked = allFixtures.find(s => s.id === 'ranking-ports')
+  assert.deepEqual(computeLayout(ranked), computeLayout({ ...ranked, edges: ranked.edges.filter(e => e.constraint !== false) }),
+    'non-ranking relationships must not change placements')
+  const explicit = allFixtures.find(s => s.id === 'explicit-containers')
+  const explicitPlaced = computeLayout(explicit)
+  assert.equal(explicitPlaced.find(n => n.id === 'explicit').w, explicitPlaced.find(n => n.id === 'legacy').w)
+  assert.ok(explicitPlaced.find(n => n.id === 'empty').h >= 58, 'empty explicit container reserves a header')
+  const notesScene = allFixtures.find(s => s.id === 'decision')
+  const notesLayout = computeLayout(notesScene)
+  const plainLayout = computeLayout({ ...notesScene, annotations: [] })
+  assert.deepEqual(notesLayout.filter(p => !notesScene.annotations.some(n => n.id === p.id)), plainLayout,
+    'annotations must not move ranked nodes')
+  const rail = notesLayout.filter(p => notesScene.annotations.some(n => n.id === p.id))
+  assert.ok(rail[1].y >= rail[0].y + rail[0].h + 24, 'notes cannot overlap')
+  assert.throws(() => assertValidScene({ ...notesScene, annotations: [{ id: 'note', target: 'missing', label: 'Note' }] }), /missing node/)
+  assert.throws(() => assertValidScene({ ...notesScene, annotations: [{ id: 'valid', target: 'request', label: 'Note' }] }), /duplicate/)
   const short = proseSize({id:'short',label:'Short'})
   const long = proseSize({id:'long',label:'The sentence worth keeping',sub:'The controller decides and never works; processors do the reverse.'})
   assert.ok(long.h > short.h, 'Wrapping prose must reserve more than the legacy height floor')

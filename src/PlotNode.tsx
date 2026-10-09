@@ -84,7 +84,7 @@ export function PlotNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}33, 0 0 28px ${p.color}55` : 'none',
       }}
     >
-      <NodeHandles />
+      <NodeHandles ports={d.ports} />
       <svg width="100%" height="100%" viewBox={`0 0 ${box.w} ${box.h}`} style={{ display: 'block' }}>
         <defs>
           {/* A curve may leave the window — sampling runs past the axis range more often than not.
