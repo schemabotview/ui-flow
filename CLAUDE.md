@@ -55,9 +55,10 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 `SceneView.tsx`.
 
 - **`src/index.ts` is the entire public surface**: the scene-model types, `SceneView`, `ThemeKey`.
-  Layout internals, the `*Metrics` sizers, `PATTERNS` and `THEMES` are withheld deliberately —
-  shipping them would ship a supported way to hand-compute positions. The foot of the file lists what
-  is withheld and why; read it before adding an export.
+  Withheld deliberately: `computeLayout`, `collectEdges`, `Placed`, the `*Metrics` modules,
+  `PATTERN_ICONS`, `PatternStyle`, `THEMES`, `Theme`, `ThemePattern`, `patternOf`, `NODE_KINDS`.
+  Shipping the layout internals would ship a supported way to hand-compute positions; shipping the
+  theme tables would invite per-repo theming. Every export is a promise — think before adding one.
 - **`layout.ts`** — longest-path layering, flow top→bottom: a layer (distance from a source) is a row
   going down, nodes within it spread across and centred. Recursive: a node with `children` is a
   container laid out inside and sized to fit them plus a header. Child positions are relative to the
@@ -107,7 +108,9 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   `network` blue, `user` violet, `warn` red — in every theme. A theme may shift an accent within its
   own hue family; it never swaps families.
 - **Two themes ship: `dark` and `light`.** `ThemeKey` defaults to `'dark'`, byte-identical to the
-  pre-0.8.0 hardcoded values. Vendor themes were built and removed — see the notes before rebuilding.
+  pre-0.8.0 hardcoded values. Vendor themes (`aws`, `azure`) were built and removed at 0.8.0: once a
+  theme may not reassign what a role means, a vendor theme can only tint the surface and nudge one
+  accent within its hue — not a look, and two more tables to keep in parity.
 - **The ENGINE paints the canvas** (as of 0.8.0). A theme cannot change a background it does not own.
 - **The VIEWPORT is locked and the TEXT is selectable — one decision, not two.** Three load-bearing
   pieces: `user-select: text` in `styles.css`, `pointerEvents: 'all'` per node in `SceneView`, and
@@ -132,7 +135,7 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   per-stage and the figure lies about its own number. **`baseline` is a declared axis truncation** and
   the engine prints it. **The row is MONOCHROME** — a per-stage `pattern` singles ONE out.
 - **A plot is sized to ONE deck-wide box, not to its content**; `equal: true` is the only exception.
-  **The plot ramp is the PATTERNS accents in a fixed order** that keeps green and orange non-adjacent;
+  **The plot ramp is the theme's pattern accents in a fixed order** that keeps green and orange non-adjacent;
   `warn` red is excluded.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, which is
   why Azure spells four keys `backupcenter`, `costbudgets`, `dbmigration`, `wafpolicy`.

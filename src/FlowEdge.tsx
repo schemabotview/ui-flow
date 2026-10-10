@@ -1,96 +1,39 @@
-// A "flow" edge: the static line + arrow, plus a pulse of light that travels source → target so the
-// path reads as live traffic (user → igw → lb → ec2 → rds). The pulse is tinted to the destination
-// node's pattern colour (passed in via edge `data.pulse`), so arriving at a service lights up in
-// that service's accent.
-//
-// Capture note: the pulse is SVG <animateMotion>, i.e. motion over time. A single-frame screenshot
-// freezes it at one position; the base line + arrow always render, so static capture degrades
-// cleanly. Getting the motion into the composited video is a capture-pipeline concern, not here.
-
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, type EdgeProps } from '@xyflow/react'
 import { useFlowTheme } from './themeContext'
+import { SANS } from './nodeStyle'
 
-export function FlowEdge({
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  markerEnd,
-  markerStart,
-  style,
-  data,
-  label,
-}: EdgeProps) {
+type EdgeData = { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; glow?: string }
+
+export function FlowEdge({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, markerStart, style, data, label }: EdgeProps) {
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; glow?: string } | undefined
-  // Both builders also hand back the path's midpoint — where the label rides. The STEP route is for
-  // a dense band diagram: between two boxes four columns apart a bezier sweeps across everything in
-  // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just
-  // enough to match the node radii; a hard 90° corner reads as a different drawing tool.
+  const d = data as EdgeData | undefined
   const geometry = { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }
-  const [edgePath, labelX, labelY] =
-    d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
-  const pulse = d?.pulse ?? t.edge.pulse
-  // The glow filter's id is per SceneView (see there), so it rides in on the edge data.
-  const glow = d?.glow ? `url(#${d.glow})` : undefined
-
+  const [path, labelX, labelY] = d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
+  const pulse = (reverse: boolean) => (
+    <circle r={4.5} fill={d?.pulse ?? t.edge.pulse} opacity={0.9} filter={d?.glow ? `url(#${d.glow})` : undefined}>
+      {reverse
+        ? <animateMotion dur="2.4s" repeatCount="indefinite" path={path} rotate="auto" keyPoints="1;0" keyTimes="0;1" calcMode="linear" />
+        : <animateMotion dur="2.4s" repeatCount="indefinite" path={path} rotate="auto" />}
+    </circle>
+  )
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} markerStart={markerStart} style={style} />
-      <circle r={4.5} fill={pulse} opacity={0.9} filter={glow}>
-        <animateMotion dur="2.4s" repeatCount="indefinite" path={edgePath} rotate="auto" />
-      </circle>
-      {/* The edge's label, as a pill riding the path midpoint. It renders in EdgeLabelRenderer — a
-          DOM layer ABOVE the nodes — so a label can never be hidden behind a container box, and it
-          pans/zooms with the viewport like everything else (DOM text, so still crisp at 4K). The fill
-          is the canvas colour on purpose: the line is INTERRUPTED by the label rather than crossed by
-          it, which a translucent pill would turn to mud at capture size. */}
+      <BaseEdge path={path} markerEnd={markerEnd} markerStart={markerStart} style={style} />
+      {pulse(false)}
       {label && (
         <EdgeLabelRenderer>
           <div
             style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-              // The label layer is pointer-events:none by default (EdgeLabelRenderer), which would
-              // leave the one bit of text NOT inside a node unselectable. `auto` is safe here
-              // because the pane has no pan/zoom handlers left to steal the drag.
-              pointerEvents: 'auto',
-              padding: '2px 8px',
-              borderRadius: 6,
-              // The scene canvas, from the THEME. Through 0.7.0 this was hardcoded '#1a1d23' — the
-              // shell's --bg, duplicated across a package boundary the engine could not see, so the
-              // pill only interrupted the line as long as nobody changed the canvas. It is now the
-              // same value SceneView paints, which is what makes the pill work under every theme.
-              background: t.edge.labelBg,
-              border: `1px solid ${t.edge.labelBorder}`,
-              color: t.edge.labelInk,
-              fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
-              fontSize: 12.5,
-              fontWeight: 500,
-              lineHeight: 1.3,
-              whiteSpace: 'nowrap',
+              position: 'absolute', transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`, pointerEvents: 'auto',
+              padding: '2px 8px', borderRadius: 6, background: t.edge.labelBg, border: `1px solid ${t.edge.labelBorder}`,
+              color: t.edge.labelInk, fontFamily: SANS, fontSize: 12.5, fontWeight: 500, lineHeight: 1.3, whiteSpace: 'nowrap',
             }}
           >
             {label}
           </div>
         </EdgeLabelRenderer>
       )}
-      {/* A two-way edge gets a second pulse travelling the other way (end → start). */}
-      {d?.bidirectional && (
-        <circle r={4.5} fill={pulse} opacity={0.9} filter={glow}>
-          <animateMotion
-            dur="2.4s"
-            repeatCount="indefinite"
-            path={edgePath}
-            rotate="auto"
-            keyPoints="1;0"
-            keyTimes="0;1"
-            calcMode="linear"
-          />
-        </circle>
-      )}
+      {d?.bidirectional && pulse(true)}
     </>
   )
 }

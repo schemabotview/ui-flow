@@ -1,10 +1,3 @@
-// PLOT node — a figure with axes. Two fixtures: a Cartesian PLANE (the maths-figure case, axes
-// through the origin, equal-scaled so the slope triangle is honest) and a grid of four DATA CHARTS
-// (the ML case, axes along the edges).
-//
-// `sample` is deliberately NOT an engine export: a scene file is TypeScript, so the author writes
-// the function itself and maps it to points. That keeps an expression parser out of the engine and
-// keeps the maths readable at the place it is stated.
 import type { Scene, PlotPoint } from '../../../src'
 
 const sample = (a: number, b: number, n: number, f: (x: number) => number): PlotPoint[] =>
@@ -13,7 +6,6 @@ const sample = (a: number, b: number, n: number, f: (x: number) => number): Plot
     return [x, f(x)] as PlotPoint
   })
 
-// ── 1. the plane ──────────────────────────────────────────────────────────────────────────────
 export const plot: Scene = {
   id: 'plot',
   title: 'plot — Cartesian plane',
@@ -26,11 +18,11 @@ export const plot: Scene = {
       plot: {
         x: { min: -15, max: 15, step: 2, label: 'x' },
         y: { min: -10, max: 10, step: 2, label: 'y' },
-        equal: true, // the rise/run triangle is only truthful at equal scale
+        equal: true,
         series: [
           { kind: 'line', points: [[-15, 8], [15, -4]], color: '#4f8ff7' },
-          { kind: 'marker', at: [0, 2], color: '#f0902f' }, // the intercept
-          { kind: 'marker', at: [5, 0], color: '#37b877' }, // the root
+          { kind: 'marker', at: [0, 2], color: '#f0902f' },
+          { kind: 'marker', at: [5, 0], color: '#37b877' },
           { kind: 'segment', from: [0, 2], to: [1, 2], color: '#e0a93b', label: 'run 1', labelAt: [1, 2.1] },
           { kind: 'segment', from: [1, 2], to: [1, 1.6], color: '#e0a93b', label: 'rise −0.4', labelAt: [1, 1.2] },
         ],
@@ -40,7 +32,6 @@ export const plot: Scene = {
   edges: [],
 }
 
-// ── 2. four charts an ML course actually needs ────────────────────────────────────────────────
 const fit = { w: 0.42, b: 1.1 }
 const houses: PlotPoint[] = [
   [1.0, 1.7], [1.4, 1.5], [1.6, 2.1], [2.1, 1.8], [2.3, 2.3], [2.6, 2.0],
@@ -96,7 +87,6 @@ export const plotMl: Scene = {
           { kind: 'line', points: sample(-1, 5, 120, (w) => (w - 2) ** 2 + 0.6), color: '#37b877' },
           {
             kind: 'scatter',
-            // w ← w − α·J'(w) from w₀ = 4.6, α = 0.25
             points: (() => {
               const out: PlotPoint[] = []
               let w = 4.6

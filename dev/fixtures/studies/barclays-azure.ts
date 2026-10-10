@@ -1,49 +1,12 @@
-// Fixture: a REAL architecture, authored from the Barclays / Azure case study in
-// ../Interview-Preparation/Ganesh_Maddipoti_Interview_PrepGuide.docx (§"Case Study 2 — Barclays":
-// Architecture Overview, Section A steps 1–10, Section B). Trade-finance and risk analytics on Azure.
-//
-// FIVE NUMBERED LAYERS over two platform bands: sources → ingestion → storage & processing →
-// serving → consumers, with governance and DevOps underneath as strata rather than stages.
-//
-// IT IS BUILT ON THE `list` NODE, and that is the point of this version. Earlier drafts modelled a
-// service's properties as a CONTAINER of one 210×96 card per bullet: "Bronze (raw)" was five nodes
-// and ~537px of height to say what one card says in ~290. Three costs, all of them real — the node
-// count tripled, every property became something an edge could point at, and the composition's
-// fitView zoom fell far enough that the leaf type stopped being readable. Now a stage is ONE node
-// and the bullets are its body, which is also why this draft can carry the document's full detail
-// (audit columns, replication factor, the SCD2 argument) where the card version had to cut to three
-// points per box.
-//
-// EVERY TECHNOLOGY NAMED HERE APPEARS IN THAT SECTION OF THE DOCUMENT, and nothing else does.
-//
-// A thing the engine does that a hand-drawn version of this does not: a flow's members are centred
-// ACROSS the flow, not top-aligned, so the five columns sit centred on one another rather than
-// ruled to a common top edge. There is no author-side lever, and spacer nodes would put geometry
-// into the content.
-//
-// Built to be read at FULL WINDOW (`?full=1` in the harness).
 import type { Scene, SceneNode } from '../../../src'
 
-// ── Layer 0 · the feeds (Step 1). Two load regimes, and the doc names both.
 const sources: SceneNode = {
   id: 'sources',
   align: 'start',
   label: 'Data sources',
   sub: 'core banking & reference',
-  // `external` because that is what they are — systems outside the platform. A band's colour is its
-  // ROLE, never its position in the row: a grey lead band is correct here, and reaching for a
-  // livelier hue just to open the diagram warmly is how green stops meaning storage.
   pattern: 'external',
   icon: 'none',
-  // CARDS, NOT A LIST — and it is the same call the consumers band makes at the other end of the row.
-  // The first draft modelled each group as one list node with its feeds as bullets, which reads as
-  // "here is a system, and these are facts about it". They are not facts about it: each feed is a
-  // thing in its own right, a separate extract on its own schedule that an edge could legitimately
-  // point at. A bullet cannot be any of that. The rule in CLAUDE.md names both ends of this row
-  // together — a consumer and a source system are the two cases that genuinely have neither points
-  // nor neighbours — and a band of bullets facing a band of cards was the asymmetry that gave it away.
-  //
-  // The two GROUPS stay boxes because they carry a real fact the feeds do not: how each is loaded.
   children: [
     {
       id: 'core-src',
@@ -79,7 +42,6 @@ const sources: SceneNode = {
   ],
 }
 
-// ── Layer 1 · ingestion (Step 1, and Section B's broker configuration).
 const ingestion: SceneNode = {
   id: 'ingestion',
   align: 'start',
@@ -88,11 +50,6 @@ const ingestion: SceneNode = {
   sub: 'batch & streaming',
   pattern: 'network',
   icon: 'none',
-  // The two MODES are boxes, each holding the one service that implements it. A wrapper per child is
-  // normally the thing the list node exists to avoid — but here the box and the card name different
-  // facts: the box is the ingestion mode (a concept the architecture has either way, and the thing
-  // the reference groups by), the card is the Azure service that happens to implement it today. The
-  // mode moved OFF each service's `sub` to pay for the level, so nothing is stated twice.
   children: [
     {
       id: 'batch-in',
@@ -141,9 +98,6 @@ const ingestion: SceneNode = {
   ],
 }
 
-// ── Layer 2 · storage & processing (Steps 2–5, 7, 8 and Section B's stream job).
-// The medallion is a flow INSIDE the lake; the two Databricks jobs sit under it as a pair, because
-// the document is explicit that they never share pipeline code — only this storage layer.
 const storage: SceneNode = {
   id: 'storage',
   align: 'start',
@@ -156,11 +110,6 @@ const storage: SceneNode = {
   children: [
     {
       id: 'adls',
-      // FRAMED, and it is the rule rather than an exception to it: three list cards sit side by side
-      // in this box, and a list card is a header, a hairline and a body. Unframed and adjacent, one
-      // zone's last bullet and the next zone's title are separated by nothing but a gap, and each
-      // card's hairline runs out into the space between them. Everywhere else in this study a box
-      // holds a SINGLE card, which the box itself already bounds — so they stay unframed.
       framed: true,
       label: 'Azure Data Lake Storage Gen2',
       sub: 'lakehouse storage with Delta',
@@ -220,13 +169,6 @@ const storage: SceneNode = {
         { source: 'silver', target: 'gold' },
       ],
     },
-    // THE TWO JOBS ARE A PAIR, in one box, side by side. An earlier pass pulled them out of this box
-    // on the grounds that their relationship to the LAKE is the whole claim and a wrapper obscures it.
-    // That was overstated: the box sits directly under the lake in the same band, so the relationship
-    // is still drawn — and what the wrapper buys is real. It states the fact that belongs to the PAIR
-    // and to neither job alone (separate pipeline code, sharing only the storage layer), it puts them
-    // in a row instead of a column so the band reads as two tiers rather than three stacked cards,
-    // and it is the thing `framed` can hang off for both of them at once.
     {
       id: 'processing',
       label: 'Processing',
@@ -234,9 +176,6 @@ const storage: SceneNode = {
       pattern: 'service',
       icon: 'databricks',
       cols: 2,
-      // No `align: 'start'` here, deliberately. The box is stretched to the lake's width above it, so
-      // the pair would otherwise left-pack and leave the surplus pooled on the right as one void; a
-      // centred pair reads as padding on both sides instead of a missing third card.
       framed: true,
       children: [
         {
@@ -273,7 +212,6 @@ const storage: SceneNode = {
   ],
 }
 
-// ── Layer 3 · serving (Steps 5, 7, 10 and Section B's hot path).
 const serving: SceneNode = {
   id: 'serving',
   align: 'start',
@@ -282,10 +220,6 @@ const serving: SceneNode = {
   sub: 'reporting · reconciliation · access',
   pattern: 'service',
   icon: 'none',
-  // Grouped by CAPABILITY, with the service that provides it inside — the same two-level naming the
-  // ingestion band uses and for the same reason: the capability is what the architecture owes its
-  // consumers and survives a change of vendor, the card is what currently delivers it. Each capability
-  // moved off its service's `sub` to pay for the level.
   children: [
     {
       id: 'analytics',
@@ -349,9 +283,6 @@ const serving: SceneNode = {
   ],
 }
 
-// ── Layer 4 · who reads it (Step 10). A consumer has no properties — it is a reader, not a service
-// — so these stay plain cards. Reaching for a list node here would be the mirror of the mistake
-// this draft fixes: a body with nothing to put in it.
 const consumers: SceneNode = {
   id: 'consumers',
   align: 'start',
@@ -391,7 +322,6 @@ const consumers: SceneNode = {
   ],
 }
 
-// ── Band 4 · Step 9, plus Step 8's quality framework. One line each, so: cards, not lists.
 const governance: SceneNode = {
   id: 'governance',
   badge: '04',
@@ -446,7 +376,6 @@ const governance: SceneNode = {
   ],
 }
 
-// ── Band 5 · the Action list's last paragraph and Step 6's orchestration + alerting.
 const devops: SceneNode = {
   id: 'devops',
   badge: '05',
@@ -504,8 +433,6 @@ const devops: SceneNode = {
 export const barclaysAzure: Scene = {
   id: 'barclays-azure',
   title: 'Case study — Barclays · Azure trade-finance & risk platform',
-  // NO scene-level edges: the three top-level nodes are strata, not a flow, so they STACK (28px
-  // apart) rather than being ranked 90px apart with arrows between them.
   padding: 0.05,
   nodes: [
     {
@@ -515,21 +442,9 @@ export const barclaysAzure: Scene = {
       pattern: 'group',
       icon: 'none',
       flow: 'LR',
-      // The five bands are a GRID, not a procession of boxes on a midline. `align: 'start'` rules
-      // them to one top edge and `stretch` runs them to one bottom edge; without both, a tall band
-      // beside a short one leaves the row looking like it drifted. See the note at the head of this
-      // file — this is the one thing the engine could not express when the fixture was written.
       align: 'start',
       stretch: true,
       children: [sources, ingestion, storage, serving, consumers],
-      // Orthogonal: between bands this wide a bezier bows out through the gap and reads as a pipe
-      // with slack in it. A step goes out, along and in, which is what a band diagram draws.
-      // Anchored at the BOXES the flow actually joins, not at the bands. Layout is unaffected — every
-      // endpoint remaps to the band that owns it, so the five columns rank exactly as before — but the
-      // drawn arrows land where the architecture puts them: the feeds split into the two ingestion
-      // modes, batch lands in the lake while streaming goes straight to the stream job, and the lake
-      // is what both serving capabilities read. Band to band those four facts collapse into one arrow
-      // that says only "then".
       edges: [
         { source: 'sources', target: 'batch-in', route: 'step' },
         { source: 'sources', target: 'rt-in', route: 'step' },

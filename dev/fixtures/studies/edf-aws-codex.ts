@@ -1,6 +1,3 @@
-// Case Study 1 in Ganesh_Maddipoti_Interview_PrepGuide.docx.
-// Nested bands and plain cards follow spark-topology; no list nodes.
-// Based on Case Study 1, with user-requested DMS and MSK Connect ingestion extensions.
 import type { Scene, SceneNode } from '../../../src'
 
 const card = (id: string, label: string, sub: string, icon: string,

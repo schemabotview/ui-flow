@@ -1,18 +1,3 @@
-// Fixture browser: main categories on the left, a readable scrolling gallery on the right.
-// ?capture=1 retains the single 16:9 stage used by regression captures.
-// Hash-routed so a fixture is linkable (#/flow-tb) and a reload keeps its place.
-//
-// FULL-WINDOW mode (`?full=1`) drops the rail, the bar and the 16:9 stage and gives SceneView the
-// whole viewport. It exists because the stage is deliberately locked to the capture aspect, which is
-// right for a teaching frame and wrong for a `studies` fixture — a 30-node architecture renders its
-// `sub` lines too small to read inside a letterboxed stage with 24px of harness padding around it.
-// It is a URL param rather than a React state so a full-window frame stays linkable and survives a
-// reload, same as the fixture id and the theme.
-//
-// The FOCUS control in the bar exists because `focusId` is part of SceneView's public surface and the
-// harness never passed it — so the one prop a content repo uses to say "this is the node this section
-// narrates" had no way to be looked at here. Two renderers were found ignoring it in production as a
-// result. It resets to none on every scene change: focus is a per-section choice, not a sticky mode.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SceneView } from '../src'
 import { computeLayout } from '../src/layout'
@@ -20,9 +5,6 @@ import type { Scene, SceneNode, ThemeKey } from '../src'
 import type { Category } from './fixtures'
 import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
 
-// The themes the engine ships. Not exported from the barrel (see index.ts — a fixed set is what keeps
-// every deck in one visual language), so the harness names them; it is inside the package, so this is
-// the one place that is allowed to.
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
 
 const CATEGORY_HEADINGS: Record<Category, string> = {
@@ -33,7 +15,6 @@ const CATEGORY_HEADINGS: Record<Category, string> = {
   studies: 'Architecture studies',
 }
 
-/** This URL with `?full` set or cleared, hash (→ the fixture) and every other param preserved. */
 function fullUrl(on: boolean) {
   const u = new URL(window.location.href)
   if (on) u.searchParams.set('full', '1')
@@ -52,18 +33,13 @@ function useHashId(fallback: string) {
   return id
 }
 
-/** Every node id in a scene, containers and their descendants included — the focus control's options.
- *  Focus can point at ANY node, not just a top-level one (pointing it at a container is exactly the
- *  case that used to silently do nothing), so this walks the whole tree. */
 function nodeIds(nodes: SceneNode[], depth = 0): { id: string; depth: number }[] {
   return nodes.flatMap((n) => [{ id: n.id, depth }, ...(n.children?.length ? nodeIds(n.children, depth + 1) : [])])
 }
 
-/** Total node count including nesting — the flat `scene.nodes.length` undercounts a nested fixture. */
 const countNodes = (nodes: SceneNode[]): number =>
   nodes.reduce((sum, n) => sum + 1 + (n.children?.length ? countNodes(n.children) : 0), 0)
 
-/** Fit gallery previews to the available width, without enlarging sparse examples. */
 function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeKey; focusId?: string }) {
   const host = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
@@ -102,7 +78,6 @@ function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeK
   )
 }
 
-// Present node forms directly, without a demonstration container around each example.
 const NODE_EXAMPLE_LABELS: Record<string, string> = {
   cards: 'Card', tiles: 'Tile', chips: 'Chip', unframed: 'Unframed',
   framed: 'Framed', ctx: 'Warn',
@@ -147,18 +122,8 @@ export function App() {
     return terms.every(term => text.includes(term))
   })
 
-
-
-  // Focus is per-scene: switching fixtures clears it rather than carrying a stale id to a scene that
-  // has no such node (which would render as "nothing is focused" and look like the bug it is not).
   const [focusId, setFocusId] = useState<string>('')
   useEffect(() => setFocusId(''), [scene.id])
-  // Theme, unlike focus, PERSISTS across fixtures — it is a deck-level choice, and the whole point of
-  // the picker is to walk the rail in one theme and see every fixture in it. Stored so a reload keeps
-  // it, because checking a theme means comparing against the last one you looked at.
-  // `?theme=aws` overrides the stored value. It exists so a screenshot run can name the theme in the
-  // URL — headless Chrome starts with an empty localStorage, so without this every capture would be
-  // dark and a theme could never be reviewed except by hand.
   const [theme, setTheme] = useState<ThemeKey>(() => {
     const q = new URLSearchParams(window.location.search).get('theme') as ThemeKey | null
     return (q && THEME_KEYS.includes(q) ? q : (localStorage.getItem('flow-theme') as ThemeKey)) || 'dark'
@@ -175,8 +140,6 @@ export function App() {
     document.getElementById(target)?.scrollIntoView({ block: 'start' })
   }, [scene.id, active, full, capture])
 
-  // Full window: the scene and nothing else. The only chrome is the way back out — and it has to be
-  // there, because with the rail gone a link is the only exit that does not mean editing the URL.
   if (full) {
     return (
       <div className="fullstage">

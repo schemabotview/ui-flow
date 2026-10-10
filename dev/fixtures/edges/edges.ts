@@ -1,32 +1,3 @@
-// Fixture: everything an edge does — routing, arrowheads, labels, and the way labels fail.
-//
-// Merged at 0.8.0 from four fixtures (labels · bidirectional · dir-override · label-collision). The
-// last of those was held out of the first merge on the grounds that its defect is "measured in
-// pixels" and a shared fitView would hide it. That was wrong, and worth stating plainly: a pill
-// overrunning its gap is a RATIO between two things in layout space, and fitView scales both by the
-// same factor — a label that covers the cards at zoom 1.0 still covers them at 0.4. The reasoning
-// that does hold is the one about CONTENT nodes, where the defect is a sizer reserving fewer pixels
-// than the renderer draws; that one is absolute, and it is why content-sizing fixtures are still not merged.
-//
-// Read left to right, top to bottom: normal → arrowheads → routing → the failure.
-//
-// ROW 1  labels at a sane length · one-way vs bidirectional. A label renders as a pill on the path's
-//   midpoint filled with the CANVAS colour, so it interrupts the line rather than sitting on it. That
-//   fill is hardcoded in FlowEdge.tsx as '#1a1d23' — the shell's --bg, duplicated across a package
-//   boundary. It looks right only because the harness stage paints the same colour; theming has to
-//   fix that first, and this row is where it will show. Two arrowheads is a CLAIM (either side can
-//   initiate), not decoration.
-// ROW 2  the per-edge `dir` override — routing only, never positioning. Both replicas sit in the same
-//   layer of a TB flow; left, the sideways edge inherits TB and loops out of the bottom face back
-//   into the top. Right, `dir: 'LR'` routes it across. Positions are identical; only the arrow moves.
-//   (flow-lr.ts claimed to cover this through 0.7.0 and never did — no edge in it set `dir`.)
-// ROW 3  THE REGRESSION CASE. snowflake's first authored course shipped a frame where an edge label
-//   was wide enough to cover the two cards it ran between, and `npm run build`, `tsc --noEmit` and
-//   `npm run check` were all green. Guards cannot see this; only a rendered frame can. The same label
-//   is shown four ways: overrunning a short TB gap, kept to a word, overrunning between narrower
-//   TILES (nothing for the pill to hide behind), and finally in an LR flow where the gap is a node
-//   width and the long label fits. The engine does NOT clamp label width — types.ts tells the author
-//   "a word or two", and this row is what makes that concrete before a capture does.
 import type { Scene } from '../../../src'
 
 const replicas = (idp: string, edgeDir?: 'LR') => ({
@@ -96,14 +67,6 @@ export const edges: Scene = {
     replicas('default'),
     replicas('overridden', 'LR'),
     {
-      // ROUTE + DASHED, the same seven edges drawn twice, because a claim about a PATH is only
-      // readable against the path it replaces. A FAN is the shape that separates them: a bezier
-      // leaving one face and arriving at another two layers down and across bows into a diagonal,
-      // and four diagonals crossing in the same band is the mush a dense diagram turns into. A step
-      // leaves square, runs along, and arrives square, so the four paths share lanes instead of
-      // crossing. The return edge is `dashed` in both: it is an acknowledgement travelling back
-      // against the data, not part of the flow — and the pulse still rides it, because what is
-      // dashed is the channel, not the traffic.
       id: 'curved',
       label: "route: 'curve' — the default",
       sub: 'the fan bows into four diagonals',

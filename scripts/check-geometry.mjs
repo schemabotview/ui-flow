@@ -4,9 +4,6 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-// esbuild is a devDependency OF THIS PACKAGE. The first draft resolved it from `../apache-spark`
-// as a fallback, which works on this laptop and nowhere else — CI has no sibling checkout. Same
-// trap as a committed `file:../ui-flow`.
 const require = createRequire(import.meta.url)
 const { build } = require(require.resolve('esbuild', { paths: [process.cwd()] }))
 const temp = await mkdtemp(join(tmpdir(), 'flow-geometry-'))
@@ -34,25 +31,17 @@ try {
   const nodes = computeLayout(scene)
   assert.equal(nodes.find(node => node.id === 'plan').node.kind, undefined, 'Compact must not rewrite cards into another kind')
   assert.equal(nodes.find(node => node.id === 'properties').node.kind, 'list')
-  // align/stretch: 'start' rules every layer to a common edge, and stretch runs them to a common far
-  // edge too. Asserted on the study, which is the only fixture wide enough for the defect to exist.
   const study = allFixtures.find(scene => scene.id === 'barclays-azure')
   const bands = computeLayout(study).filter(node => node.parentId === 'layers')
   assert.ok(bands.length >= 4, 'study must still have its band row')
   assert.equal(new Set(bands.map(b => b.y)).size, 1, 'align:start must rule every band to one top edge')
   assert.equal(new Set(bands.map(b => b.h)).size, 1, 'stretch must run every band to one bottom edge')
-  // A BACK EDGE must not rank. `workers -> driver` (drawn from the executor to the scheduler) would,
-  // relaxed like any other edge, push the driver from layer 1 to layer 3 and sit it beside the
-  // cluster manager. Asserted on x because the row runs LR: four bands, four distinct left edges, in
-  // the author's order.
   const spark = allFixtures.find(scene => scene.id === 'spark-topology')
   const row = computeLayout(spark).filter(node => node.parentId === 'runtime')
   const order = row.slice().sort((a, b) => a.x - b.x).map(node => node.id)
   assert.deepEqual(order, ['sources', 'driver', 'workers', 'cluster'], 'a back edge must not re-rank the flow')
   assert.equal(new Set(row.map(b => b.y)).size, 1, 'align:start must rule every band to one top edge')
   assert.equal(new Set(row.map(b => b.h)).size, 1, 'stretch must run every band to one bottom edge')
-  // And stretch must SHARE a layer's surplus, not hand all of it to each member: the two lower bands
-  // are one layer, and giving each the full extent doubled the scene.
   const lower = computeLayout(spark).filter(node => !node.parentId && node.id !== 'runtime')
   const runtime = computeLayout(spark).find(node => node.id === 'runtime')
   const span = Math.max(...lower.map(n => n.x + n.w)) - Math.min(...lower.map(n => n.x))

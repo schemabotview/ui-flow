@@ -1,28 +1,3 @@
-// Fixture: every PLACEMENT rule the engine has, in one frame.
-//
-// Merged at 0.8.0 from five fixtures (flow-lr · flow-bt · flow-rl · fan · grid). Each is now a
-// container panel, because a container takes its own `flow`, `edges` and `cols` — so the same layout
-// code runs, one level down, and all five are comparable at a glance instead of five rail clicks
-// apart. The four directions especially: they are mirrors of each other, and a mirror is only
-// checkable against the thing it mirrors.
-//
-// ONE THING NOT MERGED: viewport-focus/padding.ts. `scene.padding` is the fitView MARGIN, a property of the
-// viewport, and a scene has exactly one — so two paddings cannot share a frame.
-//
-// WHAT MERGING COSTS, and where it went: every panel here is a CONTAINER flow, so it exercises
-// `n.flow`, not `scene.flow` — a separate read in collectEdges. Scene-level TB is covered by
-// containers/deep-edge and LR by four other fixtures, so neither needed a fixture kept alive for it;
-// scene-level BT now rides on viewport-focus/padding.ts. RL is uncovered at scene level and stays that way: it is
-// the same expression as BT with a different string.
-//
-// The scene's own `cols: 3` is not incidental — it IS the top-level grid-wrapping case, wrapping the
-// panels themselves. The `grid` panel below covers the container-level `cols` path separately.
-//
-// COST OF MERGING, stated plainly: six panels share one fitView, so every card here renders at
-// roughly half the size it did standalone. That is fine for what this fixture checks — DIRECTION,
-// ORDER and WRAPPING are shape, and shape survives scaling. It would NOT be fine for a content node,
-// where the defect is a clipped final column a few pixels wide. That is why the `content` category
-// is not merged and should not be.
 import type { Scene } from '../../../src'
 
 export const flow: Scene = {

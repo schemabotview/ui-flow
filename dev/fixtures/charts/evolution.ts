@@ -1,17 +1,5 @@
-// EVOLUTION node — the stepped comparison row. Two fixtures, varying the two things that can break
-// it, because a comfortable one would hide both:
-//
-//   1. the TRUNCATED axis (`baseline`), the poster case this node exists for — four CPUs whose
-//      values span only 1.6×, which zero-based is four near-identical columns with no story in them.
-//      Also the case where every column carries a different NUMBER of spec lines, which is what the
-//      shared body height has to absorb without any column clipping.
-//   2. the ZERO-BASED axis with a 30× span, where the oldest stage's rise rounds to almost nothing —
-//      the degenerate end of evoRise — paired with long unbreakable tokens and a long era label, so
-//      the column-width floor is being asked to do its job rather than sitting comfortably clear of
-//      it. Its newest stage carries a `pattern` override, the "this is the one" case.
 import type { Scene } from '../../../src'
 
-// ── 1. the poster: a truncated axis, and uneven spec counts ────────────────────────────────────
 export const evolution: Scene = {
   id: 'evolution',
   title: 'evolution — truncated axis',
@@ -25,8 +13,6 @@ export const evolution: Scene = {
       pattern: 'network',
       evolution: {
         unit: 'Max clock speed (GHz)',
-        // 3.8 → 6.0 is 1.6×. Zero-based that is four columns of nearly one height; the figure's
-        // whole content is WHERE the growth happened, so the axis is cut and says so on its face.
         baseline: 3,
         stages: [
           {
@@ -63,8 +49,6 @@ export const evolution: Scene = {
             icon: 'cpu',
             value: 6.2,
             valueLabel: '6.2 GHz',
-            // One more line than its neighbours: the shared body height has to seat this without
-            // any of it leaving the column, and without this stage getting taller for having it.
             items: ['Raptor Lake R', 'TDP 253 W', 'Intel 7', '24 cores', '8P + 16E'],
           },
         ],
@@ -74,7 +58,6 @@ export const evolution: Scene = {
   edges: [],
 }
 
-// ── 2. zero-based, a 30× span, and the width floor under pressure ─────────────────────────────
 export const evolutionZero: Scene = {
   id: 'evolution-zero',
   title: 'evolution — zero-based, wide span',
@@ -123,8 +106,6 @@ export const evolutionZero: Scene = {
             icon: 'zap',
             value: 12.4,
             valueLabel: '12.4M/s',
-            // The one the slide is about: a pattern override singles it out, which is the only
-            // sanctioned reason to break the row's monochrome.
             pattern: 'storage',
             items: ['arrow_record_batches', 'checkpointed'],
           },

@@ -1,12 +1,3 @@
-// Fixture: every lucide key in the registry, as a labelled tile.
-//
-// This is the index an author needs before writing `icon: '…'` — the registry has grown past 70 keys
-// as concepts merged in, and a key that does not exist fails silently (the node falls back to its
-// pattern glyph), so guessing is expensive. Reading the gallery is cheaper.
-//
-// It enumerates LUCIDE_ICONS directly rather than restating the keys, so it can never drift from the
-// registry. The harness is internal to the package, so reaching past the barrel here is fine — a
-// content repo cannot do this, and should not need to.
 import type { Scene } from '../../../src'
 import { LUCIDE_ICONS } from '../../../src/lucideIcons'
 

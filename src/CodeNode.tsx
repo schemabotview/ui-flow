@@ -1,92 +1,43 @@
-// The visual for a CODE node: a small IDE-editor card. Window chrome (traffic-light dots + a filename
-// tab), then a body of gutter-numbered, syntax-highlighted source. Painted at a fixed base font; the
-// node's box was sized to fit by layout.ts (see codeMetrics), and SceneView's fitView scales it into
-// the pane. Handles are transparent — they only give react-flow clean anchors so a code card can sit
-// in a flow (edges route to/from it) like any other node.
-
-import { type NodeProps } from '@xyflow/react'
+import type { NodeProps } from '@xyflow/react'
 import { NodeHandles } from './Handles'
-import { useFlowTheme } from './themeContext'
 import { tokenizeCode } from './codeHighlight'
+import { FILL, MONO, useNodeStyle } from './nodeStyle'
 import {
-  CODE_FONT,
-  CODE_LINE_H,
-  CODE_BAR_H,
-  CODE_BAR_RULE,
-  CODE_BORDER,
-  CODE_GUTTER_W,
-  CODE_GUTTER_PAD,
-  CODE_PAD_X,
-  CODE_PAD_Y,
-  codeLines,
+  CODE_FONT, CODE_LINE_H, CODE_BAR_H, CODE_BAR_RULE, CODE_BORDER, CODE_GUTTER_W, CODE_GUTTER_PAD, CODE_PAD_X, CODE_PAD_Y, codeLines,
 } from './codeMetrics'
-import type { SceneNode as SceneNodeData } from './types'
+
+const DOTS = ['#ff5f56', '#ffbd2e', '#27c93f']
 
 export function CodeNode({ data }: NodeProps) {
-  const d = data as unknown as SceneNodeData & { __focus?: boolean }
-  const t = useFlowTheme()
-  const lines = codeLines(d)
+  const { d, t } = useNodeStyle(data, 'service')
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: 12,
+        ...FILL, display: 'flex', flexDirection: 'column', borderRadius: 12, overflow: 'hidden', fontFamily: MONO, background: t.code.bg,
         border: `${CODE_BORDER}px solid ${d.__focus ? t.code.borderFocus : t.code.border}`,
-        background: t.code.bg,
-        overflow: 'hidden',
-        fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
         boxShadow: d.__focus ? '0 0 0 4px #5b8cff22, 0 0 28px #5b8cff33' : '0 1px 0 #00000040',
       }}
     >
       <NodeHandles />
-      {/* window chrome */}
       <div
         style={{
-          height: CODE_BAR_H,
-          boxSizing: 'content-box', // the rule below is drawn outside CODE_BAR_H, as the sizer counts it
-          flex: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '0 12px',
-          background: t.code.chrome,
-          borderBottom: `${CODE_BAR_RULE}px solid ${t.code.chromeBorder}`,
+          height: CODE_BAR_H, boxSizing: 'content-box', flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px',
+          background: t.code.chrome, borderBottom: `${CODE_BAR_RULE}px solid ${t.code.chromeBorder}`,
         }}
       >
         <span style={{ display: 'flex', gap: 6 }}>
-          <i style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f56' }} />
-          <i style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
-          <i style={{ width: 10, height: 10, borderRadius: '50%', background: '#27c93f' }} />
+          {DOTS.map((c) => <i key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
         </span>
         {d.filename && <span style={{ fontSize: 12, color: t.code.filename }}>{d.filename}</span>}
       </div>
-      {/* source body */}
       <div style={{ flex: 1, padding: `${CODE_PAD_Y}px 0`, fontSize: CODE_FONT, lineHeight: `${CODE_LINE_H}px` }}>
-        {lines.map((line, li) => (
+        {codeLines(d).map((line, li) => (
           <div key={li} style={{ display: 'flex', whiteSpace: 'pre' }}>
-            <span
-              style={{
-                width: CODE_GUTTER_W,
-                boxSizing: 'content-box', // CODE_GUTTER_W + CODE_GUTTER_PAD wide, whatever the host's reset
-                flex: 'none',
-                textAlign: 'right',
-                paddingRight: CODE_GUTTER_PAD,
-                color: t.code.gutter,
-                userSelect: 'none',
-              }}
-            >
+            <span style={{ width: CODE_GUTTER_W, boxSizing: 'content-box', flex: 'none', textAlign: 'right', paddingRight: CODE_GUTTER_PAD, color: t.code.gutter, userSelect: 'none' }}>
               {li + 1}
             </span>
             <span style={{ paddingRight: CODE_PAD_X }}>
-              {tokenizeCode(line).map((t, ti) => (
-                <span key={ti} className={`tok-${t.cls}`}>
-                  {t.text}
-                </span>
-              ))}
+              {tokenizeCode(line).map((tok, ti) => <span key={ti} className={`tok-${tok.cls}`}>{tok.text}</span>)}
             </span>
           </div>
         ))}

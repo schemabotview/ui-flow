@@ -1,25 +1,18 @@
-// Patterns map a node's semantic role → its visual identity (icon + accent + fill). Content authors
-// pick a PatternKey; the engine owns how each looks, so every scene across every course renders in
-// one consistent visual language.
-
 import { Server, Database, Network, Users, Globe, Box, TriangleAlert, type LucideIcon } from 'lucide-react'
 import type { PatternKey } from './types'
 
 export interface PatternStyle {
   icon: LucideIcon
-  color: string // accent: border + icon
-  bg: string // node fill
+  color: string
+  bg: string
 }
 
-export const PATTERNS: Record<PatternKey, PatternStyle> = {
-  service: { icon: Server, color: '#f0902f', bg: '#241c12' },
-  storage: { icon: Database, color: '#37b877', bg: '#122419' },
-  network: { icon: Network, color: '#4f8ff7', bg: '#111d2e' },
-  user: { icon: Users, color: '#c98bff', bg: '#1e1428' },
-  external: { icon: Globe, color: '#9aa4b2', bg: '#181b20' },
-  group: { icon: Box, color: '#9aa4b2', bg: 'transparent' },
-  // A limitation / "the catch" callout — a warm red so the constraint reads as the thing being
-  // flagged, distinct from the neutral roles. Used for bottleneck/limit nodes and reusable across
-  // courses.
-  warn: { icon: TriangleAlert, color: '#f0656f', bg: '#2a1416' },
+export const PATTERN_ICONS: Record<PatternKey, LucideIcon> = {
+  service: Server,
+  storage: Database,
+  network: Network,
+  user: Users,
+  external: Globe,
+  group: Box,
+  warn: TriangleAlert,
 }

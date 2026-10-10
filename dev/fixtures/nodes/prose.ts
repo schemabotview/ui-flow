@@ -1,6 +1,5 @@
 import type { Scene } from '../../../src'
 
-// Neutral envelope, role-bearing inner objects, unframed annotations, and long wrapping prose.
 export const prose: Scene = {
   id: 'prose-hierarchy', title: 'Prose — hierarchy, focus and wrapping',
   nodes: [{ id: 'outer', label: 'Neutral outer container', pattern: 'group', cols: 2,

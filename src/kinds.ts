@@ -1,16 +1,3 @@
-// The node-kind registry: one entry per `SceneNode.kind`, each pairing the SIZER that reserves the
-// node's box with the RENDERER that paints into it.
-//
-// Why a registry rather than two switch statements: a content node is only correct when its sizer
-// and its renderer agree exactly (see the invariant in CLAUDE.md — a pixel the sizer forgets is a
-// clipped last column, not a scrollbar). Holding the pair in one place is the smallest structure
-// that makes that agreement visible. Before this, adding a kind meant editing an if/else ladder in
-// layout.ts AND a nested ternary in SceneView.tsx, with nothing but discipline keeping the two in
-// step; now a kind is one entry here and the two call sites are lookups.
-//
-// Cycle-free by construction: no renderer imports layout.ts, so layout.ts → kinds.ts → *Node.tsx is
-// a DAG. Keep it that way — a renderer that reaches back into layout would close the loop.
-
 import type { ComponentType } from 'react'
 import type { NodeProps } from '@xyflow/react'
 import type { SceneNode } from './types'
@@ -27,31 +14,18 @@ import { PlotNode } from './PlotNode'
 import { ListNode } from './ListNode'
 import { EvolutionNode } from './EvolutionNode'
 
-/** A content node kind: sized from its own content, painted by its own renderer. */
 export interface NodeKind {
-  /** The react-flow node type name. Must be unique across NODE_KINDS and the structural types below. */
-  type: string
-  /** Reserve the node's box. Must count every pixel the renderer draws — see the CLAUDE.md invariant. */
   size: (n: SceneNode) => { w: number; h: number }
   component: ComponentType<NodeProps>
 }
 
-/**
- * Keyed by `SceneNode.kind`. Adding a node kind is: a sizer, a renderer, one entry here, and the
- * `kind` union in types.ts. Nothing in layout.ts or SceneView.tsx changes.
- */
 export const NODE_KINDS: Record<string, NodeKind> = {
-  code: { type: 'code', size: codeCardSize, component: CodeNode }, // an IDE card: longest line × line count
-  memory: { type: 'memory', size: memoryCardSize, component: MemoryNode }, // a layout figure: widest cell × slot count
-  table: { type: 'table', size: tableCardSize, component: TableNode }, // a relation: widest column × line count
-  plot: { type: 'plot', size: plotCardSize, component: PlotNode }, // a figure with axes: one deck-wide box
-  list: { type: 'list', size: listCardSize, component: ListNode }, // a service + its properties: widest line × wrapped line count
-  evolution: { type: 'evolution', size: evoCardSize, component: EvolutionNode }, // a stepped comparison row: shared cap + body, per-stage rise
+  code: { size: codeCardSize, component: CodeNode },
+  memory: { size: memoryCardSize, component: MemoryNode },
+  table: { size: tableCardSize, component: TableNode },
+  plot: { size: plotCardSize, component: PlotNode },
+  list: { size: listCardSize, component: ListNode },
+  evolution: { size: evoCardSize, component: EvolutionNode },
 }
 
-/** The sizer for a node, or undefined when it is a STRUCTURAL node (card / tile / container). Those
- *  are sized by layout.ts itself — the card from proseMetrics, the container from its children plus
- *  headerMetrics, the tile from a constant — rather than by an entry in this registry. The split is
- *  no longer constant-vs-content (a card wraps its label and grows): it is that a KIND brings its own
- *  renderer, while a structural node is drawn by one of the three built into SceneView. */
 export const kindOf = (n: SceneNode): NodeKind | undefined => (n.kind ? NODE_KINDS[n.kind] : undefined)

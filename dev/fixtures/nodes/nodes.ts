@@ -1,22 +1,3 @@
-// Fixture: every way a single node can LOOK, in one frame.
-//
-// Merged at 0.8.0 from three fixtures (swatch · tile · warn). The palette and the two variants belong
-// on one screen because they are the same decision seen twice: `pattern` picks the colour role,
-// `variant` picks the shape it is drawn in, and an author choosing a node writes both. Comparing them
-// across three rail clicks was comparing from memory.
-//
-// PANEL 1 — the seven PatternKeys as cards. The palette is fixed and shared across every course:
-//   PATTERNS owns how each role looks so a green box means "storage" in every deck. A colour change
-//   lands here first and every content repo inherits it on the next minor.
-// PANEL 2 — the same roles as tiles, plus an explicit `icon` beating the pattern's default glyph.
-//   Tiles are what a "three steps" row inside a container is built from.
-// PANEL 3 — `warn` IN CONTEXT. It is in the swatch too, but a limitation only reads as a limitation
-//   when it is sitting in the flow it constrains, which is the thing that cannot be shown in a grid.
-//
-// NOT MERGED: viewport-focus/focus.ts, which sits in its own category. Focus is a per-node STATE driven from
-// the harness bar rather than anything the scene declares, and its fixture needs one of every
-// renderer family (card · tile · container · code · table · plot) so focus can be stepped through all
-// six — those content nodes would dominate this frame.
 import type { Scene } from '../../../src'
 
 export const nodes: Scene = {
@@ -54,11 +35,6 @@ export const nodes: Scene = {
       ],
     },
     {
-      // PANEL 3 — `variant: 'chip'`, the one leaf that kept its frame when 0.10.0 took the frame off
-      // the prose card. A chip hugs its own text and never pads to a common width: a row of chips is
-      // read as a SET, and equal boxes around unequal words would be a layout lying about the
-      // content. The short/long pair and the icon/no-icon pair are both here because both are what
-      // the sizer has to get right — the floor on one end, the measured advance on the other.
       id: 'chips',
       label: "variant: 'chip' — things counted, not described",
       sub: 'a chip earns its frame when the row would stop meaning what it means one member short',
@@ -76,14 +52,6 @@ export const nodes: Scene = {
       ],
     },
     {
-      // PANEL 4 — `framed`, and the fact that it is INHERITED. Left panel unframed (the default),
-      // right panel framed by one flag on the BOX, not on each card. The pair is here rather than in
-      // two fixtures because the only question worth asking about a frame is what it buys over its
-      // absence, and that is a comparison or it is nothing.
-      //
-      // Note which leaf needs it most. The prose card is a line of text with an icon: unframed it is
-      // still obviously one thing. The LIST card is a header, a hairline and a body, and with nothing
-      // bounding it the hairline runs out into space and the three parts stop reading as one object.
       id: 'unframed',
       label: 'framed: false — the default',
       sub: 'a leaf inside a box is already bounded by the box',
@@ -118,8 +86,6 @@ export const nodes: Scene = {
           icon: 'folder',
           items: ['Raw, immutable', 'Partitioned by date', '90-day retention'],
         },
-        // The override, and the reason it is a smell: this card is the only unframed thing in a framed
-        // group, which reads as a mistake rather than as emphasis. `focus` is the tool for "this one".
         { id: 'f-off', label: 'Opted out', sub: 'framed: false under a framed box', pattern: 'warn', framed: false },
       ],
     },

@@ -1,8 +1,3 @@
-// Registry of official AWS service icons (from `aws-react-icons`, the AWS Architecture Icon set).
-// A SceneNode references one by key via `icon: 'ec2'`; SceneNode/ContainerNode render it in place of
-// the pattern's default lucide glyph. Imported individually (per-file subpath) so only the icons we
-// actually use are bundled.
-
 import type { ComponentType } from 'react'
 import EC2 from 'aws-react-icons/icons/ArchitectureServiceAmazonEC2'
 import Lambda from 'aws-react-icons/icons/ArchitectureServiceAWSLambda'

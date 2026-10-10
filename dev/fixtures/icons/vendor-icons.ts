@@ -1,10 +1,3 @@
-// Fixture: the three icon registries side by side. `icon: 'ec2'` hits AWS_ICONS and renders the official
-// full-colour service tile in a rounded frame; `icon: 'terminal'` hits LUCIDE_ICONS and renders a line
-// glyph tinted in the pattern accent; a node with no `icon` falls through to the pattern's own glyph.
-// `icon: 'vm'` hits AZURE_ICONS and renders the Azure tile, which is drawn on a smaller art board and
-// so is framed without the AWS bleed. The registries share no keys, so this is a fallback chain, not a
-// precedence puzzle — but the four paths look different enough that a regression in NodeIcon shows up
-// here immediately.
 import type { Scene } from '../../../src'
 
 export const vendorIcons: Scene = {

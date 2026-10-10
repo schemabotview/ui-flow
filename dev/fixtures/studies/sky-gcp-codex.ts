@@ -1,8 +1,3 @@
-// Case Study 3 in Ganesh_Maddipoti_Interview_PrepGuide.pdf.
-// Composition follows edf-aws-codex: five nested bands, cards and chips,
-// batch and supplementary streaming processing, then shared platform controls.
-// The guide gives BigQuery -> dbt/Snowflake lineage without a transfer mechanism.
-// GCP services use supported Lucide glyphs rather than vendor icon fallbacks.
 import type { Scene, SceneNode } from '../../../src'
 
 const card = (id: string, label: string, sub: string, icon: string,
@@ -99,8 +94,6 @@ const lake = band('lake', '03', 'Storage & processing', 'storage', [
 ])
 lake.stretch = true
 lake.edges = [
-  // Keep zone connections at this level so GCS retains its three-column LR
-  // composition rather than ranking raw and real-time together before Silver.
   { source: 'raw', target: 'curated', route: 'step', dir: 'LR' },
   { source: 'realtime', target: 'curated', route: 'step', dashed: true, dir: 'RL' },
   { source: 'raw', target: 'schema', route: 'step', dir: 'TB', dashed: true },

@@ -1,7 +1,3 @@
-// Fixture: the memory node — the textbook object-layout figure. Cells share their edges (adjacency
-// IS the content), `at` paints the offset axis outside the block, `note` trails into a common
-// column, and consecutive slots sharing a `group` get bracketed on the right.
-// Use it where a grid of cards would lie by showing ordered bytes as unordered peers.
 import type { Scene } from '../../../src'
 
 export const memory: Scene = {

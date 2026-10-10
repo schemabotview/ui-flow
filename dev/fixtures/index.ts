@@ -1,6 +1,3 @@
-// Harness-only catalog. Categorize by the capability being exercised, not the domain
-// depicted. Keep scene IDs stable: consumer links and visual checks rely on them.
-// Keep content-sizing fixtures separate so clipping remains visible at capture scale.
 import type { Scene } from '../../src'
 
 import { nodes as nodesFixture } from './nodes/nodes'
@@ -77,7 +74,6 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', skyGcpCodex, 'Sky GCP case study 3: primary batch analytics, supplementary network streaming and shared controls.', ['sky', 'gcp', 'architecture', 'dataproc', 'bigquery', 'snowflake', 'pubsub', 'batch', 'streaming'], 'study'),
 ]
 
-/** Compatibility views used by the harness and existing geometry/visual checks. */
 export const fixtures = Object.fromEntries(CATEGORIES.map(category => [
   category, fixtureCatalog.filter(fixture => fixture.category === category).map(fixture => fixture.scene),
 ])) as Record<Category, Scene[]>

@@ -1,45 +1,13 @@
-// Fixture: a REAL architecture, authored from the EDF Energy / AWS case study in
-// ../../projects-workspace/Ganesh_Maddipoti_Interview_PrepGuide.docx (§"Case Study 1 — EDF Energy":
-// Architecture Overview, Section A steps 1–10, Section B). Smart metering, generation, trading and
-// customer analytics on AWS, built for Ofgem audit.
-//
-// SAME COMPOSITION AS `edf-aws-codex`, DIFFERENT CONTENT RULE. The structure is that fixture's —
-// five single-column bands over one `foundation` row, cards and chips, no `list` nodes — because at
-// this scale a flat column of services reads faster than a taxonomy of them: a wrapper box per
-// capability holds exactly one card, so it spends a header and a frame to say what the service's own
-// name already said.
-//
-// The content rule is the one that differs: EVERY TECHNOLOGY HERE APPEARS IN THAT SECTION OF THE
-// DOCUMENT, and nothing else does. So there is no AWS DMS and no MSK Connect (neither is in Case
-// Study 1), and Delta Lake and EventBridge — both named in the document, the streaming sink and the
-// trigger for the schema Lambda — are drawn rather than dropped. Kafka is not identified as MSK in
-// the source, so it is drawn as Apache Kafka.
-//
-// ONE THING IS DELIBERATELY NOT REPLICATED: the feedback edges from the processing boxes back up
-// into Bronze. They are the honest relationship — batch and streaming both land there — but a step
-// route from a card three levels down to a node two tiers away drops at that CARD's x, which is
-// inside the boxes between them; drawn, they put an arrowhead in the middle of a sub line and a
-// vertical rule through a card's body. `processing`'s own sub states the fact instead, and the band
-// stacks with no internal edges.
-//
-// Built to be read at FULL WINDOW (`?full=1` in the harness).
 import type { Scene, SceneNode } from '../../../src'
 
 const card = (id: string, label: string, sub: string, icon: string,
   pattern: SceneNode['pattern'] = 'service'): SceneNode => ({ id, label, sub, icon, pattern })
-// A token the thing above it is configured WITH — a key, an interval, a topic name, a retention
-// window. Almost every fact this document states is one of those, and a chip hugs its own text where
-// a bullet body takes ~3× the width to say the same thing.
 const chip = (id: string, label: string, pattern: SceneNode['pattern'] = 'storage'): SceneNode =>
   ({ id, label, variant: 'chip', pattern, icon: 'none' })
 const band = (id: string, badge: string, label: string, pattern: SceneNode['pattern'],
   children: SceneNode[], sub?: string): SceneNode =>
   ({ id, badge, label, sub, pattern, icon: 'none', align: 'start', children })
 
-// ── Band 01 · the feeds (Step 1). A SINGLE COLUMN of plain cards: each feed is a thing in its own
-// right — a separate extract on its own schedule that an edge could point at — and the load regime
-// the document groups them by rides on each card's own sub, rather than buying two wrapper boxes.
-// `external` because that is what they are: systems outside the platform.
 const sources = band('sources', '01', 'Data sources', 'external', [
   card('meters', 'Smart metering', 'Meter reads from the head-end systems; 50M+ daily, incremental', 'gauge', 'external'),
   card('assets', 'Generation assets', 'SCADA extracts and asset telemetry', 'zap', 'external'),
@@ -49,8 +17,6 @@ const sources = band('sources', '01', 'Data sources', 'external', [
   card('reference', 'Reference systems', 'Meter registry, tariffs and asset master; full load, row-count validated', 'database', 'external'),
 ], 'full load (reference) · incremental watermark (transactional)')
 
-// ── Band 02 · ingestion (Step 1, and Section B's broker configuration). One column: the two
-// ingestion technologies, then the two things every source connection needs.
 const ingestion = band('ingestion', '02', 'Ingestion', 'network', [
   {
     id: 'databricks', label: 'AWS Databricks', sub: 'Python / PySpark ingestion frameworks · schema enforced at landing',
@@ -71,9 +37,6 @@ const ingestion = band('ingestion', '02', 'Ingestion', 'network', [
   card('credentials', 'Secrets Manager', 'Source connection credentials; nothing hardcoded, pre-commit scanned', 'secretsmanager', 'user'),
 ])
 
-// ── Band 03 · storage AND processing in one band (Steps 2–5, 8 and Section B's stream job). The
-// medallion is a flow INSIDE the lake; the two processing jobs sit beneath it as a pair, because the
-// document is explicit that they never share pipeline code — only this storage layer.
 const lake = band('lake', '03', 'Storage & processing', 'storage', [
   {
     id: 's3', label: 'Amazon S3 · Apache Iceberg',
@@ -138,8 +101,6 @@ const lake = band('lake', '03', 'Storage & processing', 'storage', [
 ])
 lake.stretch = true
 
-// ── Band 04 · serving (Steps 7, 10 and Section B's hot path). One column of services, no capability
-// wrapper around each.
 const serving = band('serving', '04', 'Serving', 'storage', [
   {
     id: 'redshift', label: 'Amazon Redshift', sub: 'Gold star schema warehouse, materialised by dbt',
@@ -154,8 +115,6 @@ const serving = band('serving', '04', 'Serving', 'storage', [
   card('submission', 'Ofgem submission task', 'MWAA reconciliation; variance > 0.01% blocks submission', 'scroll', 'service'),
 ])
 
-// ── Band 05 · who reads it (Step 10). A consumer is a reader, not a service: nothing to configure
-// and no parts, so these stay plain cards.
 const consumers = band('consumers', '05', 'Business users', 'user', [
   card('operations', 'Metering operations', 'DynamoDB dashboard reads; event visibility under 2 minutes', 'gauge', 'user'),
   card('commercial', 'Commercial analytics', 'Consumption insights and business reporting', 'chartpie', 'user'),
@@ -173,10 +132,6 @@ export const edfAwsClaude: Scene = {
       sub: 'Smart metering, generation, trading and customer analytics · batch and supplementary streaming architecture',
       pattern: 'group', icon: 'awscloud', flow: 'LR', align: 'start', stretch: true,
       children: [sources, ingestion, lake, serving, consumers],
-      // Anchored at the BOXES the flow actually joins, not at the bands. Layout is unaffected — every
-      // endpoint remaps to the band that owns it — but the arrows land where the architecture puts
-      // them: the billing feed into the batch framework, grid events into Kafka, each ingestion mode
-      // into its own processing job, the stream into the hot path, and the lake into the warehouse.
       edges: [
         { source: 'billing', target: 'databricks', route: 'step' },
         { source: 'events', target: 'kafka', route: 'step' },
@@ -189,9 +144,6 @@ export const edfAwsClaude: Scene = {
       ],
     },
     {
-      // The platform concerns, as one row of three strata rather than three top-level bands. None of
-      // the three carries a badge: they are peers under the numbered pipeline above, and numbering
-      // one of them would read as a sixth stage.
       id: 'foundation', label: 'Shared platform controls', icon: 'none', pattern: 'group', cols: 3,
       align: 'start', stretch: true, children: [
         {

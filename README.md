@@ -33,7 +33,7 @@ package.json declares a single entry point.
 | `Scene`, `SceneNode`, `SceneEdge`, `PatternKey`, `MemorySlot`, `TableColumn`, `PlotSpec`, `PlotAxis`, `PlotSeries`, `PlotPoint`, `EvolutionSpec`, `EvolutionStage` | the scene model an author writes |
 | `SceneView` | the component that renders it |
 
-The layout internals (`computeLayout`, `Placed`, `PATTERNS`, …) are deliberately **not** exported.
+The layout internals (`computeLayout`, `Placed`, `THEMES`, …) are deliberately **not** exported.
 Shipping them would ship a supported way to hand-compute positions, and the invariant that keeps
 scenes deterministic dies at that point.
 
