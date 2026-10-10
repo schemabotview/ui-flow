@@ -8,11 +8,8 @@ import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } 
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
 
 const CATEGORY_HEADINGS: Record<Category, string> = {
-  nodes: 'Node types', edges: 'Edge types', containers: 'Container types',
-  tables: 'Table types', charts: 'Chart types', code: 'Code examples',
-  'lists-memory': 'List & memory types', layouts: 'Layout types',
-  icons: 'Icon libraries', 'viewport-focus': 'Viewport & focus examples',
-  studies: 'Architecture studies',
+  nodes: 'Node types', charts: 'Charts', layout: 'Layout, edges & viewport',
+  icons: 'Icon libraries', studies: 'Architecture studies',
 }
 
 function fullUrl(on: boolean) {
@@ -76,37 +73,6 @@ function GalleryPreview({ scene, theme, focusId }: { scene: Scene; theme: ThemeK
       </div>
     </div>
   )
-}
-
-const NODE_EXAMPLE_LABELS: Record<string, string> = {
-  cards: 'Card', tiles: 'Tile', chips: 'Chip', unframed: 'Unframed',
-  framed: 'Framed', ctx: 'Warn',
-}
-const NODE_FIXTURE_LABELS: Record<string, string> = {
-  nodes: 'Node forms', 'prose-hierarchy': 'Prose', 'prose-sizing': 'Text wrapping',
-}
-
-function galleryScenes(scene: Scene): Scene[] {
-  if (scene.id === 'nodes') {
-    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: NODE_EXAMPLE_LABELS[node.id],
-      cols: node.id === 'cards' ? 3 : node.id === 'chips' ? 2 : node.cols ?? 1,
-      flow: node.flow, framed: node.framed ?? scene.framed,
-      nodes: node.children ?? [node], edges: node.edges ?? [],
-    }))
-  }
-  if (['edges', 'flow', 'plot-ml'].includes(scene.id) && scene.edges.length === 0) {
-    return scene.nodes.map(node => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: node.label, cols: 1, nodes: [node], edges: [],
-    }))
-  }
-  if (scene.id === 'prose-sizing') {
-    return scene.nodes.map((node, index) => ({ ...scene, id: `${scene.id}-${node.id}`,
-      title: ['Wrapping card', 'Long identifier', 'Wrapping container heading'][index],
-      nodes: [node], edges: [],
-    }))
-  }
-  return [scene]
 }
 
 export function App() {
@@ -224,16 +190,11 @@ export function App() {
                   {items.map(fixture => (
                     <article className="gallery-fixture" id={`fixture-${fixture.scene.id}`} key={fixture.scene.id}>
                       <header className="fixture-heading">
-                        <h3><a href={`#/${fixture.scene.id}`}>{NODE_FIXTURE_LABELS[fixture.scene.id] ?? fixture.scene.title ?? fixture.scene.id}</a></h3>
+                        <h3><a href={`#/${fixture.scene.id}`}>{fixture.scene.title ?? fixture.scene.id}</a></h3>
                         <p>{fixture.description}</p>
                       </header>
-                      {galleryScenes(fixture.scene).map(preview => (
-                        <section className="gallery-example" key={preview.id}>
-                          {preview.id !== fixture.scene.id && <h4>{preview.title}</h4>}
-                          <GalleryPreview scene={preview} theme={theme}
-                            focusId={fixture.scene.id === scene.id ? focusId || undefined : undefined} />
-                        </section>
-                      ))}
+                      <GalleryPreview scene={fixture.scene} theme={theme}
+                        focusId={fixture.scene.id === scene.id ? focusId || undefined : undefined} />
                     </article>
                   ))}
                 </section>

@@ -3,7 +3,7 @@ import type { Scene } from '../../../src'
 export const list: Scene = {
   id: 'list',
   title: 'List — service + properties, sized to content',
-  flow: 'LR',
+  cols: 3,
   nodes: [
     {
       id: 'floor',
@@ -53,11 +53,5 @@ export const list: Scene = {
     { id: 'titled', kind: 'list', label: 'No items', sub: 'degrades to a titled block', pattern: 'user', icon: 'tree' },
     { id: 'card', label: 'Plain card', sub: 'for size comparison', pattern: 'network', icon: 'server' },
   ],
-  edges: [
-    { source: 'floor', target: 'measure' },
-    { source: 'measure', target: 'unbreakable' },
-    { source: 'unbreakable', target: 'wrapped-title' },
-    { source: 'wrapped-title', target: 'titled' },
-    { source: 'titled', target: 'card' },
-  ],
+  edges: [],
 }

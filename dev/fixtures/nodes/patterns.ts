@@ -1,8 +1,8 @@
 import type { Scene } from '../../../src'
 
-export const nodes: Scene = {
-  id: 'nodes',
-  title: 'Nodes — palette, variants, warn in context',
+export const patterns: Scene = {
+  id: 'patterns',
+  title: 'Patterns — roles, variants, framing, warn in context',
   cols: 2,
   nodes: [
     {
@@ -10,7 +10,7 @@ export const nodes: Scene = {
       label: 'Patterns — the seven roles',
       sub: "variant: 'card' (the default)",
       pattern: 'group',
-      cols: 4,
+      cols: 3,
       children: [
         { id: 'svc', label: 'Service', sub: 'compute', pattern: 'service' },
         { id: 'sto', label: 'Storage', sub: 'data at rest', pattern: 'storage' },

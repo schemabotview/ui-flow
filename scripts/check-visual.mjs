@@ -25,15 +25,16 @@ try {
   await page.evaluate(() => document.fonts.ready)
   await page.waitForFunction(() => {
     const viewport = document.querySelector('.gallery-preview .react-flow__viewport')
-    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 1
+    return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 0.75
   })
   const gallery = await page.evaluate(() => ({
     categories: document.querySelectorAll('.gallery-category').length,
     sidebarLinks: document.querySelectorAll('.rail a').length,
     sidebarChildren: document.querySelectorAll('.rail ul').length,
-    nodeExamples: document.querySelectorAll('#fixture-nodes .gallery-example').length,
+    fixtures: document.querySelectorAll('.gallery-fixture').length,
+    previews: document.querySelectorAll('.gallery-preview').length,
   }))
-  if (gallery.categories !== 11 || gallery.sidebarLinks !== 11 || gallery.sidebarChildren !== 0 || gallery.nodeExamples !== 6) {
+  if (gallery.categories !== 5 || gallery.sidebarLinks !== 5 || gallery.sidebarChildren !== 0 || gallery.fixtures !== FIXTURES.length || gallery.previews !== FIXTURES.length) {
     throw new Error(`Unexpected gallery structure: ${JSON.stringify(gallery)}`)
   }
   const overflow = await page.evaluate(() => [...document.querySelectorAll('.preview-scroll')]
@@ -46,12 +47,12 @@ try {
     const gallery = document.querySelector('.gallery')
     return target && gallery && Math.abs(target.getBoundingClientRect().top - gallery.getBoundingClientRect().top - 24) < 4
   })
-  await page.click('.rail a[href="#/edges"]')
+  await page.click('.rail a[href="#/flow"]')
   await page.waitForFunction(() => {
-    const viewport = document.querySelector('#fixture-edges .react-flow__viewport')
+    const viewport = document.querySelector('#fixture-flow .react-flow__viewport')
     return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a > 0.1
   })
-  await page.screenshot({ path: 'visual-artifacts/gallery-edges.png' })
+  await page.screenshot({ path: 'visual-artifacts/gallery-layout.png' })
   for (const width of [1280, 900]) {
     await page.setViewport({ width, height: 900 })
     await page.waitForFunction(() => [...document.querySelectorAll('.gallery-preview')]

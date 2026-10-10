@@ -22,7 +22,7 @@ const LONG = 'authenticates and then retries'
 export const edges: Scene = {
   id: 'edges',
   title: 'Edges — routing, arrowheads, labels, overrun',
-  cols: 3,
+  cols: 2,
   nodes: [
     {
       id: 'labels',

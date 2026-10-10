@@ -3,7 +3,7 @@ import type { Scene } from '../../../src'
 export const flow: Scene = {
   id: 'flow',
   title: 'Layout — directions, fan, grid',
-  cols: 3,
+  cols: 2,
   nodes: [
     {
       id: 'lr',
@@ -19,6 +19,19 @@ export const flow: Scene = {
       edges: [
         { source: 'lr1', target: 'lr2', label: 'GET' },
         { source: 'lr2', target: 'lr3', label: 'miss' },
+      ],
+    },
+    {
+      id: 'grid',
+      label: 'cols: 2 — edgeless',
+      sub: 'no edges ⇒ peers wrap into a grid',
+      pattern: 'group',
+      cols: 2,
+      children: [
+        { id: 'g1', label: 'Lambda', pattern: 'service', variant: 'tile', icon: 'lambda' },
+        { id: 'g2', label: 'S3', pattern: 'storage', variant: 'tile', icon: 's3' },
+        { id: 'g3', label: 'VPC', pattern: 'network', variant: 'tile', icon: 'vpc' },
+        { id: 'g4', label: 'IAM', pattern: 'user', variant: 'tile', icon: 'iam' },
       ],
     },
     {
@@ -38,19 +51,6 @@ export const flow: Scene = {
       ],
     },
     {
-      id: 'grid',
-      label: 'cols: 2 — edgeless',
-      sub: 'no edges ⇒ peers wrap into a grid',
-      pattern: 'group',
-      cols: 2,
-      children: [
-        { id: 'g1', label: 'Lambda', pattern: 'service', variant: 'tile', icon: 'lambda' },
-        { id: 'g2', label: 'S3', pattern: 'storage', variant: 'tile', icon: 's3' },
-        { id: 'g3', label: 'VPC', pattern: 'network', variant: 'tile', icon: 'vpc' },
-        { id: 'g4', label: 'IAM', pattern: 'user', variant: 'tile', icon: 'iam' },
-      ],
-    },
-    {
       id: 'tb',
       label: "flow: 'TB' (container)",
       sub: 'the default, one level down',
@@ -63,22 +63,6 @@ export const flow: Scene = {
       edges: [
         { source: 'tb1', target: 'tb2', label: 'request' },
         { source: 'tb2', target: 'tb3', label: 'query' },
-      ],
-    },
-    {
-      id: 'bt',
-      label: "flow: 'BT'",
-      sub: 'bottom → top — outbound, internet on top',
-      pattern: 'group',
-      flow: 'BT',
-      children: [
-        { id: 'bt1', label: 'Private host', pattern: 'service' },
-        { id: 'bt2', label: 'NAT gateway', pattern: 'network', icon: 'router' },
-        { id: 'bt3', label: 'Internet', pattern: 'external', icon: 'globe' },
-      ],
-      edges: [
-        { source: 'bt1', target: 'bt2', label: 'egress' },
-        { source: 'bt2', target: 'bt3' },
       ],
     },
     {
@@ -98,6 +82,22 @@ export const flow: Scene = {
         { source: 'fq', target: 'fw2' },
         { source: 'fw1', target: 'fsink' },
         { source: 'fw2', target: 'fsink' },
+      ],
+    },
+    {
+      id: 'bt',
+      label: "flow: 'BT'",
+      sub: 'bottom → top — outbound, internet on top',
+      pattern: 'group',
+      flow: 'BT',
+      children: [
+        { id: 'bt1', label: 'Private host', pattern: 'service' },
+        { id: 'bt2', label: 'NAT gateway', pattern: 'network', icon: 'router' },
+        { id: 'bt3', label: 'Internet', pattern: 'external', icon: 'globe' },
+      ],
+      edges: [
+        { source: 'bt1', target: 'bt2', label: 'egress' },
+        { source: 'bt2', target: 'bt3' },
       ],
     },
   ],

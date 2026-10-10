@@ -1,38 +1,34 @@
 import type { Scene } from '../../src'
 
-import { nodes as nodesFixture } from './nodes/nodes'
-import { edges as edgesFixture } from './edges/edges'
-import { containers as containersFixture } from './containers/containers'
-import { code } from './code/code'
-import { table } from './tables/table'
-import { memory } from './lists-memory/memory'
+import { overview } from './nodes/overview'
+import { patterns } from './nodes/patterns'
+import { prose, proseSizing } from './nodes/prose'
+import { list } from './nodes/list'
+import { table } from './nodes/table'
+import { code } from './nodes/code'
+import { memory } from './nodes/memory'
+import { focus } from './nodes/focus'
 import { plot, plotMl } from './charts/plot'
-import { list } from './lists-memory/list'
 import { evolution, evolutionZero } from './charts/evolution'
+import { flow } from './layout/flow'
+import { containers } from './layout/containers'
+import { edges } from './layout/edges'
+import { padding } from './layout/padding'
 import { vendorIcons } from './icons/vendor-icons'
 import { iconGallery } from './icons/icon-gallery'
 import { azureGallery } from './icons/azure-gallery'
-import { flow } from './layouts/flow'
-import { padding } from './viewport-focus/padding'
-import { focus } from './viewport-focus/focus'
-import { prose, proseSizing } from './nodes/prose'
 import { barclaysAzure } from './studies/barclays-azure'
 import { sparkTopology } from './studies/spark-topology'
 import { edfAwsCodex } from './studies/edf-aws-codex'
 import { edfAwsClaude } from './studies/edf-aws-claude'
 import { skyGcpCodex } from './studies/sky-gcp-codex'
 
-export const CATEGORIES = [
-  'nodes', 'edges', 'containers', 'tables', 'charts', 'code',
-  'lists-memory', 'layouts', 'icons', 'viewport-focus', 'studies',
-] as const
+export const CATEGORIES = ['nodes', 'charts', 'layout', 'icons', 'studies'] as const
 export type Category = (typeof CATEGORIES)[number]
 export type FixturePurpose = 'example' | 'regression' | 'gallery' | 'study'
 
 export const CATEGORY_LABELS: Record<Category, string> = {
-  nodes: 'Nodes', edges: 'Edges', containers: 'Containers', tables: 'Tables',
-  charts: 'Charts', code: 'Code', 'lists-memory': 'Lists & Memory',
-  layouts: 'Layouts', icons: 'Icons', 'viewport-focus': 'Viewport & Focus', studies: 'Studies',
+  nodes: 'Nodes', charts: 'Charts', layout: 'Layout', icons: 'Icons', studies: 'Studies',
 }
 
 export interface Fixture {
@@ -48,25 +44,26 @@ function entry(category: Category, scene: Scene, description: string, tags: stri
 }
 
 export const fixtureCatalog: Fixture[] = [
-  entry('nodes', nodesFixture, 'Node palette, patterns and card/tile variants.', ['card', 'tile', 'chip', 'patterns']),
+  entry('nodes', overview, 'Every node type in one frame: card, tile, chip, list, table, code, memory, container, plot, evolution.', ['overview', 'card', 'tile', 'chip', 'list', 'table', 'code', 'memory', 'container', 'plot', 'evolution'], 'example'),
+  entry('nodes', patterns, 'The seven pattern roles, card/tile/chip variants, framing inheritance and warn in context.', ['patterns', 'card', 'tile', 'chip', 'framed']),
   entry('nodes', prose, 'Text hierarchy, wrapping and focus across node types.', ['prose', 'wrapping', 'focus']),
   entry('nodes', proseSizing, 'Content-driven card, header and list sizing.', ['prose', 'wrapping', 'minimum-width', 'headers']),
-  entry('edges', edgesFixture, 'Routing, direction overrides, arrowheads and labels.', ['routing', 'directions', 'labels', 'arrowheads']),
-  entry('containers', containersFixture, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
-  entry('tables', table, 'Schema and data tables sized from their content.', ['schema', 'data', 'columns', 'sizing']),
+  entry('nodes', list, 'Service properties sized to their content.', ['list', 'properties', 'wrapping']),
+  entry('nodes', table, 'Schema and data tables sized from their content.', ['table', 'schema', 'data', 'columns', 'sizing']),
+  entry('nodes', code, 'Code width floor, hugging and raised cards.', ['code', 'highlighting', 'minimum-width', 'sizing']),
+  entry('nodes', memory, 'Memory slots, offsets and groups.', ['memory', 'slots', 'offsets', 'groups']),
+  entry('nodes', focus, 'Select a node or container using the focus control.', ['focus', 'interaction'], 'example'),
   entry('charts', plot, 'Cartesian axes, line series and geometric figures.', ['plot', 'line', 'axes', 'cartesian']),
   entry('charts', plotMl, 'Machine learning figures arranged in a 2×2 grid.', ['plot', 'line', 'scatter', 'machine-learning', 'grid']),
   entry('charts', evolution, 'Evolution stages with a truncated axis.', ['evolution', 'baseline', 'truncated-axis']),
   entry('charts', evolutionZero, 'Evolution stages with a zero baseline and wide span.', ['evolution', 'baseline', 'zero-based']),
-  entry('code', code, 'Code width floor, hugging and raised cards.', ['highlighting', 'minimum-width', 'sizing']),
-  entry('lists-memory', list, 'Service properties sized to their content.', ['list', 'properties', 'wrapping']),
-  entry('lists-memory', memory, 'Memory slots, offsets and groups.', ['memory', 'slots', 'offsets', 'groups']),
-  entry('layouts', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
+  entry('layout', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
+  entry('layout', containers, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
+  entry('layout', edges, 'Routing, direction overrides, arrowheads and labels.', ['edges', 'routing', 'directions', 'labels', 'arrowheads']),
+  entry('layout', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
   entry('icons', vendorIcons, 'Vendor and Lucide icons with fallback behavior.', ['aws', 'azure', 'lucide', 'fallback']),
   entry('icons', iconGallery, 'Lookup gallery of supported Lucide icon keys.', ['lucide', 'registry'], 'gallery'),
   entry('icons', azureGallery, 'Lookup gallery of Azure service icon keys.', ['azure', 'registry'], 'gallery'),
-  entry('viewport-focus', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
-  entry('viewport-focus', focus, 'Select a node or container using the focus control.', ['focus', 'interaction'], 'example'),
   entry('studies', barclaysAzure, 'Azure trade-finance and risk platform at architecture scale.', ['azure', 'architecture', 'nested'], 'study'),
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
   entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
