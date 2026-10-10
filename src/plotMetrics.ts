@@ -47,12 +47,25 @@ export const PLOT_AREA_H_MAX = 620
 /** A "nice" tick interval (1/2/5 × 10ⁿ) for a span, when the author has not named one. */
 export function niceStep(span: number): number {
   const raw = Math.abs(span) / 9
+  if (!(raw > 0) || !Number.isFinite(raw)) return 1 // a zero or non-finite span has no scale to pick from
   const mag = Math.pow(10, Math.floor(Math.log10(raw)))
   const n = raw / mag
   return (n >= 5 ? 5 : n >= 2 ? 2 : 1) * mag
 }
 
-export const axisStep = (a: PlotAxis): number => a.step ?? niceStep(a.max - a.min)
+// The most ticks one axis may paint. Generous — a nice step gives ~10 — but finite, because the
+// tick loop runs inside computeLayout (through yGutter) and an unbounded one hangs the whole page.
+export const PLOT_MAX_TICKS = 200
+
+/** The axis's tick interval: the author's `step` when it is usable, else a nice one for the span. A
+ *  zero, negative or non-finite step would never reach `max`, and one so fine it exceeds
+ *  PLOT_MAX_TICKS is a typo rather than a figure — both fall back instead of hanging layout. */
+export function axisStep(a: PlotAxis): number {
+  const span = Math.abs(a.max - a.min)
+  const s = a.step
+  if (s !== undefined && Number.isFinite(s) && s > 0 && span / s <= PLOT_MAX_TICKS) return s
+  return niceStep(span)
+}
 
 /**
  * The tick VALUES an axis paints, stepping outward from a multiple of the step so ticks land on
@@ -64,7 +77,9 @@ export function axisTicks(a: PlotAxis): number[] {
   const start = Math.ceil(a.min / step) * step
   // Accumulate by multiplication rather than repeated addition: 0.1 + 0.1 + 0.1 drifts, and a tick
   // labelled "0.30000000000000004" is a defect the author cannot fix from the scene file.
-  for (let i = 0; start + i * step <= a.max + step * 1e-9; i++) out.push(round(start + i * step, step))
+  // Capped as well as guarded: axisStep already rejects a step that cannot terminate, and the bound
+  // keeps a non-finite range (Infinity, NaN) from looping either.
+  for (let i = 0; i <= PLOT_MAX_TICKS && start + i * step <= a.max + step * 1e-9; i++) out.push(round(start + i * step, step))
   return out
 }
 

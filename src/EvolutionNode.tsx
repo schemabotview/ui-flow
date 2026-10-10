@@ -26,6 +26,7 @@ import {
   EVO_BODY_PAD_BOTTOM,
   EVO_CAP_H,
   EVO_CAP_PAD_TOP,
+  EVO_COL_BORDER,
   EVO_COL_GAP,
   EVO_COL_PAD_X,
   EVO_COL_RADIUS,
@@ -48,13 +49,14 @@ import {
   EVO_TITLE_LINE_H,
   EVO_UNIT_FONT,
   EVO_UNIT_GAP,
+  EVO_UNIT_LINE_H,
   EVO_VALUE_FONT,
   EVO_VALUE_LINE_H,
   evoBodyHeight,
-  evoCaptionHeight,
   evoColumnHeight,
-  evoColumnWidth,
   evoRise,
+  evoTrackWidth,
+  evoUnitText,
   stageValueLabel,
 } from './evolutionMetrics'
 import type { EvolutionStage, SceneNode as SceneNodeData } from './types'
@@ -78,15 +80,13 @@ export function EvolutionNode({ data }: NodeProps) {
 
   const base = patternOf(t, d.pattern, 'service')
   const stages = spec.stages
-  const colW = evoColumnWidth(spec)
   const bodyH = evoBodyHeight(spec)
-  const caption = evoCaptionHeight(d)
   // The era labels and the unit caption are ruled to the same track widths as the columns above, so
   // a year sits under its own column rather than under the gap beside it.
   const rowStyle = { display: 'flex', gap: EVO_COL_GAP, alignItems: 'flex-end' } as const
-  const trackW = colW + EVO_COL_PAD_X * 2
+  const trackW = evoTrackWidth(spec)
   const hasEras = stages.some((s) => s.at)
-  const unitText = [spec.unit, spec.baseline ? `columns rise from ${spec.baseline}` : null].filter(Boolean).join('   ·   ')
+  const unitText = evoUnitText(spec)
 
   return (
     <div
@@ -108,11 +108,11 @@ export function EvolutionNode({ data }: NodeProps) {
 
       {d.label && (
         <div style={{ marginBottom: EVO_TITLE_BLOCK_GAP }}>
-          <div style={{ fontSize: EVO_TITLE_FONT, fontWeight: 600, lineHeight: `${EVO_TITLE_LINE_H}px`, color: base.color }}>
+          <div style={{ fontSize: EVO_TITLE_FONT, fontWeight: 600, lineHeight: `${EVO_TITLE_LINE_H}px`, color: base.color, overflowWrap: 'anywhere' }}>
             {d.label}
           </div>
           {d.sub && (
-            <div style={{ fontSize: EVO_SUB_FONT, lineHeight: `${EVO_SUB_LINE_H}px`, opacity: 0.7 }}>{d.sub}</div>
+            <div style={{ fontSize: EVO_SUB_FONT, lineHeight: `${EVO_SUB_LINE_H}px`, opacity: 0.7, overflowWrap: 'anywhere' }}>{d.sub}</div>
           )}
         </div>
       )}
@@ -121,7 +121,7 @@ export function EvolutionNode({ data }: NodeProps) {
           grows upward from it, which is the direction the figure is read in. */}
       <div style={rowStyle}>
         {stages.map((s, i) => (
-          <Column key={i} t={t} spec={spec} stage={s} i={i} n={stages.length} colW={colW} bodyH={bodyH} fallback={d.pattern} />
+          <Column key={i} t={t} spec={spec} stage={s} i={i} n={stages.length} bodyH={bodyH} fallback={d.pattern} />
         ))}
       </div>
 
@@ -153,7 +153,8 @@ export function EvolutionNode({ data }: NodeProps) {
           style={{
             marginTop: EVO_UNIT_GAP,
             fontSize: EVO_UNIT_FONT,
-            lineHeight: `${EVO_UNIT_FONT + 4}px`,
+            lineHeight: `${EVO_UNIT_LINE_H}px`,
+            overflowWrap: 'anywhere',
             color: t.plot.tick,
             opacity: 0.8,
           }}
@@ -171,7 +172,6 @@ function Column({
   stage,
   i,
   n,
-  colW,
   bodyH,
   fallback,
 }: {
@@ -180,7 +180,6 @@ function Column({
   stage: EvolutionStage
   i: number
   n: number
-  colW: number
   bodyH: number
   fallback?: SceneNodeData['pattern']
 }) {
@@ -193,7 +192,7 @@ function Column({
     <div
       style={{
         flex: 'none',
-        width: colW + EVO_COL_PAD_X * 2,
+        width: evoTrackWidth(spec),
         height: evoColumnHeight(spec, stage),
         boxSizing: 'border-box',
         display: 'flex',
@@ -201,7 +200,7 @@ function Column({
         // Square at the foot, rounded at the cap: a column grows out of the axis, and four boxes
         // floating clear of the rule they stand on do not read as a chart.
         borderRadius: `${EVO_COL_RADIUS}px ${EVO_COL_RADIUS}px 0 0`,
-        border: `1px solid ${p.color}${singled ? 'ff' : '44'}`,
+        border: `${EVO_COL_BORDER}px solid ${p.color}${singled ? 'ff' : '44'}`,
         borderBottom: 'none',
         background: `${p.color}${singled ? '33' : fillAlpha(i, n)}`,
         padding: `0 ${EVO_COL_PAD_X}px`,

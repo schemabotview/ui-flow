@@ -8,7 +8,18 @@ import { type NodeProps } from '@xyflow/react'
 import { NodeHandles } from './Handles'
 import { useFlowTheme } from './themeContext'
 import { tokenizeCode } from './codeHighlight'
-import { CODE_FONT, CODE_LINE_H, CODE_BAR_H, CODE_GUTTER_W, CODE_PAD_X, CODE_PAD_Y, codeLines } from './codeMetrics'
+import {
+  CODE_FONT,
+  CODE_LINE_H,
+  CODE_BAR_H,
+  CODE_BAR_RULE,
+  CODE_BORDER,
+  CODE_GUTTER_W,
+  CODE_GUTTER_PAD,
+  CODE_PAD_X,
+  CODE_PAD_Y,
+  codeLines,
+} from './codeMetrics'
 import type { SceneNode as SceneNodeData } from './types'
 
 export function CodeNode({ data }: NodeProps) {
@@ -24,7 +35,7 @@ export function CodeNode({ data }: NodeProps) {
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 12,
-        border: `1px solid ${d.__focus ? t.code.borderFocus : t.code.border}`,
+        border: `${CODE_BORDER}px solid ${d.__focus ? t.code.borderFocus : t.code.border}`,
         background: t.code.bg,
         overflow: 'hidden',
         fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
@@ -36,13 +47,14 @@ export function CodeNode({ data }: NodeProps) {
       <div
         style={{
           height: CODE_BAR_H,
+          boxSizing: 'content-box', // the rule below is drawn outside CODE_BAR_H, as the sizer counts it
           flex: 'none',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
           padding: '0 12px',
           background: t.code.chrome,
-          borderBottom: `1px solid ${t.code.chromeBorder}`,
+          borderBottom: `${CODE_BAR_RULE}px solid ${t.code.chromeBorder}`,
         }}
       >
         <span style={{ display: 'flex', gap: 6 }}>
@@ -59,9 +71,10 @@ export function CodeNode({ data }: NodeProps) {
             <span
               style={{
                 width: CODE_GUTTER_W,
+                boxSizing: 'content-box', // CODE_GUTTER_W + CODE_GUTTER_PAD wide, whatever the host's reset
                 flex: 'none',
                 textAlign: 'right',
-                paddingRight: 12,
+                paddingRight: CODE_GUTTER_PAD,
                 color: t.code.gutter,
                 userSelect: 'none',
               }}

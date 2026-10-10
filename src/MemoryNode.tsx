@@ -13,15 +13,18 @@ import {
   MEM_FONT,
   MEM_ROW_H,
   MEM_AXIS_GAP,
-  MEM_CHAR_W,
   MEM_CELL_PAD_X,
   MEM_NOTE_GAP,
   MEM_BRACKET_GAP,
   MEM_BRACKET_W,
-  MEM_TITLE_H,
-  MEM_FOOT_H,
+  MEM_BRACKET_LABEL_GAP,
+  MEM_LABEL_FONT,
+  MEM_TITLE_FONT,
+  MEM_TITLE_LINE_H,
+  MEM_FOOT_LINE_H,
   cellCols,
   groupRuns,
+  memoryGeometry,
 } from './memoryMetrics'
 import type { SceneNode as SceneNodeData } from './types'
 
@@ -31,17 +34,18 @@ export function MemoryNode({ data }: NodeProps) {
   const t = useFlowTheme()
   const p = patternOf(t, d.pattern, 'network')
   const runs = groupRuns(slots)
-  const { nameCols, totalCols } = cellCols(slots)
-  const blockW = totalCols * MEM_CHAR_W + MEM_CELL_PAD_X * 2
-  const axisW = Math.max(0, ...slots.map((s) => s.at.length)) * MEM_CHAR_W + MEM_AXIS_GAP
-  const blockTop = d.label ? MEM_TITLE_H : 0
+  const { nameCols } = cellCols(slots)
+  const { axisW, blockW, titleH, footH } = memoryGeometry(d)
+  const blockTop = titleH
 
   return (
     <div style={{ width: '100%', height: '100%', boxSizing: 'border-box', position: 'relative', fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif" }}>
       <NodeHandles />
 
       {d.label && (
-        <div style={{ height: MEM_TITLE_H, display: 'flex', alignItems: 'center', paddingLeft: axisW, fontSize: 16, fontWeight: 600, color: t.ink }}>{d.label}</div>
+        <div style={{ height: titleH, display: 'flex', alignItems: 'center', paddingLeft: axisW, boxSizing: 'border-box', fontSize: MEM_TITLE_FONT, fontWeight: 600, lineHeight: `${MEM_TITLE_LINE_H}px`, overflowWrap: 'anywhere', color: t.ink }}>
+          <div style={{ minWidth: 0 }}>{d.label}</div>
+        </div>
       )}
 
       {/* the block: cells share edges, so only the first carries a full border and the rest a top rule */}
@@ -110,18 +114,18 @@ export function MemoryNode({ data }: NodeProps) {
               height: (r.to - r.from + 1) * MEM_ROW_H - 6,
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: MEM_BRACKET_LABEL_GAP,
             }}
           >
             <span style={{ width: MEM_BRACKET_W, height: '100%', borderLeft: `2px solid ${p.color}`, borderTop: `2px solid ${p.color}`, borderBottom: `2px solid ${p.color}`, borderRadius: '3px 0 0 3px' }} />
-            <span style={{ fontSize: 12, color: t.inkMuted, whiteSpace: 'pre' }}>{r.label}</span>
+            <span style={{ fontSize: MEM_LABEL_FONT, color: t.inkMuted, whiteSpace: 'pre' }}>{r.label}</span>
           </div>
         ))}
       </div>
 
       {d.sub && (
-        <div style={{ position: 'absolute', left: axisW, top: blockTop + slots.length * MEM_ROW_H, height: MEM_FOOT_H, display: 'flex', alignItems: 'center', fontSize: 12, color: t.inkMuted }}>
-          {d.sub}
+        <div style={{ position: 'absolute', left: axisW, right: 0, top: blockTop + slots.length * MEM_ROW_H, height: footH, display: 'flex', alignItems: 'center', fontSize: MEM_LABEL_FONT, lineHeight: `${MEM_FOOT_LINE_H}px`, overflowWrap: 'anywhere', color: t.inkMuted }}>
+          <div style={{ minWidth: 0 }}>{d.sub}</div>
         </div>
       )}
     </div>

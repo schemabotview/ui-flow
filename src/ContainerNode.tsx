@@ -42,6 +42,7 @@ import {
   HEADER_SUB_FONT,
   HEADER_SUB_LINE_H,
   HEADER_SUB_GAP,
+  HEADER_BORDER,
   headerBadgeWidth,
 } from './headerMetrics'
 import type { SceneNode as SceneNodeData } from './types'
@@ -62,7 +63,7 @@ export function ContainerNode({ data }: NodeProps) {
         boxSizing: 'border-box',
         borderRadius: 16,
         // Full accent, not a 35%-alpha ghost of it: the outline IS the grouping.
-        border: `${d.__focus ? 3 : 1.5}px solid ${d.__focus ? p.color : `${p.color}cc`}`,
+        border: `${d.__focus ? HEADER_BORDER : 1.5}px solid ${d.__focus ? p.color : `${p.color}cc`}`,
         background: d.__focus ? `${p.color}1c` : `${p.color}0d`,
         boxShadow: d.__focus ? `0 0 0 4px ${p.color}2e, 0 0 30px ${p.color}3d` : 'none',
         position: 'relative',

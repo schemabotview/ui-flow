@@ -10,10 +10,12 @@
 // figure the curve is the content and the graph paper is not. Series carry DIRECT labels rather
 // than a legend box, so the reader never looks away from the curve to find out what it is.
 
+import { useId } from 'react'
 import { type NodeProps } from '@xyflow/react'
 import { NodeHandles } from './Handles'
 import { patternOf, type Theme } from './themes'
 import { useFlowTheme } from './themeContext'
+import { textWidth } from './textMetrics'
 import {
   PLOT_AXIS_FONT,
   PLOT_LABEL_FONT,
@@ -43,6 +45,10 @@ function seriesColor(t: Theme, s: PlotSeries, i: number): string {
 export function PlotNode({ data }: NodeProps) {
   const d = data as unknown as SceneNodeData & { __focus?: boolean }
   const t = useFlowTheme()
+  // Per instance, not per node id: SVG ids are document-global, so two plots sharing an id on one page
+  // (two SceneViews, a gallery) each clipped to whichever <clipPath> came first — the wrong rectangle.
+  // Called before the early return so the hook order is stable.
+  const clipId = `plotclip-${useId().replace(/[^A-Za-z0-9_-]/g, '')}`
   const spec = d.plot
   if (!spec) return null
 
@@ -68,8 +74,6 @@ export function PlotNode({ data }: NodeProps) {
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
   const axisY = origin ? clamp(sy(0), inset.t, inset.t + area.h) : inset.t + area.h
   const axisX = origin ? clamp(sx(0), inset.l, inset.l + area.w) : inset.l
-
-  const clipId = `plotclip-${d.id}`
 
   return (
     <div
@@ -227,9 +231,9 @@ export function PlotNode({ data }: NodeProps) {
                 : s.points?.[s.points.length - 1])
             if (!anchor) return null
             // A label anchored to a series' LAST point sits at the right edge by construction, so
-            // the common case is the one that overruns. Measure it (a sans advance is ~0.55em) and
-            // flip it to the inside rather than let it leave the card.
-            const w = s.label.length * PLOT_LABEL_FONT * 0.55
+            // the common case is the one that overruns. Measure it (textMetrics — the same table the
+            // sizers use, never a mean) and flip it to the inside rather than let it leave the card.
+            const w = textWidth(s.label, PLOT_LABEL_FONT)
             const right = inset.l + area.w
             const flip = sx(anchor[0]) + 12 + w > right
             return (

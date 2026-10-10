@@ -18,6 +18,10 @@ import {
   TABLE_COL_GAP,
   TABLE_KEY_W,
   TABLE_NAME_FONT,
+  TABLE_NAME_LINE_H,
+  TABLE_SUB_FONT,
+  TABLE_SUB_LINE_H,
+  TABLE_SUB_GAP,
   TABLE_HEAD_PAD_TOP,
   TABLE_HEAD_PAD_BOTTOM,
   tableColumnChars,
@@ -74,8 +78,12 @@ export function TableNode({ data }: NodeProps) {
           fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
         }}
       >
-        <div style={{ fontSize: TABLE_NAME_FONT, fontWeight: 600, lineHeight: '22px', color: p.color }}>{d.label}</div>
-        {d.sub && <div style={{ fontSize: 12, lineHeight: '16px', opacity: 0.7, marginTop: 2 }}>{d.sub}</div>}
+        <div style={{ fontSize: TABLE_NAME_FONT, fontWeight: 600, lineHeight: `${TABLE_NAME_LINE_H}px`, color: p.color }}>{d.label}</div>
+        {d.sub && (
+          <div style={{ fontSize: TABLE_SUB_FONT, lineHeight: `${TABLE_SUB_LINE_H}px`, opacity: 0.7, marginTop: TABLE_SUB_GAP, overflowWrap: 'anywhere' }}>
+            {d.sub}
+          </div>
+        )}
       </div>
       <div style={{ flex: 'none', height: 1, background: `${p.color}55` }} />
 

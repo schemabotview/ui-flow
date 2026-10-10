@@ -27,7 +27,9 @@ export function NodeIcon({ icon, pattern, size = 26 }: { icon?: string; pattern:
   if (Aws) {
     return (
       <span style={{ flex: 'none', display: 'inline-flex', borderRadius: 6, overflow: 'hidden', lineHeight: 0 }}>
-        <Aws size={size + 4} />
+        {/* Exactly `size`: every sizer reserves `size` for the glyph, so a tile drawn even a few px
+            larger overruns its icon box (a chip by 4px across, a tile by 4px down). */}
+        <Aws size={size} />
       </span>
     )
   }

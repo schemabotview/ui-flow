@@ -4,7 +4,7 @@
 // the `user-select` block in styles.css): the scene carries real prose and real code, and a locked
 // viewport is what makes a drag mean "select" rather than "pan".
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef } from 'react'
 import { ReactFlow, Background, MarkerType, type Node, type Edge, type ReactFlowInstance } from '@xyflow/react'
 import type { Scene } from './types'
 import { computeLayout, collectEdges } from './layout'
@@ -37,6 +37,11 @@ const edgeTypes = { flow: FlowEdge }
  */
 export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; focusId?: string; theme?: ThemeKey }) {
   const t = THEMES[theme] ?? THEMES.dark
+  // SVG ids are DOCUMENT-global, and a page may hold several SceneViews (the harness gallery does, and
+  // so can a content repo). A fixed `flow-pulse-glow` resolved every `url(#…)` to the first instance;
+  // harmless while every copy was identical, but it is the same trap PlotNode's clip fell into, so
+  // the id is per instance. Sanitised because useId's format is not guaranteed safe inside `url(#…)`.
+  const glowId = `flow-pulse-glow-${useId().replace(/[^A-Za-z0-9_-]/g, '')}`
   const { nodes, edges } = useMemo(() => {
     const placed = computeLayout(scene)
     // `framed` is INHERITED: a leaf takes its own value, else the nearest ancestor container's, else
@@ -96,7 +101,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         label: e.label,
         type: 'flow',
         // Pulse tinted to the destination service so arriving at a node lights up in its accent.
-        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve' },
+        data: { pulse: p.color, bidirectional: !!e.bidirectional, route: e.route ?? 'curve', glow: glowId },
         // A dashed path marks an edge that is not the subject's main flow (a status report, an
         // acknowledgement travelling back). The DASH is on the line only — the pulse still rides the
         // same path, because what is dashed is the channel, not the traffic.
@@ -107,7 +112,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
       }
     })
     return { nodes, edges }
-  }, [scene, focusId, t])
+  }, [scene, focusId, t, glowId])
 
   // Re-fit whenever the pane's real size changes. `fitView` alone only runs on mount, and it can
   // measure the container before the flex layout has settled (so a wide scene overflows past the
@@ -120,7 +125,11 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
   // its elements match the rest of the deck. Because padding is a fraction, it behaves identically at
   // 1080p (dev), 1920 (reels) and 2160 (4K capture) — no absolute-zoom scaling, no per-resolution math.
   const FIT = { padding: scene.padding ?? 0.12, minZoom: 0.05, maxZoom: 8 }
-  const fit = () => rf.current?.fitView(FIT)
+  // Read through a ref: the ResizeObserver below is created once, and a closure over the FIRST
+  // render's FIT kept the first scene's padding for every later scene's resize-refit.
+  const fitRef = useRef(FIT)
+  fitRef.current = FIT
+  const fit = () => rf.current?.fitView(fitRef.current)
   useEffect(() => {
     const el = wrap.current
     if (!el) return
@@ -143,10 +152,10 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
           It lives here (rather than in the app's stylesheet) so the render-engine folder stays
           self-contained and portable between concept repos. */}
       <style>{'.react-flow__edgelabel-renderer { z-index: 5; }'}</style>
-      {/* Soft glow for the travelling edge pulse; referenced by FlowEdge via url(#flow-pulse-glow). */}
+      {/* Soft glow for the travelling edge pulse; FlowEdge references it by the id in its edge data. */}
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
         <defs>
-          <filter id="flow-pulse-glow" x="-200%" y="-200%" width="500%" height="500%">
+          <filter id={glowId} x="-200%" y="-200%" width="500%" height="500%">
             <feGaussianBlur stdDeviation="2.4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />

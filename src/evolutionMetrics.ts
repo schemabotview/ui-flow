@@ -64,6 +64,10 @@ export const EVO_UNIT_FONT = 13 // the axis caption and the painted baseline not
 export const EVO_COL_PAD_X = 14 // inside a column, each side
 export const EVO_COL_GAP = 16 // between columns
 export const EVO_COL_RADIUS = 12
+// A column's own border — left, right and top; the foot is open onto the axis. EvolutionNode sets
+// box-sizing: border-box, so this is counted OUTSIDE the text measure rather than eating into it:
+// wrapLines wraps at exactly `evoColumnWidth`, and the column is that plus its padding plus this.
+export const EVO_COL_BORDER = 1
 export const EVO_CAP_PAD_TOP = 14 // above the headline figure
 export const EVO_CAP_PAD_BOTTOM = 10 // below it, before the rise begins
 export const EVO_BODY_PAD_BOTTOM = 16 // below the last spec line, before the column's foot
@@ -187,20 +191,43 @@ export function evoRise(spec: EvolutionSpec, stage: EvolutionStage): number {
   return Math.round((Math.max(0, stage.value - base) / top) * EVO_RISE)
 }
 
-/** A stage's whole column height: the two shared blocks plus its own rise. */
+/** A stage's whole column height: the two shared blocks plus its own rise, plus the top border that
+ *  border-box takes out of it. Every column carries the same border, so differences stay pure data. */
 export const evoColumnHeight = (spec: EvolutionSpec, stage: EvolutionStage): number =>
-  EVO_CAP_H + evoRise(spec, stage) + evoBodyHeight(spec)
+  EVO_COL_BORDER + EVO_CAP_H + evoRise(spec, stage) + evoBodyHeight(spec)
 
-/** The caption block above the columns — the node's own label and sub. */
-export function evoCaptionHeight(node: Pick<SceneNode, 'label' | 'sub'>): number {
-  if (!node.label) return 0
-  return EVO_TITLE_LINE_H + (node.sub ? EVO_SUB_LINE_H : 0) + EVO_TITLE_BLOCK_GAP
+/** One column's outer width — the text measure, its padding and its side borders. Also the track
+ *  each era label is centred in, so a year sits under its own column. */
+export const evoTrackWidth = (spec: EvolutionSpec): number => evoColumnWidth(spec) + 2 * (EVO_COL_PAD_X + EVO_COL_BORDER)
+
+/** The width of the row of columns — which is also the measure the caption and unit line wrap at. */
+export function evoRowWidth(spec: EvolutionSpec): number {
+  const n = stagesOf(spec).length
+  return n * evoTrackWidth(spec) + Math.max(0, n - 1) * EVO_COL_GAP
 }
 
-/** Everything drawn BELOW the columns: the axis rule, the era labels, the unit caption. */
+/** The caption block above the columns — the node's own label and sub, each WRAPPED at the row's
+ *  width. The figure is as wide as its columns, not as its title: a long caption on a two-stage row
+ *  takes a second line, and counting it as one would push the axis out past the card's clip. */
+export function evoCaptionHeight(node: Pick<SceneNode, 'label' | 'sub' | 'evolution'>): number {
+  if (!node.label) return 0
+  const textW = evoRowWidth(node.evolution!)
+  const title = wrapLines(node.label, textW, EVO_TITLE_FONT, 600) * EVO_TITLE_LINE_H
+  const sub = node.sub ? wrapLines(node.sub, textW, EVO_SUB_FONT) * EVO_SUB_LINE_H : 0
+  return title + sub + EVO_TITLE_BLOCK_GAP
+}
+
+/** The caption under the axis: what the heights measure, and the baseline when one truncates them. */
+export const evoUnitText = (spec: EvolutionSpec): string =>
+  [spec.unit, spec.baseline ? `columns rise from ${spec.baseline}` : null].filter(Boolean).join('   ·   ')
+export const EVO_UNIT_LINE_H = EVO_UNIT_FONT + 4
+
+/** Everything drawn BELOW the columns: the axis rule, the era labels, the unit caption (wrapped at
+ *  the row's width, for the same reason the caption is). */
 export function evoAxisHeight(spec: EvolutionSpec): number {
   const eras = stagesOf(spec).some((s) => s.at) ? EVO_AXIS_LABEL_GAP + EVO_AXIS_LINE_H : 0
-  const unit = spec.unit || spec.baseline ? EVO_UNIT_GAP + EVO_UNIT_FONT + 4 : 0
+  const unitText = evoUnitText(spec)
+  const unit = unitText ? EVO_UNIT_GAP + wrapLines(unitText, evoRowWidth(spec), EVO_UNIT_FONT) * EVO_UNIT_LINE_H : 0
   return EVO_AXIS_RULE_GAP + EVO_RULE_H + eras + unit
 }
 
@@ -208,10 +235,9 @@ export function evoAxisHeight(spec: EvolutionSpec): number {
 export function evoContentSize(node: Pick<SceneNode, 'label' | 'sub' | 'evolution'>): { w: number; h: number } {
   const spec = node.evolution!
   const stages = stagesOf(spec)
-  const colW = evoColumnWidth(spec) + EVO_COL_PAD_X * 2
   const tallest = Math.max(0, ...stages.map((s) => evoColumnHeight(spec, s)))
   return {
-    w: Math.round(stages.length * colW + Math.max(0, stages.length - 1) * EVO_COL_GAP + EVO_PAD * 2),
+    w: Math.round(evoRowWidth(spec) + EVO_PAD * 2),
     h: Math.round(evoCaptionHeight(node) + tallest + evoAxisHeight(spec) + EVO_PAD * 2),
   }
 }

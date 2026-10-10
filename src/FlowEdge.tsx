@@ -24,7 +24,7 @@ export function FlowEdge({
   label,
 }: EdgeProps) {
   const t = useFlowTheme()
-  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step' } | undefined
+  const d = data as { pulse?: string; bidirectional?: boolean; route?: 'curve' | 'step'; glow?: string } | undefined
   // Both builders also hand back the path's midpoint — where the label rides. The STEP route is for
   // a dense band diagram: between two boxes four columns apart a bezier sweeps across everything in
   // between, where an orthogonal run goes out, along and in. `borderRadius` rounds the corners just
@@ -33,11 +33,13 @@ export function FlowEdge({
   const [edgePath, labelX, labelY] =
     d?.route === 'step' ? getSmoothStepPath({ ...geometry, borderRadius: 10 }) : getBezierPath(geometry)
   const pulse = d?.pulse ?? t.edge.pulse
+  // The glow filter's id is per SceneView (see there), so it rides in on the edge data.
+  const glow = d?.glow ? `url(#${d.glow})` : undefined
 
   return (
     <>
       <BaseEdge path={edgePath} markerEnd={markerEnd} markerStart={markerStart} style={style} />
-      <circle r={4.5} fill={pulse} opacity={0.9} filter="url(#flow-pulse-glow)">
+      <circle r={4.5} fill={pulse} opacity={0.9} filter={glow}>
         <animateMotion dur="2.4s" repeatCount="indefinite" path={edgePath} rotate="auto" />
       </circle>
       {/* The edge's label, as a pill riding the path midpoint. It renders in EdgeLabelRenderer — a
@@ -77,7 +79,7 @@ export function FlowEdge({
       )}
       {/* A two-way edge gets a second pulse travelling the other way (end → start). */}
       {d?.bidirectional && (
-        <circle r={4.5} fill={pulse} opacity={0.9} filter="url(#flow-pulse-glow)">
+        <circle r={4.5} fill={pulse} opacity={0.9} filter={glow}>
           <animateMotion
             dur="2.4s"
             repeatCount="indefinite"

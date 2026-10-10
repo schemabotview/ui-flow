@@ -10,6 +10,7 @@
 // grid so the columns actually line up.
 
 import type { SceneNode, TableColumn } from './types'
+import { textWidth, wrapLines } from './textMetrics'
 
 export const TABLE_FONT = 15 // px — IBM Plex Mono, the grid body
 export const TABLE_LINE_H = 26 // px per body line (roomier than code's 22 — these are read, not scanned)
@@ -34,13 +35,42 @@ export const TABLE_MIN_CHARS = 24
 
 // The header block: the table's name, and its `sub` when set. Sans-serif (it is a caption, not data).
 export const TABLE_NAME_FONT = 17
-const NAME_LINE_H = 22
-const SUB_LINE_H = 16
+export const TABLE_NAME_LINE_H = 22
+export const TABLE_SUB_FONT = 12
+export const TABLE_SUB_LINE_H = 16
+export const TABLE_SUB_GAP = 2 // marginTop on the sub
 export const TABLE_HEAD_PAD_TOP = 12
 export const TABLE_HEAD_PAD_BOTTOM = 10
 
-export function tableHeaderHeight(node: Pick<SceneNode, 'sub'>): number {
-  return TABLE_HEAD_PAD_TOP + NAME_LINE_H + (node.sub ? 2 + SUB_LINE_H : 0) + TABLE_HEAD_PAD_BOTTOM
+type TableSized = Pick<SceneNode, 'label' | 'sub' | 'columns' | 'headers' | 'values'>
+
+/**
+ * The width inside the card's padding and border: the grid's, or the caption's when the name runs
+ * longer. The name is MEASURED (textMetrics, weight 600) rather than converted to mono columns by a
+ * mean — a mean is wrong in both directions, and the short one clips. The name therefore always fits
+ * on its one reserved line; the `sub` wraps at this width instead, and tableHeaderHeight counts it.
+ */
+export function tableContentWidth(node: TableSized): number {
+  const chars = tableColumnChars(node)
+  const gutter = hasKeys(node.columns) && !isDataTable(node) ? TABLE_KEY_W : 0
+  const gridChars = Math.max(TABLE_MIN_CHARS, chars.reduce((a, b) => a + b, 0))
+  const grid =
+    gutter +
+    Math.ceil(gridChars * TABLE_CHAR_W) +
+    // Gaps sit between GRID TRACKS, and the PK/FK gutter is a track of its own — a schema table with
+    // keys renders `34px <name> <type>`, i.e. three tracks and two gaps. Counting gaps off the column
+    // count alone under-reserved one whole gap whenever the gutter was present, clipping the last
+    // column.
+    TABLE_COL_GAP * Math.max(0, chars.length + (gutter ? 1 : 0) - 1)
+  return Math.max(grid, Math.ceil(textWidth(node.label, TABLE_NAME_FONT, 600)))
+}
+
+/** The caption block's height: the name on one line, and the `sub` wrapped at the content width. */
+export function tableHeaderHeight(node: TableSized): number {
+  const sub = node.sub
+    ? TABLE_SUB_GAP + wrapLines(node.sub, tableContentWidth(node), TABLE_SUB_FONT) * TABLE_SUB_LINE_H
+    : 0
+  return TABLE_HEAD_PAD_TOP + TABLE_NAME_LINE_H + sub + TABLE_HEAD_PAD_BOTTOM
 }
 
 /** A table is in DATA mode when it carries `values`; otherwise it is a SCHEMA listing of `columns`. */
@@ -78,24 +108,7 @@ export function tableCardSize(node: Pick<SceneNode, 'label' | 'sub' | 'columns' 
   w: number
   h: number
 } {
-  const chars = tableColumnChars(node)
-  const gutter = hasKeys(node.columns) && !isDataTable(node) ? TABLE_KEY_W : 0
-  const gridChars = Math.max(
-    TABLE_MIN_CHARS,
-    chars.reduce((a, b) => a + b, 0),
-    // The caption must fit too — it is sans at a larger size, so ~0.62 of a mono advance per char.
-    Math.ceil((node.label.length * TABLE_NAME_FONT * 0.62) / TABLE_CHAR_W),
-  )
-  const w =
-    TABLE_PAD_X * 2 +
-    gutter +
-    Math.ceil(gridChars * TABLE_CHAR_W) +
-    // Gaps sit between GRID TRACKS, and the PK/FK gutter is a track of its own — a schema table with
-    // keys renders `34px <name> <type>`, i.e. three tracks and two gaps. Counting gaps off the column
-    // count alone under-reserved one whole gap whenever the gutter was present, clipping the last
-    // column.
-    TABLE_COL_GAP * Math.max(0, chars.length + (gutter ? 1 : 0) - 1) +
-    TABLE_BORDER * 2
+  const w = TABLE_PAD_X * 2 + tableContentWidth(node) + TABLE_BORDER * 2
   const h =
     tableHeaderHeight(node) + TABLE_RULE_H + TABLE_PAD_Y * 2 + tableBodyLines(node) * TABLE_LINE_H + TABLE_BORDER * 2
   return { w, h }
