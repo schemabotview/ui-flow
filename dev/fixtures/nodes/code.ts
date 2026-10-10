@@ -9,8 +9,8 @@ const SPARK = [
 
 export const code: Scene = {
   id: 'code',
-  title: 'Code — the width floor, hugged and raised',
-  cols: 1,
+  title: 'Content cards — code, table, memory',
+  cols: 2,
   nodes: [
     {
       id: 'floor',
@@ -44,6 +44,57 @@ export const code: Scene = {
         { id: 'out', kind: 'code', hug: true, filename: 'stdout', label: '[0, 1, 4, 9, 16]' },
       ],
       edges: [{ source: 'call', target: 'out', label: 'run' }],
+    },
+    {
+      id: 'tables', label: 'Table — schema and data modes', sub: 'columns + key badges · a result set', pattern: 'group', flow: 'LR',
+      children: [
+        {
+          id: 'schema',
+          kind: 'table',
+          label: 'orders',
+          sub: 'schema',
+          pattern: 'storage',
+          columns: [
+            { name: 'id', type: 'bigint', key: 'PK' },
+            { name: 'customer_id', type: 'bigint', key: 'FK' },
+            { name: 'placed_at', type: 'timestamptz' },
+            { name: 'total', type: 'numeric(10,2)' },
+            { name: 'status', type: 'text' },
+          ],
+        },
+        {
+          id: 'result',
+          kind: 'table',
+          label: 'SELECT status, count(*)',
+          sub: 'result',
+          pattern: 'service',
+          headers: ['status', 'count'],
+          values: [
+            ['shipped', '1,204'],
+            ['pending', '318'],
+            ['cancelled', '47'],
+          ],
+        },
+      ],
+      edges: [{ source: 'schema', target: 'result', label: 'GROUP BY' }],
+    },
+    {
+      id: 'memory', label: 'Memory — slots, offsets, groups', sub: 'adjacent bytes share edges', pattern: 'group',
+      children: [
+        {
+          id: 'listobj',
+          kind: 'memory',
+          label: 'PyListObject',
+          sub: 'CPython, 64-bit',
+          slots: [
+            { at: '0x00', name: 'ob_refcnt', note: 'Py_ssize_t', group: 'PyObject' },
+            { at: '0x08', name: 'ob_type', note: 'PyTypeObject *', group: 'PyObject' },
+            { at: '0x10', name: 'ob_size', note: 'Py_ssize_t', group: 'VarObject' },
+            { at: '0x18', name: 'ob_item', note: 'PyObject **', group: 'list body' },
+            { at: '0x20', name: 'allocated', note: 'Py_ssize_t', group: 'list body' },
+          ],
+        },
+      ],
     },
     {
       id: 'raised',

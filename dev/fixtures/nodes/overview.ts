@@ -5,7 +5,7 @@ const sample = (x: number) => 1 / (1 + Math.exp(-x))
 export const overview: Scene = {
   id: 'nodes',
   title: 'Node types — one of each',
-  cols: 4,
+  cols: 3,
   nodes: [
     {
       id: 'ov-card', label: 'Card', sub: 'default leaf · colour = role', pattern: 'group', cols: 2,
@@ -17,17 +17,34 @@ export const overview: Scene = {
       ],
     },
     {
-      id: 'ov-tile', label: 'Tile', sub: "variant: 'tile'", pattern: 'group', cols: 2,
+      id: 'tiles',
+      label: 'Tile',
+      sub: "variant: 'tile' · icon override",
+      pattern: 'group',
+      cols: 2,
       children: [
-        { id: 'ov-t1', label: 'lambda', pattern: 'service', variant: 'tile', icon: 'lambda' },
-        { id: 'ov-t2', label: 'cosmos', pattern: 'storage', variant: 'tile', icon: 'cosmos' },
-        { id: 'ov-t3', label: 'cpu', pattern: 'service', variant: 'tile', icon: 'cpu' },
-        { id: 'ov-t4', label: 'default', pattern: 'network', variant: 'tile' },
+        { id: 't1', label: 'fetch', pattern: 'service', variant: 'tile', icon: 'scroll' },
+        { id: 't2', label: 'decode', pattern: 'service', variant: 'tile', icon: 'braces' },
+        { id: 't3', label: 'execute', pattern: 'service', variant: 'tile', icon: 'cpu' },
+        { id: 't4', label: 'default glyph', pattern: 'storage', variant: 'tile' },
       ],
     },
     {
-      id: 'ov-chip', label: 'Chip', sub: "variant: 'chip'", pattern: 'group', cols: 2,
-      children: [1, 2, 3, 4].map((i) => ({ id: `ov-k${i}`, label: `Task ${i}`, pattern: 'network' as const, variant: 'chip' as const, icon: 'none' })),
+      id: 'chips',
+      label: 'Chip',
+      sub: "variant: 'chip' · counted, not described",
+      pattern: 'group',
+      cols: 2,
+      children: [
+        { variant: 'chip' as const, id: 'k1', label: 'Task 1', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k2', label: 'Task 2', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k3', label: 'Task 3', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k4', label: 'Task 4', pattern: 'network', icon: 'none' },
+        { variant: 'chip' as const, id: 'k5', label: '3', pattern: 'storage', icon: 'none' },
+        { variant: 'chip' as const, id: 'k6', label: 'Cache / memory', pattern: 'storage', icon: 'database' },
+        { variant: 'chip' as const, id: 'k7', label: 'Local disk', pattern: 'storage', icon: 'server' },
+        { variant: 'chip' as const, id: 'k8', label: 'a chip whose label runs long enough to set its own width', pattern: 'warn' },
+      ],
     },
     {
       id: 'ov-list', label: 'List', sub: "kind: 'list'", pattern: 'group',

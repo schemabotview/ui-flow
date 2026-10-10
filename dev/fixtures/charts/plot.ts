@@ -6,9 +6,17 @@ const sample = (a: number, b: number, n: number, f: (x: number) => number): Plot
     return [x, f(x)] as PlotPoint
   })
 
+
+const fit = { w: 0.42, b: 1.1 }
+const houses: PlotPoint[] = [
+  [1.0, 1.7], [1.4, 1.5], [1.6, 2.1], [2.1, 1.8], [2.3, 2.3], [2.6, 2.0],
+  [3.0, 2.6], [3.2, 2.2], [3.6, 2.8], [4.0, 2.7], [4.3, 3.1], [4.8, 3.0],
+]
+
 export const plot: Scene = {
   id: 'plot',
-  title: 'plot — Cartesian plane',
+  title: 'Plots — Cartesian plane and ML figures',
+  cols: 2,
   nodes: [
     {
       id: 'line',
@@ -28,21 +36,6 @@ export const plot: Scene = {
         ],
       },
     },
-  ],
-  edges: [],
-}
-
-const fit = { w: 0.42, b: 1.1 }
-const houses: PlotPoint[] = [
-  [1.0, 1.7], [1.4, 1.5], [1.6, 2.1], [2.1, 1.8], [2.3, 2.3], [2.6, 2.0],
-  [3.0, 2.6], [3.2, 2.2], [3.6, 2.8], [4.0, 2.7], [4.3, 3.1], [4.8, 3.0],
-]
-
-export const plotMl: Scene = {
-  id: 'plot-ml',
-  title: 'plot — ML figures (2×2)',
-  cols: 2,
-  nodes: [
     {
       id: 'fit',
       kind: 'plot',

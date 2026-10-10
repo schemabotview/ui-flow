@@ -2,21 +2,15 @@ import type { Scene } from '../../src'
 
 import { overview } from './nodes/overview'
 import { patterns } from './nodes/patterns'
-import { prose, proseSizing } from './nodes/prose'
-import { list } from './nodes/list'
-import { table } from './nodes/table'
+import { prose } from './nodes/prose'
 import { code } from './nodes/code'
-import { memory } from './nodes/memory'
-import { focus } from './nodes/focus'
-import { plot, plotMl } from './charts/plot'
-import { evolution, evolutionZero } from './charts/evolution'
+import { plot } from './charts/plot'
+import { evolution } from './charts/evolution'
 import { flow } from './layout/flow'
 import { containers } from './layout/containers'
 import { edges } from './layout/edges'
 import { padding } from './layout/padding'
-import { vendorIcons } from './icons/vendor-icons'
-import { iconGallery } from './icons/icon-gallery'
-import { azureGallery } from './icons/azure-gallery'
+import { icons } from './icons/icons'
 import { barclaysAzure } from './studies/barclays-azure'
 import { sparkTopology } from './studies/spark-topology'
 import { edfAwsCodex } from './studies/edf-aws-codex'
@@ -44,26 +38,17 @@ function entry(category: Category, scene: Scene, description: string, tags: stri
 }
 
 export const fixtureCatalog: Fixture[] = [
-  entry('nodes', overview, 'Every node type in one frame: card, tile, chip, list, table, code, memory, container, plot, evolution.', ['overview', 'card', 'tile', 'chip', 'list', 'table', 'code', 'memory', 'container', 'plot', 'evolution'], 'example'),
-  entry('nodes', patterns, 'The seven pattern roles, card/tile/chip variants, framing inheritance and warn in context.', ['patterns', 'card', 'tile', 'chip', 'framed']),
-  entry('nodes', prose, 'Text hierarchy, wrapping and focus across node types.', ['prose', 'wrapping', 'focus']),
-  entry('nodes', proseSizing, 'Content-driven card, header and list sizing.', ['prose', 'wrapping', 'minimum-width', 'headers']),
-  entry('nodes', list, 'Service properties sized to their content.', ['list', 'properties', 'wrapping']),
-  entry('nodes', table, 'Schema and data tables sized from their content.', ['table', 'schema', 'data', 'columns', 'sizing']),
-  entry('nodes', code, 'Code width floor, hugging and raised cards.', ['code', 'highlighting', 'minimum-width', 'sizing']),
-  entry('nodes', memory, 'Memory slots, offsets and groups.', ['memory', 'slots', 'offsets', 'groups']),
-  entry('nodes', focus, 'Select a node or container using the focus control.', ['focus', 'interaction'], 'example'),
-  entry('charts', plot, 'Cartesian axes, line series and geometric figures.', ['plot', 'line', 'axes', 'cartesian']),
-  entry('charts', plotMl, 'Machine learning figures arranged in a 2×2 grid.', ['plot', 'line', 'scatter', 'machine-learning', 'grid']),
-  entry('charts', evolution, 'Evolution stages with a truncated axis.', ['evolution', 'baseline', 'truncated-axis']),
-  entry('charts', evolutionZero, 'Evolution stages with a zero baseline and wide span.', ['evolution', 'baseline', 'zero-based']),
+  entry('nodes', overview, 'Every node type in one frame — card, tile, chip, list, table, code, memory, container, plot, evolution. Use the focus control to light any of them.', ['overview', 'card', 'tile', 'chip', 'list', 'table', 'code', 'memory', 'container', 'plot', 'evolution', 'focus'], 'example'),
+  entry('nodes', patterns, 'The seven pattern roles, framing inheritance and warn in context.', ['patterns', 'roles', 'framed', 'warn']),
+  entry('nodes', prose, 'Text hierarchy, wrapping cards and headers, and list width floors.', ['prose', 'wrapping', 'list', 'minimum-width', 'headers', 'focus']),
+  entry('nodes', code, 'Content-sized cards: code width floor, hug and minCols; table schema and data modes; memory layout.', ['code', 'table', 'memory', 'minimum-width', 'sizing']),
+  entry('charts', plot, 'Cartesian plane and machine-learning figures: lines, scatter, areas, markers, segments.', ['plot', 'line', 'scatter', 'axes', 'machine-learning']),
+  entry('charts', evolution, 'Evolution rows on a truncated and on a zero-based axis.', ['evolution', 'baseline', 'truncated-axis', 'zero-based']),
   entry('layout', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
   entry('layout', containers, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
   entry('layout', edges, 'Routing, direction overrides, arrowheads and labels.', ['edges', 'routing', 'directions', 'labels', 'arrowheads']),
   entry('layout', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
-  entry('icons', vendorIcons, 'Vendor and Lucide icons with fallback behavior.', ['aws', 'azure', 'lucide', 'fallback']),
-  entry('icons', iconGallery, 'Lookup gallery of supported Lucide icon keys.', ['lucide', 'registry'], 'gallery'),
-  entry('icons', azureGallery, 'Lookup gallery of Azure service icon keys.', ['azure', 'registry'], 'gallery'),
+  entry('icons', icons, 'How an icon key resolves, and every AWS, Lucide and Azure key the engine registers.', ['aws', 'azure', 'lucide', 'registry', 'fallback'], 'gallery'),
   entry('studies', barclaysAzure, 'Azure trade-finance and risk platform at architecture scale.', ['azure', 'architecture', 'nested'], 'study'),
   entry('studies', sparkTopology, 'Apache Spark runtime topology at architecture scale.', ['apache-spark', 'architecture', 'nested'], 'study'),
   entry('studies', edfAwsCodex, 'EDF Energy AWS case study 1: batch lakehouse, supplementary streaming and shared controls.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'batch', 'streaming'], 'study'),
@@ -77,3 +62,15 @@ export const fixtures = Object.fromEntries(CATEGORIES.map(category => [
 export const allFixtures: Scene[] = CATEGORIES.flatMap(category => fixtures[category])
 export const categoryOf = (id: string): Category | undefined =>
   fixtureCatalog.find(fixture => fixture.scene.id === id)?.category
+
+export const FIXTURE_ALIASES: Record<string, string> = {
+  focus: 'nodes',
+  'prose-sizing': 'prose-hierarchy',
+  list: 'prose-hierarchy',
+  table: 'code',
+  memory: 'code',
+  'plot-ml': 'plot',
+  'evolution-zero': 'evolution',
+  'vendor-icons': 'icon-gallery',
+  'azure-gallery': 'icon-gallery',
+}

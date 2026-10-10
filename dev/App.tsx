@@ -3,7 +3,7 @@ import { SceneView } from '../src'
 import { computeLayout } from '../src/layout'
 import type { Scene, SceneNode, ThemeKey } from '../src'
 import type { Category } from './fixtures'
-import { CATEGORIES, CATEGORY_LABELS, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
+import { CATEGORIES, CATEGORY_LABELS, FIXTURE_ALIASES, fixtureCatalog, allFixtures, categoryOf } from './fixtures'
 
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
 
@@ -20,7 +20,10 @@ function fullUrl(on: boolean) {
 }
 
 function useHashId(fallback: string) {
-  const read = () => window.location.hash.replace(/^#\/?/, '') || fallback
+  const read = () => {
+    const id = window.location.hash.replace(/^#\/?/, '') || fallback
+    return FIXTURE_ALIASES[id] ?? id
+  }
   const [id, setId] = useState(read)
   useEffect(() => {
     const onHash = () => setId(read())

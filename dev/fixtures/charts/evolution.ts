@@ -2,8 +2,9 @@ import type { Scene } from '../../../src'
 
 export const evolution: Scene = {
   id: 'evolution',
-  title: 'evolution — truncated axis',
+  title: 'Evolution — truncated and zero-based axes',
   padding: 0.16,
+  cols: 2,
   nodes: [
     {
       id: 'cpus',
@@ -54,15 +55,6 @@ export const evolution: Scene = {
         ],
       },
     },
-  ],
-  edges: [],
-}
-
-export const evolutionZero: Scene = {
-  id: 'evolution-zero',
-  title: 'evolution — zero-based, wide span',
-  padding: 0.16,
-  nodes: [
     {
       id: 'throughput',
       kind: 'evolution',
