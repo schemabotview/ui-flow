@@ -32,6 +32,7 @@ export interface PlotSeries {
   labelAt?: PlotPoint
   color?: PatternKey | string
   dashed?: boolean
+  arrow?: boolean
   size?: number
 }
 

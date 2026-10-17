@@ -89,7 +89,8 @@ captures; `?full=1` retains the full-window view. Existing hash links remain sta
 capability tags and purpose (`example`, `regression`, `gallery` or `study`). Categorize by what the
 fixture exercises, rather than the domain it depicts. Keep sizing-sensitive fixtures separate;
 use studies for complete architectures and galleries for icon lookup. Charts currently cover
-line/scatter plots and evolution; bar charts require renderer support before adding fixtures.
+line/scatter plots, arrowed vectors and evolution; bar charts require renderer support before adding
+fixtures.
 
 Run `npm run check` for geometry/determinism and text bounds across both themes and three viewports.
 Review the harness visually for navigation and scene composition.
@@ -123,6 +124,8 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `stretch` | scene · container | grow containers to the full cross-extent, so bands end on one line too |
 | `route: 'step'` | edge | orthogonal routing instead of a bezier |
 | `dashed` | edge | a path that is not the subject's main flow |
+| `arrow` | plot `segment` | an arrowhead at `to`, making the segment a vector; the label moves to the tip |
+| `dashed: false` | plot `segment` | a solid segment — a segment is dashed unless this says otherwise |
 
 A container is coloured by its `pattern` and by nothing else. An unreleased draft read the accent
 from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`; it was removed and

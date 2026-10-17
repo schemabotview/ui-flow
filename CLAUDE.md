@@ -137,6 +137,11 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 - **A plot is sized to ONE deck-wide box, not to its content**; `equal: true` is the only exception.
   **The plot ramp is the theme's pattern accents in a fixed order** that keeps green and orange non-adjacent;
   `warn` red is excluded.
+- **A plot `segment` is DASHED unless `dashed: false`** — it exists to draw a construction or threshold
+  line. `arrow: true` adds a head at `to` and moves the label from the midpoint to the tip, which is
+  what makes a segment read as a vector. The head is drawn as a polygon inside the series clip, so a
+  tip ON the axis bound loses its shoulders — leave the range a little headroom. A zero-length
+  segment draws no head.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, which is
   why Azure spells four keys `backupcenter`, `costbudgets`, `dbmigration`, `wafpolicy`.
 - **Azure tiles need a `viewBox` the upstream package does not ship.** `NodeIcon` supplies

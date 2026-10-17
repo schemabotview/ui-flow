@@ -42,7 +42,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('nodes', patterns, 'The seven pattern roles, framing inheritance and warn in context.', ['patterns', 'roles', 'framed', 'warn']),
   entry('nodes', prose, 'Text hierarchy, wrapping cards and headers, and list width floors.', ['prose', 'wrapping', 'list', 'minimum-width', 'headers', 'focus']),
   entry('nodes', code, 'Content-sized cards: code width floor, hug and minCols; table schema and data modes; memory layout.', ['code', 'table', 'memory', 'minimum-width', 'sizing']),
-  entry('charts', plot, 'Cartesian plane and machine-learning figures: lines, scatter, areas, markers, segments.', ['plot', 'line', 'scatter', 'axes', 'machine-learning']),
+  entry('charts', plot, 'Cartesian plane and machine-learning figures: lines, scatter, areas, markers, segments and arrowed vectors.', ['plot', 'line', 'scatter', 'axes', 'machine-learning', 'vector', 'arrowheads']),
   entry('charts', evolution, 'Evolution rows on a truncated and on a zero-based axis.', ['evolution', 'baseline', 'truncated-axis', 'zero-based']),
   entry('layout', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
   entry('layout', containers, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),

@@ -155,8 +155,22 @@ export function PlotNode({ data }: NodeProps) {
               return <circle key={i} cx={sx(s.at[0])} cy={sy(s.at[1])} r={r} fill={c} stroke={t.plot.surface} strokeWidth={2} />
             }
             if (s.kind === 'segment' && s.from && s.to) {
-              return <line key={i} x1={sx(s.from[0])} y1={sy(s.from[1])} x2={sx(s.to[0])} y2={sy(s.to[1])}
-                stroke={c} strokeWidth={2} strokeDasharray={dash ?? '7 6'} strokeLinecap="round" />
+              const [x1, y1, x2, y2] = [sx(s.from[0]), sy(s.from[1]), sx(s.to[0]), sy(s.to[1])]
+              const len = Math.hypot(x2 - x1, y2 - y1)
+              const head = s.arrow && len > 1 ? r * 1.5 : 0
+              const [ux, uy] = head ? [(x2 - x1) / len, (y2 - y1) / len] : [0, 0]
+              const [hx, hy] = [x2 - ux * head, y2 - uy * head]
+              const halfW = head * 0.45
+              return (
+                <g key={i}>
+                  <line x1={x1} y1={y1} x2={hx} y2={hy} stroke={c} strokeWidth={2}
+                    strokeDasharray={s.dashed === false ? undefined : '7 6'} strokeLinecap="round" />
+                  {head > 0 && (
+                    <polygon fill={c}
+                      points={`${x2},${y2} ${hx - uy * halfW},${hy + ux * halfW} ${hx + uy * halfW},${hy - ux * halfW}`} />
+                  )}
+                </g>
+              )
             }
             return null
           })}
@@ -168,7 +182,7 @@ export function PlotNode({ data }: NodeProps) {
             const anchor: PlotPoint | undefined =
               s.labelAt ??
               (s.kind === 'marker' ? s.at
-                : s.kind === 'segment' && s.from && s.to ? [(s.from[0] + s.to[0]) / 2, (s.from[1] + s.to[1]) / 2]
+                : s.kind === 'segment' && s.from && s.to ? (s.arrow ? s.to : [(s.from[0] + s.to[0]) / 2, (s.from[1] + s.to[1]) / 2])
                 : s.points?.[s.points.length - 1])
             if (!anchor) return null
             const w = textWidth(s.label, PLOT_LABEL_FONT)
