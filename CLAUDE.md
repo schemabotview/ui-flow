@@ -162,6 +162,8 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   terminal `span: 'all'`) is ~16:9 by itself and measured ~50% larger code at 4K. `stretch` reaches
   `tree` and `terminal` so the explorer runs the column's full height — those two kinds only, because
   they were new when it was added; extending it to `code` would re-frame every existing code row.
+  Panes sit `gap: 'tight'` (10px) at both levels; tight applies only where a group has no edges,
+  because a layered gap is the room an arrow is drawn in.
 - **`show` / `highlight` use the FILE's line numbers**, and a `code` card with neither renders exactly
   as before. Collapsed runs print `··· N lines` — U+00B7, not `⋯`, because the sizer assumes every
   glyph is one 9.02px Plex Mono advance and a fallback-font glyph would break that.

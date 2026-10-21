@@ -12,9 +12,10 @@ const TILE_GAP_X = 20
 const TILE_GAP_Y = 16
 const PAD = 14
 const STRETCHY = new Set(['tree', 'terminal'])
+const TIGHT_GAP = 10
 
 type Flow = 'TB' | 'LR' | 'BT' | 'RL'
-type Group = Pick<Scene, 'cols' | 'flow' | 'align' | 'stretch'> & { edges?: SceneEdge[] }
+type Group = Pick<Scene, 'cols' | 'flow' | 'align' | 'stretch' | 'gap'> & { edges?: SceneEdge[] }
 type Header = SceneNode['header']
 
 export interface Placed {
@@ -104,8 +105,9 @@ function layoutSubtree(nodes: SceneNode[], g: Group, header: Header): { placed: 
   }
 
   const allTiles = nodes.length > 0 && nodes.every((n) => n.variant === 'tile' && !n.children?.length)
-  const gapCross = allTiles ? TILE_GAP_X : GAP_X
-  const gapAlong = localEdges.length ? GAP_Y : allTiles ? TILE_GAP_Y : STACK_GAP_Y
+  const tight = g.gap === 'tight'
+  const gapCross = tight ? TIGHT_GAP : allTiles ? TILE_GAP_X : GAP_X
+  const gapAlong = localEdges.length ? GAP_Y : tight ? TIGHT_GAP : allTiles ? TILE_GAP_Y : STACK_GAP_Y
   const depth = depthOf(nodes, localEdges, cols)
   const layers = new Map<number, SceneNode[]>()
   for (const n of nodes) {

@@ -11,6 +11,7 @@ export const ideFrame: Scene = {
   flow: 'LR',
   align: 'start',
   stretch: true,
+  gap: 'tight',
   nodes: [
     {
       id: 'explorer',
@@ -34,6 +35,7 @@ export const ideFrame: Scene = {
       id: 'workbench',
       label: 'workbench',
       bare: true,
+      gap: 'tight',
       children: [
         {
           id: 'editor',

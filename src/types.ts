@@ -86,6 +86,7 @@ export interface SceneNode {
   pills?: boolean
   span?: 'all'
   bare?: boolean
+  gap?: 'tight'
   header?: 'band' | 'plain'
   columns?: TableColumn[]
   headers?: string[]
@@ -125,6 +126,7 @@ export interface Scene {
   header?: 'band' | 'plain'
   align?: 'center' | 'start'
   stretch?: boolean
+  gap?: 'tight'
   flow?: 'TB' | 'LR' | 'BT' | 'RL'
   padding?: number
 }

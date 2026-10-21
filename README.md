@@ -152,6 +152,7 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `highlight` | `kind: 'code'` | line numbers (the file's own) to tint in the node's `pattern` — `storage` green reads as "added" |
 | `kind: 'terminal'` | leaf | a terminal pane: `$ ` lines are commands, `Traceback` and `…Error:` lines are red, the rest is output; `filename` sets the title |
 | `bare` | container | a layout-only group: no border, header or padding — e.g. an editor with a terminal docked under it |
+| `gap: 'tight'` | scene · container | 10px between boxes in an EDGELESS group instead of 24 / 28 — for panes that sit edge to edge; a group with edges keeps its room for arrows |
 
 A container is coloured by its `pattern` and by nothing else. An unreleased draft read the accent
 from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`; it was removed and
