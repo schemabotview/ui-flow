@@ -5,6 +5,7 @@ import { patterns } from './nodes/patterns'
 import { prose } from './nodes/prose'
 import { code } from './nodes/code'
 import { annotations } from './nodes/annotations'
+import { ide } from './nodes/ide'
 import { plot } from './charts/plot'
 import { evolution } from './charts/evolution'
 import { flow } from './layout/flow'
@@ -19,6 +20,7 @@ import { edfAwsCodex } from './studies/edf-aws-codex'
 import { edfAwsClaude } from './studies/edf-aws-claude'
 import { skyGcpCodex } from './studies/sky-gcp-codex'
 import { energyUtilities } from './studies/energy-utilities'
+import { ideFrame } from './studies/ide-frame'
 
 export const CATEGORIES = ['nodes', 'charts', 'layout', 'icons', 'studies'] as const
 export type Category = (typeof CATEGORIES)[number]
@@ -46,6 +48,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('nodes', prose, 'Text hierarchy, wrapping cards and headers, and list width floors.', ['prose', 'wrapping', 'list', 'minimum-width', 'headers', 'focus']),
   entry('nodes', code, 'Content-sized cards: code width floor, hug and minCols; table schema and data modes; memory layout.', ['code', 'table', 'memory', 'minimum-width', 'sizing']),
   entry('nodes', annotations, 'Notes (dashed callouts sized to their text) and list pills against the default bullets, including a wrapping pill and an unbreakable token.', ['note', 'list', 'pills', 'minimum-width']),
+  entry('nodes', ide, 'IDE panes: a file tree (nesting, NEW badges, a collapsed folder, a long unbreakable name, notes), code with folded ranges and highlighted lines in real line numbers, a terminal with a traceback, and Python keywords coloured.', ['tree', 'code', 'terminal', 'fold', 'highlight', 'traceback', 'minimum-width']),
   entry('charts', plot, 'Cartesian plane and machine-learning figures: lines, scatter, areas, markers, segments and arrowed vectors.', ['plot', 'line', 'scatter', 'axes', 'machine-learning', 'vector', 'arrowheads']),
   entry('charts', evolution, 'Evolution rows on a truncated and on a zero-based axis.', ['evolution', 'baseline', 'truncated-axis', 'zero-based']),
   entry('layout', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
@@ -60,6 +63,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1, document-only: single-column bands, cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'delta', 'bands', 'chips'], 'study'),
   entry('studies', skyGcpCodex, 'Sky GCP case study 3: primary batch analytics, supplementary network streaming and shared controls.', ['sky', 'gcp', 'architecture', 'dataproc', 'bigquery', 'snowflake', 'pubsub', 'batch', 'streaming'], 'study'),
   entry('studies', energyUtilities, 'Energy & Utilities end-to-end data architecture: six banded columns over two full-width rails whose arrows land straight on every column.', ['energy', 'aws', 'databricks', 'iceberg', 'kafka', 'delta', 'span', 'ports', 'band', 'pills'], 'study'),
+  entry('studies', ideFrame, 'The python-ct IDE frame: explorer, editor and terminal side by side, with code and output that were actually run.', ['ide', 'tree', 'code', 'terminal', 'python', 'roastery'], 'study'),
 ]
 
 export const fixtures = Object.fromEntries(CATEGORIES.map(category => [

@@ -157,6 +157,16 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 - **`header: 'band'` is INHERITED like `framed`** and costs geometry: `HEADER_BAND_GAP` under the
   band. The band's height is the header the LAYOUT reserved (`Placed.header`), never recomputed at
   the stretched width — a wider box would wrap fewer lines and the band would stop short of its gap.
+- **An IDE frame is explorer | (editor over terminal)** — `ide-frame` study. Three panes across make a
+  ~3.6:1 strip that 16:9 letterboxes; docking the terminal under the editor (a `bare` column, the
+  terminal `span: 'all'`) is ~16:9 by itself and measured ~50% larger code at 4K. `stretch` reaches
+  `tree` and `terminal` so the explorer runs the column's full height — those two kinds only, because
+  they were new when it was added; extending it to `code` would re-frame every existing code row.
+- **`show` / `highlight` use the FILE's line numbers**, and a `code` card with neither renders exactly
+  as before. Collapsed runs print `··· N lines` — U+00B7, not `⋯`, because the sizer assumes every
+  glyph is one 9.02px Plex Mono advance and a fallback-font glyph would break that.
+- **Python keywords are coloured** (`while`, `elif`, `try`, `raise`, `yield`, `None`, …) since 2.1.0.
+  The highlighter was SQL/Scala-shaped; this recolours those words in existing frames, nothing else.
 - **An EVOLUTION column's height is CAP + rise + BODY, and only the rise is data.** Size the body
   per-stage and the figure lies about its own number. **`baseline` is a declared axis truncation** and
   the engine prints it. **The row is MONOCHROME** — a per-stage `pattern` singles ONE out.

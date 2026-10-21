@@ -62,6 +62,14 @@ export interface EvolutionSpec {
   unit?: string
 }
 
+export interface TreeEntry {
+  name: string
+  children?: TreeEntry[]
+  folder?: boolean
+  state?: 'active' | 'new' | 'muted'
+  note?: string
+}
+
 export interface SceneNode {
   id: string
   label: string
@@ -71,9 +79,13 @@ export interface SceneNode {
   framed?: boolean
   badge?: string
   variant?: 'card' | 'tile' | 'chip'
-  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution' | 'note'
+  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution' | 'note' | 'tree' | 'terminal'
+  tree?: TreeEntry[]
+  highlight?: number[]
+  show?: [number, number][]
   pills?: boolean
   span?: 'all'
+  bare?: boolean
   header?: 'band' | 'plain'
   columns?: TableColumn[]
   headers?: string[]

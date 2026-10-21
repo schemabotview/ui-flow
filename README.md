@@ -138,7 +138,7 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `variant: 'chip'` | leaf | a small framed token that hugs its text — for things COUNTED, not described |
 | `framed` | scene · container · leaf | draw the leaf borders back on; inherited, and costs no geometry |
 | `align: 'start'` | scene · container | rule every layer to a common edge instead of centring it |
-| `stretch` | scene · container | grow containers to the full cross-extent, so bands end on one line too |
+| `stretch` | scene · container | grow containers — and `tree` / `terminal` panes — to the full cross-extent, so bands end on one line too |
 | `route: 'step'` | edge | orthogonal routing instead of a bezier |
 | `dashed` | edge | a path that is not the subject's main flow |
 | `arrow` | plot `segment` | an arrowhead at `to`, making the segment a vector; the label moves to the tip |
@@ -147,6 +147,11 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `header: 'band'` | scene · container | paint the header as a tinted band with the title centred; inherited like `framed`, `'plain'` opts a subtree back out. Reserves 14px under the band |
 | `kind: 'note'` | leaf | a dashed callout sized to its text (140–300px) — an annotation, not a component |
 | `pills` | `kind: 'list'` | draw the items as stacked tinted boxes (a component's operations) instead of bullets |
+| `kind: 'tree'` + `tree` | leaf | an IDE file explorer: `{ name, children?, folder?, state?: 'active' \| 'new' \| 'muted', note? }`; a folder with `children` is drawn open, `folder: true` alone drawn closed; `.py` files take the Python mark |
+| `show` | `kind: 'code'` | `[from, to][]` line ranges to keep; everything else collapses to `··· N lines` rows, with real line numbers kept |
+| `highlight` | `kind: 'code'` | line numbers (the file's own) to tint in the node's `pattern` — `storage` green reads as "added" |
+| `kind: 'terminal'` | leaf | a terminal pane: `$ ` lines are commands, `Traceback` and `…Error:` lines are red, the rest is output; `filename` sets the title |
+| `bare` | container | a layout-only group: no border, header or padding — e.g. an editor with a terminal docked under it |
 
 A container is coloured by its `pattern` and by nothing else. An unreleased draft read the accent
 from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`; it was removed and

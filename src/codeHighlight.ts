@@ -8,6 +8,8 @@ const KEYWORDS = new Set([
   'on', 'using', 'having', 'order', 'asc', 'desc', 'limit', 'offset', 'distinct', 'with', 'recursive',
   'union', 'intersect', 'except', 'all', 'insert', 'into', 'values', 'update', 'set', 'delete',
   'over', 'partition', 'between', 'like', 'exists', 'case', 'when', 'then', 'end', 'count', 'sum', 'avg', 'min', 'max',
+  'while', 'elif', 'try', 'raise', 'finally', 'pass', 'break', 'continue', 'yield', 'async', 'await', 'assert', 'del',
+  'global', 'nonlocal', 'none', 'match',
 ])
 
 const TOKEN = /(\s+)|((?:--|#)[\s\S]*)|('[^']*'?|"[^"]*"?)|(\d[\d.]*)|([A-Za-z_]\w*)|(\.\.\.|[\s\S])/g

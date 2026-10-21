@@ -11,6 +11,7 @@ const STACK_GAP_Y = 28
 const TILE_GAP_X = 20
 const TILE_GAP_Y = 16
 const PAD = 14
+const STRETCHY = new Set(['tree', 'terminal'])
 
 type Flow = 'TB' | 'LR' | 'BT' | 'RL'
 type Group = Pick<Scene, 'cols' | 'flow' | 'align' | 'stretch'> & { edges?: SceneEdge[] }
@@ -79,6 +80,7 @@ function sizeOf(n: SceneNode, inherited: Header): Sized {
   if (n.children?.length) {
     const style = n.header ?? inherited
     const inner = layoutSubtree(n.children, n, style)
+    if (n.bare) return { w: inner.w, h: inner.h, kids: inner.placed, header: 0, inset: 0 }
     const w = Math.max(inner.w + 2 * PAD, headerMinWidth(n))
     const header = headerHeight(n, w) + (style === 'band' ? HEADER_BAND_GAP : 0)
     return { w, h: inner.h + header + PAD, kids: inner.placed, header, inset: PAD + (w - 2 * PAD - inner.w) / 2 }
@@ -140,7 +142,7 @@ function layoutSubtree(nodes: SceneNode[], g: Group, header: Header): { placed: 
 
   if (stretch && align === 'start')
     rows.forEach((r, i) => {
-      const boxes = r.filter((n) => n.children?.length)
+      const boxes = r.filter((n) => n.children?.length || STRETCHY.has(n.kind ?? ''))
       const surplus = maxAcross - rowAcross[i]
       if (!boxes.length || surplus <= 0) return
       for (const n of boxes) horizontal ? (box(n).h += surplus / boxes.length) : (box(n).w += surplus / boxes.length)

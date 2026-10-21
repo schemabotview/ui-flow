@@ -8,6 +8,8 @@ import { plotCardSize } from './plotMetrics'
 import { listCardSize } from './listMetrics'
 import { evoCardSize } from './evolutionMetrics'
 import { noteCardSize } from './noteMetrics'
+import { treeCardSize } from './treeMetrics'
+import { terminalCardSize } from './terminalMetrics'
 import { CodeNode } from './CodeNode'
 import { MemoryNode } from './MemoryNode'
 import { TableNode } from './TableNode'
@@ -15,6 +17,8 @@ import { PlotNode } from './PlotNode'
 import { ListNode } from './ListNode'
 import { EvolutionNode } from './EvolutionNode'
 import { NoteNode } from './NoteNode'
+import { TreeNode } from './TreeNode'
+import { TerminalNode } from './TerminalNode'
 
 export interface NodeKind {
   size: (n: SceneNode) => { w: number; h: number }
@@ -29,6 +33,8 @@ export const NODE_KINDS: Record<string, NodeKind> = {
   list: { size: listCardSize, component: ListNode },
   evolution: { size: evoCardSize, component: EvolutionNode },
   note: { size: noteCardSize, component: NoteNode },
+  tree: { size: treeCardSize, component: TreeNode },
+  terminal: { size: terminalCardSize, component: TerminalNode },
 }
 
 export const kindOf = (n: SceneNode): NodeKind | undefined => (n.kind ? NODE_KINDS[n.kind] : undefined)

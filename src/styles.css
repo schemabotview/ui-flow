@@ -32,6 +32,8 @@
 .flow-node--memory,
 .flow-node--list,
 .flow-node--evolution,
-.flow-node--note {
+.flow-node--note,
+.flow-node--tree,
+.flow-node--terminal {
   cursor: text;
 }

@@ -7,6 +7,7 @@ import {
 
 export function ContainerNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'external')
+  if (d.bare) return null
   const f = d.__focus
   const band = d.__band
   const title = { fontSize: HEADER_TITLE_FONT, fontWeight: 600, lineHeight: `${HEADER_TITLE_LINE_H}px`, color: band ? t.ink : p.color } as const
