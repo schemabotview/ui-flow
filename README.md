@@ -40,11 +40,14 @@ scenes deterministic dies at that point.
 
 ## Icons
 
-A node's `icon` key is looked up in three registries, in order, with the pattern's own glyph as the
-fallback. They share no keys, so it is a fallback chain rather than a precedence rule:
+A node's `icon` key is looked up in four registries, in order, with the pattern's own glyph as the
+fallback. The AWS, Azure and brand sets share no keys (`check-geometry` enforces it), and no brand key
+shadows a lucide one. Two lucide keys ARE shadowed by Azure tiles and so can never render as glyphs:
+`monitor` and `users` — `icon: 'monitor'` draws the Azure Monitor tile.
 
 | `icon: 'ec2'` | an official AWS service tile, full colour, in a rounded frame — 68 keys, see the `vendor-icons` fixture |
 | `icon: 'vm'` | an official Azure service tile — 134 keys, see the `azure-gallery` fixture |
+| `icon: 'kafka'` | a brand mark from simple-icons (CC0) in its own colour, or in ink where that colour would vanish on the surface — 40 keys (Kafka, Spark, Airflow, Python, Linux, Docker, Kubernetes, PostgreSQL, GitHub, Terraform, …), see the `icon-gallery` fixture. Delta Lake, Iceberg, dbt and Power BI are not in simple-icons and are not drawn by hand |
 | `icon: 'terminal'` | a lucide line glyph, tinted in the pattern accent — 75 keys, see the `icon-gallery` fixture |
 | *(omitted)* | the pattern's default glyph |
 
@@ -68,9 +71,12 @@ supplies them, so there is only ever one React.
 
 ## Upgrading to 2.0
 
-2.0 removes react-flow. Scenes, `SceneView`'s props and every layout are unchanged — measured on all
-86 python-ct sections at 3840×2160 under `?capture=1`, every node box and every edge path is
-identical to 1.4.0. What breaks is only what reached past the public surface:
+2.0 removes react-flow. Scenes, `SceneView`'s props and every node position are unchanged —
+measured on all 86 python-ct sections at 3840×2160 under `?capture=1`, every node box is identical to
+1.4.0. One thing moves on purpose: an edge on a face that carries **two or more** edges now leaves
+from its own port lined up with its far end, instead of every edge leaving the face's centre. A
+single-edge face is untouched. On python-ct that is 18 of 115 edges, in 7 of 86 sections — re-record
+those. What breaks is only what reached past the public surface:
 
 - Drop `@xyflow/react` from the app's dependencies.
 - The DOM classes changed: `.react-flow__node` is now `.flow-node` (with `data-id`), the viewport is
@@ -137,6 +143,10 @@ New in the scene model, each defaulting to what 0.9.0 did:
 | `dashed` | edge | a path that is not the subject's main flow |
 | `arrow` | plot `segment` | an arrowhead at `to`, making the segment a vector; the label moves to the tip |
 | `dashed: false` | plot `segment` | a solid segment — a segment is dashed unless this says otherwise |
+| `span: 'all'` | any node | own a row and take its full cross width — a full-width rail under a row of columns. In an edgeless grid it starts a new row; a container's children are re-centred |
+| `header: 'band'` | scene · container | paint the header as a tinted band with the title centred; inherited like `framed`, `'plain'` opts a subtree back out. Reserves 14px under the band |
+| `kind: 'note'` | leaf | a dashed callout sized to its text (140–300px) — an annotation, not a component |
+| `pills` | `kind: 'list'` | draw the items as stacked tinted boxes (a component's operations) instead of bullets |
 
 A container is coloured by its `pattern` and by nothing else. An unreleased draft read the accent
 from a `--flow-container-accent` CSS variable a repo set in its own `theme.css`; it was removed and

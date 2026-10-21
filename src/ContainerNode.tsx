@@ -8,7 +8,8 @@ import {
 export function ContainerNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'external')
   const f = d.__focus
-  const title = { fontSize: HEADER_TITLE_FONT, fontWeight: 600, lineHeight: `${HEADER_TITLE_LINE_H}px`, color: p.color } as const
+  const band = d.__band
+  const title = { fontSize: HEADER_TITLE_FONT, fontWeight: 600, lineHeight: `${HEADER_TITLE_LINE_H}px`, color: band ? t.ink : p.color } as const
   return (
     <div
       style={{
@@ -17,7 +18,20 @@ export function ContainerNode({ data }: NodeViewProps) {
         background: `${p.color}${f ? '1c' : '0d'}`, boxShadow: f ? glow(p.color, '2e', '3d', 30) : 'none',
       }}
     >
-      <div style={{ position: 'absolute', top: HEADER_INSET_Y, left: HEADER_INSET_X, right: HEADER_INSET_X, display: 'flex', alignItems: 'flex-start', fontFamily: SANS }}>
+      {band && (
+        <div
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: band, borderRadius: `${16 - (f ? HEADER_BORDER : 1.5)}px ${16 - (f ? HEADER_BORDER : 1.5)}px 0 0`,
+            background: `${p.color}${f ? '3d' : '29'}`, borderBottom: `1px solid ${p.color}66`, boxSizing: 'border-box',
+          }}
+        />
+      )}
+      <div
+        style={{
+          position: 'absolute', top: HEADER_INSET_Y, left: HEADER_INSET_X, right: HEADER_INSET_X, display: 'flex', alignItems: 'flex-start',
+          justifyContent: band ? 'center' : undefined, textAlign: band ? 'center' : undefined, fontFamily: SANS,
+        }}
+      >
         {d.badge && (
           <div style={{ ...title, flex: 'none', width: headerBadgeWidth(d.badge) - HEADER_BADGE_GAP, marginRight: HEADER_BADGE_GAP, opacity: 0.55, fontVariantNumeric: 'tabular-nums' }}>
             {d.badge}

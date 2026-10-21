@@ -6,11 +6,11 @@ import { ContainerNode } from './ContainerNode'
 import { TileNode } from './TileNode'
 import { ChipNode } from './ChipNode'
 import { FlowEdge, EdgeLabel, type EdgeView } from './FlowEdge'
-import { ANCHOR_OUTSET, anchor, curvePath, stepPath, type Box, type Side } from './edgePath'
+import { ANCHOR_OUTSET, anchor, centreOn, curvePath, ports, stepPath, type Box, type Side } from './edgePath'
 import { THEMES, patternOf, type ThemeKey } from './themes'
 import { FlowThemeProvider } from './themeContext'
 import { NODE_KINDS } from './kinds'
-import { HEADER_BORDER } from './headerMetrics'
+import { HEADER_BAND_GAP, HEADER_BORDER } from './headerMetrics'
 import type { NodeViewProps } from './nodeStyle'
 
 const STRUCTURAL: Record<string, ComponentType<NodeViewProps>> = { scene: SceneNode, container: ContainerNode, tile: TileNode, chip: ChipNode }
@@ -75,6 +75,16 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         if (c.node.framed !== undefined) return c.node.framed
       return scene.framed ?? false
     }
+    const bandOf = (p: Placed): number | undefined => {
+      if (p.header === undefined) return undefined
+      let style = scene.header
+      for (let c: Placed | undefined = p; c; c = c.parentId ? byId.get(c.parentId) : undefined)
+        if (c.node.header !== undefined) {
+          style = c.node.header
+          break
+        }
+      return style === 'band' ? p.header - HEADER_BAND_GAP : undefined
+    }
     for (const p of placed) {
       const parent = p.parentId ? views.get(p.parentId) : undefined
       views.set(p.id, {
@@ -85,18 +95,32 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         w: p.w,
         h: p.h,
         z: parent ? parent.z + 1 : 0,
-        data: { ...p.node, __focus: p.node.id === focusId, __framed: framedOf(p) },
+        data: { ...p.node, __focus: p.node.id === focusId, __framed: framedOf(p), __band: bandOf(p) },
       })
     }
-    const edges: EdgeView[] = []
-    collectEdges(scene).forEach((e, i) => {
+    const ends = collectEdges(scene).flatMap((e, i) => {
       const s = views.get(e.source)
       const g = views.get(e.target)
-      if (!s || !g) return
+      if (!s || !g) return []
       const [sSide, tSide] = FACES[e.dir] ?? FACES.TB
+      return [{ e, i, s, g, sSide, tSide, sAt: centreOn(s, sSide), tAt: centreOn(g, tSide) }]
+    })
+    const faces = new Map<string, { box: NodeView; side: Side; toward: number[]; set: ((at: number) => void)[] }>()
+    const face = (box: NodeView, side: Side, toward: number, set: (at: number) => void) => {
+      const key = `${side}:${box.id}`
+      const f = faces.get(key) ?? faces.set(key, { box, side, toward: [], set: [] }).get(key)!
+      f.toward.push(toward)
+      f.set.push(set)
+    }
+    for (const end of ends) {
+      face(end.s, end.sSide, centreOn(end.g, end.sSide), (at) => (end.sAt = at))
+      face(end.g, end.tSide, centreOn(end.s, end.tSide), (at) => (end.tAt = at))
+    }
+    for (const f of faces.values()) ports(f.box, f.side, f.toward).forEach((at, k) => f.set[k](at))
+    const edges: EdgeView[] = ends.map(({ e, i, s, g, sSide, tSide, sAt, tAt }) => {
       const route = e.route === 'step' ? stepPath : curvePath
-      const [path, labelX, labelY] = route(anchor(s, sSide, outsetOf(s)), sSide, anchor(g, tSide, outsetOf(g)), tSide)
-      edges.push({
+      const [path, labelX, labelY] = route(anchor(s, sSide, outsetOf(s), sAt), sSide, anchor(g, tSide, outsetOf(g), tAt), tSide)
+      return {
         id: `${e.source}->${e.target}#${i}`,
         path,
         labelX,
@@ -106,7 +130,7 @@ export function SceneView({ scene, focusId, theme = 'dark' }: { scene: Scene; fo
         pulse: patternOf(t, g.data.pattern, 'external').color,
         bidirectional: !!e.bidirectional,
         dashed: !!e.dashed,
-      })
+      }
     })
     return { nodes: [...views.values()], edges }
   }, [scene, focusId, t])

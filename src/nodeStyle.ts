@@ -2,7 +2,7 @@ import type { PatternKey, SceneNode } from './types'
 import { patternOf } from './themes'
 import { useFlowTheme } from './themeContext'
 
-export type NodeData = SceneNode & { __focus?: boolean; __framed?: boolean }
+export type NodeData = SceneNode & { __focus?: boolean; __framed?: boolean; __band?: number }
 export type NodeViewProps = { data: NodeData }
 
 export const SANS = "'IBM Plex Sans', system-ui, sans-serif"

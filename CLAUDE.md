@@ -41,10 +41,12 @@ node's `right`, means the sizer under-reserves. For `list`, whose body wraps, ch
 reserve exactly 2px over what it draws (the focused border), and much more than that means the wrap
 estimate counts a line the browser never draws.
 
-The five fixtures under `dev/fixtures/studies/` are the architecture-scale cases and they vary
+The six fixtures under `dev/fixtures/studies/` are the architecture-scale cases and they vary
 different things — `barclays-azure` varies SCALE (30+ nodes, three nesting levels, a five-band row);
 `spark-topology` varies the SHAPE of the composition (two band rows, a repeated unit three levels
-deep, a counted-token leaf, a channel running against the flow). A capability claimed on one row only
+deep, a counted-token leaf, a channel running against the flow); `energy-utilities` varies the
+FRAME (a six-column `LR` row over two `span: 'all'` rails in a `BT` scene, every face a fan of aligned
+ports, banded headers). A capability claimed on one row only
 is an untested claim about the second — that is how the `stretch` surplus bug survived its first
 fixture.
 
@@ -74,7 +76,8 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   below). The import graph `layout.ts → kinds.ts → *Node.tsx` is a DAG — no renderer may import
   `layout.ts`.
 - **`themes.ts`** owns two resolved tables (`dark`, `light`); `patterns.ts` owns the role accents.
-- **Icons**: `awsIcons.ts`, `azureIcons.ts`, `lucideIcons.ts`, dispatched by `NodeIcon.tsx`.
+- **Icons**: `awsIcons.ts`, `azureIcons.ts`, `brandIcons.ts`, `lucideIcons.ts`, dispatched by
+  `NodeIcon.tsx` in that order.
 - **`dev/fixtures/index.ts`** is the harness catalog and the source of truth for both check scripts —
   a fixture added there is swept without touching either script. Categorize by the capability
   exercised, not the domain depicted, and keep scene ids stable (consumer links depend on them).
@@ -139,8 +142,21 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   `HEADER_MAX_FORCED_W`).
 - **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** `stretch` applies to
   CONTAINERS only and *shares* the surplus among a layer's boxes.
-- **A BACK EDGE is drawn but does not RANK** (`depthOf` skips it). **Two edges between the same pair
-  of FACES coincide exactly** — anchor a feedback edge at its real deep endpoints.
+- **A BACK EDGE is drawn but does not RANK** (`depthOf` skips it). Anchor a feedback edge at its real
+  deep endpoints.
+- **A face with ONE edge anchors at its centre; a face with SEVERAL gives each its own PORT**
+  (`ports` in `edgePath.ts`): each anchor slides along the face to the far end's centre, clamped
+  `PORT_INSET` from the corners, and if any two land within `PORT_MIN_GAP` the whole face spreads
+  evenly in far-end order instead (so two edges between the same pair of faces no longer coincide).
+  That is what lands a rail's six arrows straight on six columns. The single-edge rule is
+  load-bearing: it is why 2.0 moved no edge that was not part of a fan — 18 of python-ct's 115.
+- **`span: 'all'` OWNS a row and takes its surplus** before `stretch` runs, so the two compose. In an
+  edgeless subtree `depthOf` closes the current row before it and after it; in a layered one the
+  author keeps it alone in its layer. A widened container re-centres its children (`inset`), which
+  `stretch` deliberately does not.
+- **`header: 'band'` is INHERITED like `framed`** and costs geometry: `HEADER_BAND_GAP` under the
+  band. The band's height is the header the LAYOUT reserved (`Placed.header`), never recomputed at
+  the stretched width — a wider box would wrap fewer lines and the band would stop short of its gap.
 - **An EVOLUTION column's height is CAP + rise + BODY, and only the rise is data.** Size the body
   per-stage and the figure lies about its own number. **`baseline` is a declared axis truncation** and
   the engine prints it. **The row is MONOCHROME** — a per-stage `pattern` singles ONE out.
@@ -154,6 +170,15 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   segment draws no head.
 - **A vendor icon key must be unique across BOTH vendor sets.** `NodeIcon` checks AWS first, which is
   why Azure spells four keys `backupcenter`, `costbudgets`, `dbmigration`, `wafpolicy`.
+- **A brand key may shadow NOTHING.** `check-geometry` asserts AWS / Azure / brand are pairwise
+  disjoint and no brand key is a lucide key (hence `postgresql`, `snowflakedb`, not `postgres`,
+  `snowflake`). Lucide `monitor` and `users` are ALREADY shadowed by Azure tiles — known, reported,
+  and left alone because fixing the order re-frames every scene that uses them.
+- **A brand mark draws in its own colour unless that is under `BRAND_MIN_CONTRAST` against the
+  surface**, then in ink — Kafka's and GitHub's near-black would vanish on dark.
+- **simple-icons is imported by NAMED export only** and tree-shakes to the 40 marks used; its 5 MB
+  `index.mjs` would otherwise ride in the sourcemap, which is why `vite.config.ts` drops vendor
+  `sourcesContent` after the write.
 - **Azure tiles need a `viewBox` the upstream package does not ship.** `NodeIcon` supplies
   `viewBox="0 0 18 18"`, correct for all 134 registered keys.
 

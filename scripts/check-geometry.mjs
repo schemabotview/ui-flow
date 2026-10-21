@@ -9,8 +9,8 @@ const { build } = require(require.resolve('esbuild', { paths: [process.cwd()] })
 const temp = await mkdtemp(join(tmpdir(), 'flow-geometry-'))
 try {
   const output = join(temp, 'fixtures.mjs')
-  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout} from './src/layout'; export {proseSize} from './src/proseMetrics'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
-  const { allFixtures, computeLayout, proseSize } = await import(pathToFileURL(output))
+  await build({ stdin: { contents: `export {allFixtures} from './dev/fixtures'; export {computeLayout} from './src/layout'; export {proseSize} from './src/proseMetrics'; export {AWS_ICONS} from './src/awsIcons'; export {AZURE_ICONS} from './src/azureIcons'; export {BRAND_ICONS} from './src/brandIcons'; export {LUCIDE_ICONS} from './src/lucideIcons'`, resolveDir: process.cwd(), loader: 'ts' }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' })
+  const { allFixtures, computeLayout, proseSize, AWS_ICONS, AZURE_ICONS, BRAND_ICONS, LUCIDE_ICONS } = await import(pathToFileURL(output))
   for (const scene of allFixtures) {
     const placed = computeLayout(scene)
     assert.deepEqual(placed, computeLayout(scene), `${scene.id}: nondeterministic layout`)
@@ -46,6 +46,32 @@ try {
   const runtime = computeLayout(spark).find(node => node.id === 'runtime')
   const span = Math.max(...lower.map(n => n.x + n.w)) - Math.min(...lower.map(n => n.x))
   assert.ok(Math.abs(span - runtime.w) < 60, `stretched layer should span the row (${span} vs ${runtime.w})`)
+
+  const owners = new Map()
+  for (const [set, keys] of Object.entries({ aws: AWS_ICONS, azure: AZURE_ICONS, brand: BRAND_ICONS }))
+    for (const key of Object.keys(keys)) {
+      assert.ok(!owners.has(key), `icon key '${key}' is registered by both ${owners.get(key)} and ${set}`)
+      owners.set(key, set)
+    }
+  for (const key of Object.keys(BRAND_ICONS)) assert.ok(!(key in LUCIDE_ICONS), `brand key '${key}' would shadow the lucide glyph`)
+
+  const railFix = allFixtures.find(scene => scene.id === 'rails')
+  const railNodes = computeLayout(railFix)
+  const at = id => railNodes.find(node => node.id === id)
+  const gridKids = railNodes.filter(node => node.parentId === 'grid')
+  const gridW = Math.max(...gridKids.map(n => n.x + n.w)) - Math.min(...gridKids.map(n => n.x))
+  assert.ok(Math.abs(at('g-rail').w - gridW) < 0.01, `span: 'all' must take the grid's full width (${at('g-rail').w} vs ${gridW})`)
+  assert.ok(at('g-rail').y > at('g1').y && at('g4').y > at('g-rail').y, 'a spanning node must own its row')
+  const upRow = ['up1', 'up2', 'up3'].map(at)
+  const upW = Math.max(...upRow.map(n => n.x + n.w)) - Math.min(...upRow.map(n => n.x))
+  assert.ok(Math.abs(at('base').w - upW) < 0.01, `a spanning node in a layered row must take the row's width (${at('base').w} vs ${upW})`)
+
+  const energy = allFixtures.find(scene => scene.id === 'energy-utilities')
+  const placedE = computeLayout(energy)
+  const top = id => placedE.find(node => node.id === id)
+  assert.equal(top('dataops').w, top('pipeline').w, 'both rails must run the full width of the pipeline')
+  assert.equal(top('security').w, top('pipeline').w, 'both rails must run the full width of the pipeline')
+  assert.ok(top('security').y > top('dataops').y && top('dataops').y > top('pipeline').y, "flow: 'BT' must stack security under dataops under the pipeline")
 
   console.log(`Geometry and determinism passed for ${allFixtures.length} visual fixtures.`)
 } finally { await rm(temp, {recursive:true,force:true}) }

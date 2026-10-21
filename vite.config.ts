@@ -1,8 +1,22 @@
-import { defineConfig } from 'vite'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const dropVendorSources = (): Plugin => ({
+  name: 'drop-vendor-sources',
+  writeBundle({ dir = 'dist' }, bundle) {
+    for (const name of Object.keys(bundle).filter((f) => f.endsWith('.map'))) {
+      const path = join(dir, name)
+      const map = JSON.parse(readFileSync(path, 'utf8'))
+      map.sourcesContent = map.sources.map((s: string, i: number) => (s.includes('node_modules') ? null : map.sourcesContent[i]))
+      writeFileSync(path, JSON.stringify(map))
+    }
+  },
+})
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), dropVendorSources()],
   server: { port: 5174 },
   build: {
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: 'index' },

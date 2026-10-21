@@ -16,17 +16,37 @@ const STEP_OFFSET = 20
 
 const DIR: Record<Side, Pt> = { t: { x: 0, y: -1 }, b: { x: 0, y: 1 }, l: { x: -1, y: 0 }, r: { x: 1, y: 0 } }
 
-export function anchor(b: Box, side: Side, out: number): Pt {
+export const PORT_INSET = 18
+export const PORT_MIN_GAP = 14
+
+const vertical = (side: Side) => side === 't' || side === 'b'
+
+export const centreOn = (b: Box, side: Side) => (vertical(side) ? b.x + b.w / 2 : b.y + b.h / 2)
+
+export function anchor(b: Box, side: Side, out: number, at = centreOn(b, side)): Pt {
   switch (side) {
     case 't':
-      return { x: b.x + b.w / 2, y: b.y - out }
+      return { x: at, y: b.y - out }
     case 'b':
-      return { x: b.x + b.w / 2, y: b.y + b.h + out }
+      return { x: at, y: b.y + b.h + out }
     case 'l':
-      return { x: b.x - out, y: b.y + b.h / 2 }
+      return { x: b.x - out, y: at }
     case 'r':
-      return { x: b.x + b.w + out, y: b.y + b.h / 2 }
+      return { x: b.x + b.w + out, y: at }
   }
+}
+
+export function ports(b: Box, side: Side, toward: number[]): number[] {
+  const lo = vertical(side) ? b.x : b.y
+  const len = vertical(side) ? b.w : b.h
+  if (toward.length < 2 || len < 2 * PORT_INSET) return toward.map(() => lo + len / 2)
+  const want = toward.map((v) => Math.min(lo + len - PORT_INSET, Math.max(lo + PORT_INSET, v)))
+  const order = want.map((_, i) => i).sort((a, b) => toward[a] - toward[b] || a - b)
+  const crowded = order.some((i, k) => k > 0 && want[i] - want[order[k - 1]] < PORT_MIN_GAP)
+  if (!crowded) return want
+  const at = new Array<number>(toward.length)
+  order.forEach((i, k) => (at[i] = lo + ((k + 1) * len) / (toward.length + 1)))
+  return at
 }
 
 const reach = (gap: number) => (gap >= 0 ? 0.5 * gap : CURVATURE * 25 * Math.sqrt(-gap))

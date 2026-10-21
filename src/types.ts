@@ -71,7 +71,10 @@ export interface SceneNode {
   framed?: boolean
   badge?: string
   variant?: 'card' | 'tile' | 'chip'
-  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution'
+  kind?: 'code' | 'memory' | 'table' | 'plot' | 'list' | 'evolution' | 'note'
+  pills?: boolean
+  span?: 'all'
+  header?: 'band' | 'plain'
   columns?: TableColumn[]
   headers?: string[]
   values?: string[][]
@@ -107,6 +110,7 @@ export interface Scene {
   edges: SceneEdge[]
   cols?: number
   framed?: boolean
+  header?: 'band' | 'plain'
   align?: 'center' | 'start'
   stretch?: boolean
   flow?: 'TB' | 'LR' | 'BT' | 'RL'

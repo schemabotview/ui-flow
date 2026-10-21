@@ -3,6 +3,7 @@ import { FILL, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   LIST_TITLE_FONT, LIST_TITLE_LINE_H, LIST_SUB_FONT, LIST_SUB_LINE_H, LIST_ITEM_FONT, LIST_ITEM_LINE_H, LIST_ITEM_GAP,
   LIST_PAD_X, LIST_HEAD_PAD_TOP, LIST_HEAD_PAD_BOTTOM, LIST_BODY_PAD_Y, LIST_ICON, LIST_ICON_GAP, LIST_BULLET_W,
+  LIST_PILL_PAD_X, LIST_PILL_PAD_Y,
 } from './listMetrics'
 
 export function ListNode({ data }: NodeViewProps) {
@@ -30,7 +31,17 @@ export function ListNode({ data }: NodeViewProps) {
         <>
           <div style={{ flex: 'none', height: 1, background: `${p.color}55` }} />
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: LIST_ITEM_GAP, padding: `${LIST_BODY_PAD_Y}px ${LIST_PAD_X}px` }}>
-            {items.map((item, i) => (
+            {items.map((item, i) => d.pills ? (
+              <div
+                key={i}
+                style={{
+                  padding: `${LIST_PILL_PAD_Y}px ${LIST_PILL_PAD_X}px`, borderRadius: 8, background: `${p.color}1a`, textAlign: 'center',
+                  fontSize: LIST_ITEM_FONT, lineHeight: `${LIST_ITEM_LINE_H}px`, overflowWrap: 'anywhere',
+                }}
+              >
+                {item}
+              </div>
+            ) : (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: `${LIST_BULLET_W}px 1fr` }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: p.color, opacity: 0.85, marginTop: (LIST_ITEM_LINE_H - 5) / 2 }} />
                 <div style={{ fontSize: LIST_ITEM_FONT, lineHeight: `${LIST_ITEM_LINE_H}px`, opacity: 0.86, overflowWrap: 'anywhere' }}>{item}</div>

@@ -2,6 +2,7 @@ import type { Scene, SceneNode } from '../../../src'
 import { AWS_ICONS } from '../../../src/awsIcons'
 import { LUCIDE_ICONS } from '../../../src/lucideIcons'
 import { AZURE_ICONS } from '../../../src/azureIcons'
+import { BRAND_ICONS } from '../../../src/brandIcons'
 
 const registry = (id: string, label: string, keys: object): SceneNode => ({
   id,
@@ -16,7 +17,7 @@ export const icons: Scene = {
   title: 'Icons — resolution order and every registry',
   nodes: [
     {
-      id: 'resolution', label: 'Resolution order', sub: 'AWS tile → Azure tile → lucide glyph → the pattern default', pattern: 'group', cols: 3,
+      id: 'resolution', label: 'Resolution order', sub: 'AWS tile → Azure tile → brand mark → lucide glyph → the pattern default', pattern: 'group', cols: 3,
       children: [
         { id: 'ec2', label: 'EC2', sub: "icon: 'ec2' — AWS tile", pattern: 'service', icon: 'ec2' },
         { id: 's3', label: 'S3', sub: "icon: 's3' — AWS tile", pattern: 'storage', icon: 's3' },
@@ -26,6 +27,8 @@ export const icons: Scene = {
         { id: 'vm', label: 'Virtual Machine', sub: "icon: 'vm' — Azure tile", pattern: 'service', icon: 'vm' },
         { id: 'storageacct', label: 'Storage account', sub: "icon: 'storage' — Azure tile", pattern: 'storage', icon: 'storage' },
         { id: 'vnet', label: 'VNet', sub: "icon: 'vnet' — Azure tile", pattern: 'network', icon: 'vnet' },
+        { id: 'kafka', label: 'Kafka', sub: "icon: 'kafka' — brand mark, ink on a dark surface", pattern: 'network', icon: 'kafka' },
+        { id: 'spark', label: 'Spark', sub: "icon: 'spark' — brand mark in its own colour", pattern: 'service', icon: 'spark' },
         { id: 'none', label: 'Default', sub: 'no icon — pattern glyph', pattern: 'storage' },
         { id: 't1', label: 'lambda', pattern: 'service', variant: 'tile', icon: 'lambda' },
         { id: 't2', label: 'dynamodb', pattern: 'storage', variant: 'tile', icon: 'dynamodb' },
@@ -38,6 +41,7 @@ export const icons: Scene = {
     registry('aws', 'AWS', AWS_ICONS),
     registry('lucide', 'Lucide', LUCIDE_ICONS),
     registry('azure', 'Azure', AZURE_ICONS),
+    registry('brand', 'Brand', BRAND_ICONS),
   ],
   edges: [],
 }

@@ -15,6 +15,7 @@ export const HEADER_INSET_X = 16
 export const HEADER_INSET_Y = 14
 export const HEADER_BORDER = 3
 export const HEADER_MIN = 58
+export const HEADER_BAND_GAP = 14
 
 export const headerBadgeWidth = (badge?: string): number =>
   badge ? Math.ceil(textWidth(badge, HEADER_TITLE_FONT, 600)) + HEADER_BADGE_GAP : 0

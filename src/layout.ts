@@ -1,6 +1,6 @@
 import type { Scene, SceneNode, SceneEdge } from './types'
 import { kindOf } from './kinds'
-import { headerHeight, headerMinWidth } from './headerMetrics'
+import { HEADER_BAND_GAP, headerHeight, headerMinWidth } from './headerMetrics'
 import { proseSize } from './proseMetrics'
 import { chipSize } from './chipMetrics'
 import { tileSize } from './tileMetrics'
@@ -14,6 +14,7 @@ const PAD = 14
 
 type Flow = 'TB' | 'LR' | 'BT' | 'RL'
 type Group = Pick<Scene, 'cols' | 'flow' | 'align' | 'stretch'> & { edges?: SceneEdge[] }
+type Header = SceneNode['header']
 
 export interface Placed {
   id: string
@@ -22,6 +23,7 @@ export interface Placed {
   w: number
   h: number
   parentId?: string
+  header?: number
   node: SceneNode
 }
 
@@ -34,7 +36,23 @@ interface Sized {
 }
 
 function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<string, number> {
-  if (!edges.length) return new Map(nodes.map((n, i) => [n.id, Math.floor(i / Math.max(1, cols))]))
+  if (!edges.length) {
+    const rows = new Map<string, number>()
+    let row = 0
+    let col = 0
+    for (const n of nodes) {
+      if (n.span && col > 0) {
+        row++
+        col = 0
+      }
+      rows.set(n.id, row)
+      if (n.span || ++col >= Math.max(1, cols)) {
+        row++
+        col = 0
+      }
+    }
+    return rows
+  }
   const depth = new Map(nodes.map((n) => [n.id, 0]))
   const adj = new Map<string, string[]>(nodes.map((n) => [n.id, []]))
   const indeg = new Map(nodes.map((n) => [n.id, 0]))
@@ -57,20 +75,21 @@ function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<stri
   return depth
 }
 
-function sizeOf(n: SceneNode): Sized {
+function sizeOf(n: SceneNode, inherited: Header): Sized {
   if (n.children?.length) {
-    const inner = layoutSubtree(n.children, n)
+    const style = n.header ?? inherited
+    const inner = layoutSubtree(n.children, n, style)
     const w = Math.max(inner.w + 2 * PAD, headerMinWidth(n))
-    const header = headerHeight(n, w)
+    const header = headerHeight(n, w) + (style === 'band' ? HEADER_BAND_GAP : 0)
     return { w, h: inner.h + header + PAD, kids: inner.placed, header, inset: PAD + (w - 2 * PAD - inner.w) / 2 }
   }
   const kind = kindOf(n)
   return kind ? kind.size(n) : n.variant === 'chip' ? chipSize(n) : n.variant === 'tile' ? tileSize(n) : proseSize(n)
 }
 
-function layoutSubtree(nodes: SceneNode[], g: Group): { placed: Placed[]; w: number; h: number } {
+function layoutSubtree(nodes: SceneNode[], g: Group, header: Header): { placed: Placed[]; w: number; h: number } {
   const { cols = 1, flow = 'TB', align = 'center', stretch = false } = g
-  const sized = new Map(nodes.map((n) => [n.id, sizeOf(n)]))
+  const sized = new Map(nodes.map((n) => [n.id, sizeOf(n, header)]))
 
   const ownerOf = new Map<string, string>()
   const own = (m: SceneNode, root: string): void => (ownerOf.set(m.id, root), m.children?.forEach((c) => own(c, root)))
@@ -103,6 +122,22 @@ function layoutSubtree(nodes: SceneNode[], g: Group): { placed: Placed[]; w: num
   const maxAcross = Math.max(0, ...rowAcross)
   const totalAlong = rowAlong.reduce((sum, a) => sum + a, 0) + gapAlong * Math.max(0, rows.length - 1)
 
+  rows.forEach((r, i) => {
+    const spans = r.filter((n) => n.span === 'all')
+    const surplus = maxAcross - rowAcross[i]
+    if (!spans.length || surplus <= 0) return
+    for (const n of spans) {
+      const s = box(n)
+      const share = surplus / spans.length
+      if (horizontal) s.h += share
+      else {
+        s.w += share
+        if (s.inset !== undefined) s.inset += share / 2
+      }
+    }
+    rowAcross[i] = maxAcross
+  })
+
   if (stretch && align === 'start')
     rows.forEach((r, i) => {
       const boxes = r.filter((n) => n.children?.length)
@@ -119,7 +154,7 @@ function layoutSubtree(nodes: SceneNode[], g: Group): { placed: Placed[]; w: num
       const s = box(n)
       let a = cursorAlong + (rowAlong[i] - along(s)) / 2
       if (reverse) a = totalAlong - a - along(s)
-      placed.push({ id: n.id, x: horizontal ? a : cursorAcross, y: horizontal ? cursorAcross : a, w: s.w, h: s.h, node: n })
+      placed.push({ id: n.id, x: horizontal ? a : cursorAcross, y: horizontal ? cursorAcross : a, w: s.w, h: s.h, header: s.header, node: n })
       for (const c of s.kids ?? []) placed.push(c.parentId === undefined ? { ...c, x: s.inset! + c.x, y: s.header! + c.y, parentId: n.id } : c)
       cursorAcross += across(s) + gapCross
     }
@@ -128,7 +163,7 @@ function layoutSubtree(nodes: SceneNode[], g: Group): { placed: Placed[]; w: num
   return horizontal ? { placed, w: totalAlong, h: maxAcross } : { placed, w: maxAcross, h: totalAlong }
 }
 
-export const computeLayout = (scene: Scene): Placed[] => layoutSubtree(scene.nodes, scene).placed
+export const computeLayout = (scene: Scene): Placed[] => layoutSubtree(scene.nodes, scene, scene.header).placed
 
 export interface PlacedEdge extends SceneEdge {
   dir: Flow

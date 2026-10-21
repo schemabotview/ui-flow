@@ -17,26 +17,33 @@ export const LIST_ICON = 40
 export const LIST_ICON_GAP = 13
 export const LIST_BULLET_W = 15
 export const LIST_BORDER = 2.5
+export const LIST_PILL_PAD_X = 10
+export const LIST_PILL_PAD_Y = 5
 
 export const LIST_MIN_W = 259
 export const LIST_MAX_W = 320
 
 import { wrapLines, textWidth } from './textMetrics'
 
-function naturalWidth(node: Pick<SceneNode, 'label' | 'sub' | 'items'>): number {
+type ListShape = Pick<SceneNode, 'label' | 'sub' | 'items' | 'pills'>
+
+const itemGutter = (node: ListShape) => (node.pills ? 2 * LIST_PILL_PAD_X : LIST_BULLET_W)
+const itemChromeH = (node: ListShape) => (node.pills ? 2 * LIST_PILL_PAD_Y : 0)
+
+function naturalWidth(node: ListShape): number {
   const head =
     LIST_ICON +
     LIST_ICON_GAP +
     Math.max(textWidth(node.label, LIST_TITLE_FONT, 600), node.sub ? textWidth(node.sub, LIST_SUB_FONT) : 0)
-  const body = LIST_BULLET_W + Math.max(0, ...(node.items ?? []).map((i) => textWidth(i, LIST_ITEM_FONT)))
+  const body = itemGutter(node) + Math.max(0, ...(node.items ?? []).map((i) => textWidth(i, LIST_ITEM_FONT)))
   return Math.max(head, body)
 }
 
-export function listContentWidth(node: Pick<SceneNode, 'label' | 'sub' | 'items'>): number {
+export function listContentWidth(node: ListShape): number {
   return Math.min(LIST_MAX_W, Math.max(LIST_MIN_W, Math.ceil(naturalWidth(node))))
 }
 
-export function listHeaderHeight(node: Pick<SceneNode, 'label' | 'sub' | 'items'>): number {
+export function listHeaderHeight(node: ListShape): number {
   const textW = listContentWidth(node) - LIST_ICON - LIST_ICON_GAP
   const titleH = wrapLines(node.label, textW, LIST_TITLE_FONT, 600) * LIST_TITLE_LINE_H
   const subH = node.sub ? 2 + wrapLines(node.sub, textW, LIST_SUB_FONT) * LIST_SUB_LINE_H : 0
@@ -46,13 +53,13 @@ export function listHeaderHeight(node: Pick<SceneNode, 'label' | 'sub' | 'items'
   )
 }
 
-export function listCardSize(node: Pick<SceneNode, 'label' | 'sub' | 'items'>): { w: number; h: number } {
+export function listCardSize(node: ListShape): { w: number; h: number } {
   const content = listContentWidth(node)
   const items = node.items ?? []
-  const textW = content - LIST_BULLET_W
+  const textW = content - itemGutter(node)
   const bodyLines = items.reduce((sum, i) => sum + wrapLines(i, textW, LIST_ITEM_FONT), 0)
   const bodyH = items.length
-    ? bodyLines * LIST_ITEM_LINE_H + (items.length - 1) * LIST_ITEM_GAP + LIST_BODY_PAD_Y * 2 + LIST_RULE_H
+    ? bodyLines * LIST_ITEM_LINE_H + items.length * itemChromeH(node) + (items.length - 1) * LIST_ITEM_GAP + LIST_BODY_PAD_Y * 2 + LIST_RULE_H
     : 0
   return {
     w: content + LIST_PAD_X * 2 + LIST_BORDER * 2,

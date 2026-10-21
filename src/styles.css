@@ -31,6 +31,7 @@
 .flow-node--table,
 .flow-node--memory,
 .flow-node--list,
-.flow-node--evolution {
+.flow-node--evolution,
+.flow-node--note {
   cursor: text;
 }
