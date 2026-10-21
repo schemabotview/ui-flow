@@ -204,5 +204,6 @@ Both are invisible until they break:
 
 ## Releasing
 
-`npm version <patch|minor|major>` then `npm publish`. Content repos pin a version and upgrade
+`npm version <patch|minor|major>` then `npm publish`, which builds first (`prepublishOnly`) — `npm
+publish` packs `dist/` as it finds it, and the shell's 0.13.0 shipped a stale stylesheet that way. Content repos pin a version and upgrade
 deliberately, so a breaking layout change should be a **major** — 15 sites depend on this.

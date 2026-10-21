@@ -25,7 +25,8 @@
     "dev": "vite",
     "build": "vite build && tsc --emitDeclarationOnly && cp src/styles.css dist/styles.css",
     "watch": "vite build --watch",
-    "check": "node scripts/check-geometry.mjs && node scripts/check-visual.mjs"
+    "check": "node scripts/check-geometry.mjs && node scripts/check-visual.mjs",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
