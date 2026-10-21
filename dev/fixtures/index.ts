@@ -20,7 +20,7 @@ import { edfAwsCodex } from './studies/edf-aws-codex'
 import { edfAwsClaude } from './studies/edf-aws-claude'
 import { skyGcpCodex } from './studies/sky-gcp-codex'
 import { energyUtilities } from './studies/energy-utilities'
-import { ideFrame } from './studies/ide-frame'
+import { ideFrame, ideFrameShort } from './studies/ide-frame'
 
 export const CATEGORIES = ['nodes', 'charts', 'layout', 'icons', 'studies'] as const
 export type Category = (typeof CATEGORIES)[number]
@@ -63,6 +63,7 @@ export const fixtureCatalog: Fixture[] = [
   entry('studies', edfAwsClaude, 'EDF Energy AWS case study 1, document-only: single-column bands, cards and chips, no list nodes.', ['edf', 'aws', 'architecture', 'iceberg', 'kafka', 'delta', 'bands', 'chips'], 'study'),
   entry('studies', skyGcpCodex, 'Sky GCP case study 3: primary batch analytics, supplementary network streaming and shared controls.', ['sky', 'gcp', 'architecture', 'dataproc', 'bigquery', 'snowflake', 'pubsub', 'batch', 'streaming'], 'study'),
   entry('studies', energyUtilities, 'Energy & Utilities end-to-end data architecture: six banded columns over two full-width rails whose arrows land straight on every column.', ['energy', 'aws', 'databricks', 'iceberg', 'kafka', 'delta', 'span', 'ports', 'band', 'pills'], 'study'),
+  entry('studies', ideFrameShort, 'The IDE frame with a four-line file: minimum sizes keep every panel exactly where ide-frame has it.', ['ide', 'template', 'minW', 'minH', 'consistency'], 'study'),
   entry('studies', ideFrame, 'The python-ct IDE frame: explorer, editor and terminal side by side, with code and output that were actually run.', ['ide', 'tree', 'code', 'terminal', 'python', 'roastery'], 'study'),
 ]
 

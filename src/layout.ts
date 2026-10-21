@@ -78,6 +78,16 @@ function depthOf(nodes: SceneNode[], edges: SceneEdge[], cols: number): Map<stri
 }
 
 function sizeOf(n: SceneNode, inherited: Header): Sized {
+  const s = naturalSize(n, inherited)
+  if (n.minW !== undefined && s.w < n.minW) {
+    if (s.inset !== undefined && !n.bare) s.inset += (n.minW - s.w) / 2
+    s.w = n.minW
+  }
+  if (n.minH !== undefined && s.h < n.minH) s.h = n.minH
+  return s
+}
+
+function naturalSize(n: SceneNode, inherited: Header): Sized {
   if (n.children?.length) {
     const style = n.header ?? inherited
     const inner = layoutSubtree(n.children, n, style)

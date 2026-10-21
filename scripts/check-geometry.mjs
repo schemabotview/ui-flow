@@ -73,5 +73,14 @@ try {
   assert.equal(top('security').w, top('pipeline').w, 'both rails must run the full width of the pipeline')
   assert.ok(top('security').y > top('dataops').y && top('dataops').y > top('pipeline').y, "flow: 'BT' must stack security under dataops under the pipeline")
 
+  const box = (id, sceneId) => {
+    const placed = computeLayout(allFixtures.find(scene => scene.id === sceneId))
+    const abs = new Map()
+    for (const n of placed) abs.set(n.id, { x: (abs.get(n.parentId)?.x ?? 0) + n.x, y: (abs.get(n.parentId)?.y ?? 0) + n.y, w: n.w, h: n.h })
+    return abs.get(id)
+  }
+  for (const pane of ['explorer', 'editor', 'terminal', 'side'])
+    assert.deepEqual(box(pane, 'ide-frame-short'), box(pane, 'ide-frame'), `minW/minH must hold the ${pane} pane in place across IDE frames`)
+
   console.log(`Geometry and determinism passed for ${allFixtures.length} visual fixtures.`)
 } finally { await rm(temp, {recursive:true,force:true}) }

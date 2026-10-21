@@ -16,6 +16,7 @@ export const ideFrame: Scene = {
     {
       id: 'explorer',
       kind: 'tree',
+      minW: 300,
       label: 'roastery-shop',
       tree: [
         { name: '.venv', folder: true, state: 'muted', note: "this project's own Python" },
@@ -40,6 +41,8 @@ export const ideFrame: Scene = {
         {
           id: 'editor',
           kind: 'code',
+          minCols: 92,
+          minH: 640,
           filename: 'roastery/pricing.py',
           pattern: 'storage',
           label: pricing,
@@ -49,6 +52,7 @@ export const ideFrame: Scene = {
         {
           id: 'terminal',
           kind: 'terminal',
+          minH: 300,
           filename: 'Terminal — roastery-shop',
           label: [
             '$ python main.py',
@@ -60,7 +64,28 @@ export const ideFrame: Scene = {
         },
       ],
     },
+    { id: 'side', label: 'side', bare: true, minW: 560, children: [{ id: 'side-note', kind: 'note', pattern: 'storage', label: 'The side pane: a fixed column, empty or not' }] },
   ],
   edges: [],
 }
 
+
+// The same frame with a four-line file and a two-line terminal. With the template's minimum sizes it
+// lays out to the SAME explorer, editor and terminal boxes as ideFrame — check-geometry asserts it —
+// so a video cut between the two does not move a single panel.
+export const ideFrameShort: Scene = {
+  ...ideFrame,
+  id: 'ide-frame-short',
+  title: 'Study — the IDE frame with a short file: same panels, same places',
+  nodes: [
+    { ...ideFrame.nodes[0], tree: [{ name: '.venv', folder: true, state: 'muted' }, { name: 'main.py', state: 'new' }] },
+    {
+      ...ideFrame.nodes[1],
+      children: [
+        { ...ideFrame.nodes[1].children![0], filename: 'main.py', label: '# a short file\n\nprint("roastery-etl: starting")\nprint("orders processed:", 0)', show: undefined, highlight: [3, 4] },
+        { ...ideFrame.nodes[1].children![1], label: '$ python main.py\nroastery-etl: starting\norders processed: 0' },
+      ],
+    },
+    ideFrame.nodes[2],
+  ],
+}

@@ -87,6 +87,8 @@ export interface SceneNode {
   span?: 'all'
   bare?: boolean
   gap?: 'tight'
+  minW?: number
+  minH?: number
   header?: 'band' | 'plain'
   columns?: TableColumn[]
   headers?: string[]

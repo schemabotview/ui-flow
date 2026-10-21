@@ -164,6 +164,12 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   they were new when it was added; extending it to `code` would re-frame every existing code row.
   Panes sit `gap: 'tight'` (10px) at both levels; tight applies only where a group has no edges,
   because a layered gap is the room an arrow is drawn in.
+- **`minW` / `minH` are FLOORS applied after the natural size** (`sizeOf` → `naturalSize`), so a
+  box never shrinks below them and content still grows it. Their job is consistency across frames:
+  the fit is a pure function of the scene's bounds, so frames with identical boxes get identical
+  zoom and put every panel at the same pixels. `check-geometry` asserts it on `ide-frame` vs
+  `ide-frame-short`. A bare container with `minW` keeps its children at the start; a framed one
+  re-centres them.
 - **`show` / `highlight` use the FILE's line numbers**, and a `code` card with neither renders exactly
   as before. Collapsed runs print `··· N lines` — U+00B7, not `⋯`, because the sizer assumes every
   glyph is one 9.02px Plex Mono advance and a fallback-font glyph would break that.
