@@ -1,14 +1,12 @@
-import type { NodeProps } from '@xyflow/react'
-import { NodeHandles } from './Handles'
 import { tokenizeCode } from './codeHighlight'
-import { FILL, MONO, useNodeStyle } from './nodeStyle'
+import { FILL, MONO, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   CODE_FONT, CODE_LINE_H, CODE_BAR_H, CODE_BAR_RULE, CODE_BORDER, CODE_GUTTER_W, CODE_GUTTER_PAD, CODE_PAD_X, CODE_PAD_Y, codeLines,
 } from './codeMetrics'
 
 const DOTS = ['#ff5f56', '#ffbd2e', '#27c93f']
 
-export function CodeNode({ data }: NodeProps) {
+export function CodeNode({ data }: NodeViewProps) {
   const { d, t } = useNodeStyle(data, 'service')
   return (
     <div
@@ -18,7 +16,6 @@ export function CodeNode({ data }: NodeProps) {
         boxShadow: d.__focus ? '0 0 0 4px #5b8cff22, 0 0 28px #5b8cff33' : '0 1px 0 #00000040',
       }}
     >
-      <NodeHandles />
       <div
         style={{
           height: CODE_BAR_H, boxSizing: 'content-box', flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px',

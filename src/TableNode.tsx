@@ -1,12 +1,10 @@
-import type { NodeProps } from '@xyflow/react'
-import { NodeHandles } from './Handles'
-import { FILL, MONO, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, MONO, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   TABLE_FONT, TABLE_LINE_H, TABLE_PAD_X, TABLE_PAD_Y, TABLE_COL_GAP, TABLE_KEY_W, TABLE_NAME_FONT, TABLE_NAME_LINE_H,
   TABLE_SUB_FONT, TABLE_SUB_LINE_H, TABLE_SUB_GAP, TABLE_HEAD_PAD_TOP, TABLE_HEAD_PAD_BOTTOM, tableColumnChars, isDataTable, hasKeys,
 } from './tableMetrics'
 
-export function TableNode({ data }: NodeProps) {
+export function TableNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'service')
   const dataMode = isDataTable(d)
   const chars = tableColumnChars(d)
@@ -26,7 +24,6 @@ export function TableNode({ data }: NodeProps) {
         background: p.bg, color: t.ink, overflow: 'hidden', boxShadow: d.__focus ? glow(p.color) : 'none',
       }}
     >
-      <NodeHandles />
       <div style={{ flex: 'none', padding: `${TABLE_HEAD_PAD_TOP}px ${TABLE_PAD_X}px ${TABLE_HEAD_PAD_BOTTOM}px`, fontFamily: SANS }}>
         <div style={{ fontSize: TABLE_NAME_FONT, fontWeight: 600, lineHeight: `${TABLE_NAME_LINE_H}px`, color: p.color }}>{d.label}</div>
         {d.sub && <div style={{ fontSize: TABLE_SUB_FONT, lineHeight: `${TABLE_SUB_LINE_H}px`, opacity: 0.7, marginTop: TABLE_SUB_GAP, overflowWrap: 'anywhere' }}>{d.sub}</div>}

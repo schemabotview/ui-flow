@@ -1,13 +1,11 @@
-import type { NodeProps } from '@xyflow/react'
 import { NodeIcon } from './NodeIcon'
-import { NodeHandles } from './Handles'
-import { FILL, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   LIST_TITLE_FONT, LIST_TITLE_LINE_H, LIST_SUB_FONT, LIST_SUB_LINE_H, LIST_ITEM_FONT, LIST_ITEM_LINE_H, LIST_ITEM_GAP,
   LIST_PAD_X, LIST_HEAD_PAD_TOP, LIST_HEAD_PAD_BOTTOM, LIST_BODY_PAD_Y, LIST_ICON, LIST_ICON_GAP, LIST_BULLET_W,
 } from './listMetrics'
 
-export function ListNode({ data }: NodeProps) {
+export function ListNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'service')
   const bare = !d.__focus && !d.__framed
   const items = d.items ?? []
@@ -19,7 +17,6 @@ export function ListNode({ data }: NodeProps) {
         boxShadow: d.__focus ? glow(p.color) : 'none',
       }}
     >
-      <NodeHandles />
       <div style={{ flex: 'none', display: 'flex', alignItems: 'flex-start', gap: LIST_ICON_GAP, padding: `${LIST_HEAD_PAD_TOP}px ${LIST_PAD_X}px ${LIST_HEAD_PAD_BOTTOM}px` }}>
         <div style={{ flex: 'none', width: LIST_ICON, height: LIST_ICON, display: 'flex', alignItems: 'center' }}>
           <NodeIcon icon={d.icon} pattern={p} size={LIST_ICON} />

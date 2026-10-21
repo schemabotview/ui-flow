@@ -1,9 +1,7 @@
 import { useId } from 'react'
-import type { NodeProps } from '@xyflow/react'
-import { NodeHandles } from './Handles'
 import type { Theme } from './themes'
 import { textWidth } from './textMetrics'
-import { FILL, MONO, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, MONO, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   PLOT_AXIS_FONT, PLOT_LABEL_FONT, PLOT_SUB_H, PLOT_TICK_FONT, PLOT_TITLE_FONT,
   axisStep, axisTicks, formatTick, plotAreaSize, plotAxesMode, plotContentSize, plotInset,
@@ -16,7 +14,7 @@ function seriesColor(t: Theme, s: PlotSeries, i: number): string {
   return t.plot.series[i % t.plot.series.length]
 }
 
-export function PlotNode({ data }: NodeProps) {
+export function PlotNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'external')
   const clipId = `plotclip-${useId().replace(/[^A-Za-z0-9_-]/g, '')}`
   const spec = d.plot
@@ -44,7 +42,6 @@ export function PlotNode({ data }: NodeProps) {
         overflow: 'hidden', boxShadow: d.__focus ? glow(p.color) : 'none',
       }}
     >
-      <NodeHandles />
       <svg width="100%" height="100%" viewBox={`0 0 ${box.w} ${box.h}`} style={{ display: 'block' }}>
         <defs>
           <clipPath id={clipId}>

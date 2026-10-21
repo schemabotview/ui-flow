@@ -8,7 +8,7 @@ export default defineConfig({
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: 'index' },
     sourcemap: true,
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime', '@xyflow/react', 'lucide-react'],
+      external: ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
     },
   },
 })

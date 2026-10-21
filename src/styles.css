@@ -1,4 +1,3 @@
-@import '@xyflow/react/dist/style.css';
 @import '@fontsource/ibm-plex-sans/400.css';
 @import '@fontsource/ibm-plex-sans/600.css';
 @import '@fontsource/ibm-plex-mono/400.css';
@@ -11,27 +10,27 @@
 .tok-punct { color: #8b909c; }
 .tok-comment { color: #6b748b; font-style: italic; }
 
-.react-flow__node {
+.flow-scene {
+  direction: ltr;
+}
+
+.flow-node,
+.flow-edge-labels {
   -webkit-user-select: text;
   user-select: text;
 }
 
-.react-flow__edgelabel-renderer {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-.react-flow__node-container,
-.react-flow__node-plot,
-.react-flow__node-tile {
+.flow-node--container,
+.flow-node--plot,
+.flow-node--tile {
   cursor: default;
 }
-.react-flow__node-scene,
-.react-flow__node-chip,
-.react-flow__node-code,
-.react-flow__node-table,
-.react-flow__node-memory,
-.react-flow__node-list,
-.react-flow__node-evolution {
+.flow-node--scene,
+.flow-node--chip,
+.flow-node--code,
+.flow-node--table,
+.flow-node--memory,
+.flow-node--list,
+.flow-node--evolution {
   cursor: text;
 }

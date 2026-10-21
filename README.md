@@ -1,7 +1,8 @@
 # @graphlearning/flow
 
 The scene engine for [GraphL](https://graphl.in). A **scene** is a declarative graph — nodes, edges
-and nesting — and this package computes every position and renders it with react-flow.
+and nesting — and this package computes every position and paints it (its own renderer, no react-flow
+since 2.0).
 
 Authors never place nodes. That is the point: layout is derived, so a scene is deterministic and its
 screenshots are reproducible frame to frame.
@@ -56,14 +57,24 @@ included, and that is the trade the single bundle makes.
 
 Both are invisible until they break:
 
-1. **Import the stylesheet once** — `import '@graphlearning/flow/styles.css'`. It carries react-flow's
-   stylesheet and the IBM Plex faces the engine is *calibrated* to: `codeMetrics.ts` sizes every code
+1. **Import the stylesheet once** — `import '@graphlearning/flow/styles.css'`. It carries the node
+   styles and the IBM Plex faces the engine is *calibrated* to: `codeMetrics.ts` sizes every code
    node from a measured 9.02px glyph advance, so a different monospace face mis-sizes every card.
 2. **The host paints the canvas.** `SceneView` draws its background dots at `#2a2f38` and assumes a
    dark surface behind it (GraphL apps use `#1a1d23`). On a light background its labels vanish.
 
-`react`, `react-dom`, `@xyflow/react` and `lucide-react` are **peer** dependencies — the host app
+`react`, `react-dom` and `lucide-react` are **peer** dependencies — the host app
 supplies them, so there is only ever one React.
+
+## Upgrading to 2.0
+
+2.0 removes react-flow. Scenes, `SceneView`'s props and every layout are unchanged — measured on all
+86 python-ct sections at 3840×2160 under `?capture=1`, every node box and every edge path is
+identical to 1.4.0. What breaks is only what reached past the public surface:
+
+- Drop `@xyflow/react` from the app's dependencies.
+- The DOM classes changed: `.react-flow__node` is now `.flow-node` (with `data-id`), the viewport is
+  `.flow-viewport`. `@graphlearning/shell` ≥ 0.11.0 waits for either, so upgrade the shell with it.
 
 ## Develop
 

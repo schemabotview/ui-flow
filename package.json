@@ -1,7 +1,7 @@
 {
   "name": "@graphlearning/flow",
-  "version": "1.4.0",
-  "description": "Declarative react-flow scene engine for GraphL — authors describe nodes, edges and nesting; the engine computes every position.",
+  "version": "2.0.0",
+  "description": "Declarative scene engine for GraphL \u2014 authors describe nodes, edges and nesting; the engine computes every position and paints it.",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
@@ -34,7 +34,6 @@
     "aws-react-icons": "^3.3.0"
   },
   "peerDependencies": {
-    "@xyflow/react": "^12.11.2",
     "lucide-react": "^1.28.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
@@ -43,7 +42,6 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "@xyflow/react": "^12.11.2",
     "esbuild": "^0.28.2",
     "lucide-react": "^1.28.0",
     "puppeteer": "^25.12.0",

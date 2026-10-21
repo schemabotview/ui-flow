@@ -1,8 +1,6 @@
-import type { NodeProps } from '@xyflow/react'
 import { patternOf, type Theme } from './themes'
 import { NodeIcon } from './NodeIcon'
-import { NodeHandles } from './Handles'
-import { FILL, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   EVO_AXIS_FONT, EVO_AXIS_LABEL_GAP, EVO_AXIS_LINE_H, EVO_AXIS_RULE_GAP, EVO_BODY_PAD_BOTTOM, EVO_CAP_H, EVO_CAP_PAD_TOP,
   EVO_COL_BORDER, EVO_COL_GAP, EVO_COL_PAD_X, EVO_COL_RADIUS, EVO_ICON, EVO_ICON_GAP, EVO_ITEM_FONT, EVO_ITEM_GAP, EVO_ITEM_LINE_H,
@@ -15,7 +13,7 @@ import type { EvolutionSpec, EvolutionStage, PatternKey } from './types'
 const fillAlpha = (i: number, n: number) => Math.round(14 + (n > 1 ? i / (n - 1) : 1) * 30).toString(16).padStart(2, '0')
 const wrap = (fontSize: number, lineH: number) => ({ fontSize, lineHeight: `${lineH}px`, overflowWrap: 'anywhere' }) as const
 
-export function EvolutionNode({ data }: NodeProps) {
+export function EvolutionNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'service')
   const spec = d.evolution
   if (!spec?.stages?.length) return null
@@ -30,7 +28,6 @@ export function EvolutionNode({ data }: NodeProps) {
         fontFamily: SANS, padding: EVO_PAD, overflow: 'hidden', boxShadow: d.__focus ? glow(p.color) : 'none',
       }}
     >
-      <NodeHandles />
       {d.label && (
         <div style={{ marginBottom: EVO_TITLE_BLOCK_GAP }}>
           <div style={{ ...wrap(EVO_TITLE_FONT, EVO_TITLE_LINE_H), fontWeight: 600, color: p.color }}>{d.label}</div>

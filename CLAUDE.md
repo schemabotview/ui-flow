@@ -51,8 +51,8 @@ fixture.
 ## Architecture
 
 The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure) → `SceneView`
-(react-flow). Understanding it means reading four files: `types.ts`, `layout.ts`, `kinds.ts`,
-`SceneView.tsx`.
+(its own renderer; react-flow was removed at 2.0.0). Understanding it means reading four files:
+`types.ts`, `layout.ts`, `kinds.ts`, `SceneView.tsx`.
 
 - **`src/index.ts` is the entire public surface**: the scene-model types, `SceneView`, `ThemeKey`.
   Withheld deliberately: `computeLayout`, `collectEdges`, `Placed`, the `*Metrics` modules,
@@ -84,7 +84,7 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 - **Scenes are declarative — never write x/y.** `layout.ts` assigns every position and size.
 - **A plot's x/y are DATA, not layout** — values in the axes' own units; the engine still owns every
   pixel. Curves are sampled in the scene file, which is TypeScript.
-- **Peer deps, never deps** for `react`, `react-dom`, `@xyflow/react`, `lucide-react`. The `external`
+- **Peer deps, never deps** for `react`, `react-dom`, `lucide-react`. The `external`
   list in `vite.config.ts` enforces it — check it after any dependency change.
 - **The public surface is one component plus the scene model's types.** Adding one is a promise to
   every content repo.
@@ -114,7 +114,17 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 - **The ENGINE paints the canvas** (as of 0.8.0). A theme cannot change a background it does not own.
 - **The VIEWPORT is locked and the TEXT is selectable — one decision, not two.** Three load-bearing
   pieces: `user-select: text` in `styles.css`, `pointerEvents: 'all'` per node in `SceneView`, and
-  `preventScrolling={false}`.
+  no wheel or drag handler anywhere — page scroll passes straight through the scene.
+- **The fit is a PURE function of the pane size** (`fitTransform` in `SceneView`): same scene, same
+  `offsetWidth`/`offsetHeight`, same transform — no async `fitView`. It reproduces react-flow 12's
+  `getViewportForBounds` (padding floored per axis, zoom clamped 0.05–8), which is why 2.0 matched
+  1.4.0 to the pixel.
+- **An edge ends `ANCHOR_OUTSET` (4px) outside its node; a container's, 4px outside its INNER border
+  edge** (3 unfocused — the 1.5px border renders as 1 — and 1 focused, `HEADER_BORDER`). Under
+  react-flow this was measured off invisible DOM handles and so depended on the host's CSS (the dev
+  harness's global `border-box` made it 3px); the constants pin the value content repos rendered,
+  which is what every recorded video shows. Z-order follows react-flow's too: a node's z is its
+  nesting depth, an edge's is the deeper endpoint's, labels sit at 5.
 - **The edge pulse's period is a RECORDER contract.** `FlowEdge`'s `dur="2.4s"` must stay in step with
   `PULSE_S` in the shell's `record-course.mjs` / `record-reels.mjs`. Changing it here alone does not
   break the build; it puts a visible jump at every loop join in every recorded video.
@@ -124,7 +134,7 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   decoration; a node-level override is a smell — `focus` is the tool for "this one".
 - **`variant: 'chip'` is the one framed leaf by default** — a thing counted, not described.
 - **A property is not a peer — use `kind: 'list'`.** Building one from a container of one card per
-  bullet costs ~3.4× the height and drags the whole scene's fitView zoom down.
+  bullet costs ~3.4× the height and drags the whole scene's fit zoom down.
 - **A CONTAINER is sized by its children AND by its own header** (`headerMinWidth`, capped by
   `HEADER_MAX_FORCED_W`).
 - **`align: 'start'` + `stretch` is what makes a band diagram read as a grid.** `stretch` applies to
@@ -151,7 +161,7 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
 
 Both are invisible until they break:
 
-1. **Import the stylesheet once** — `@graphlearning/flow/styles.css` carries react-flow's sheet, the
+1. **Import the stylesheet once** — `@graphlearning/flow/styles.css` carries the node styles, the
    calibrated IBM Plex faces and the `.tok-*` colours.
 2. Three stylesheets cascade in `main.tsx` and the order is load-bearing: flow → shell → repo theme.
 

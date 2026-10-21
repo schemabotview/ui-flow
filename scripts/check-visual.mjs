@@ -24,7 +24,7 @@ try {
   await page.goto('http://127.0.0.1:5179/#/nodes', { waitUntil: 'networkidle0' })
   await page.evaluate(() => document.fonts.ready)
   await page.waitForFunction(() => {
-    const viewport = document.querySelector('.gallery-preview .react-flow__viewport')
+    const viewport = document.querySelector('.gallery-preview .flow-viewport')
     return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a >= 0.75
   })
   const gallery = await page.evaluate(() => ({
@@ -49,7 +49,7 @@ try {
   })
   await page.click('.rail a[href="#/flow"]')
   await page.waitForFunction(() => {
-    const viewport = document.querySelector('#fixture-flow .react-flow__viewport')
+    const viewport = document.querySelector('#fixture-flow .flow-viewport')
     return viewport && new DOMMatrix(getComputedStyle(viewport).transform).a > 0.1
   })
   await page.screenshot({ path: 'visual-artifacts/gallery-layout.png' })
@@ -73,7 +73,7 @@ try {
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
         const failures = await page.evaluate(() => {
           const failures = []
-          for (const node of document.querySelectorAll('.react-flow__node')) {
+          for (const node of document.querySelectorAll('.flow-node')) {
             const bounds = node.getBoundingClientRect()
             const walk = document.createTreeWalker(node, NodeFilter.SHOW_TEXT)
             while (walk.nextNode()) {

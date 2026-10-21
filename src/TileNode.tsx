@@ -1,12 +1,10 @@
-import type { NodeProps } from '@xyflow/react'
 import { NodeIcon, hasIcon } from './NodeIcon'
-import { NodeHandles } from './Handles'
-import { FILL, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   TILE_LABEL_FONT, TILE_LABEL_LINE_H, TILE_SUB_FONT, TILE_SUB_LINE_H, TILE_SUB_GAP, TILE_ICON, TILE_ICON_GAP, TILE_PAD_X, TILE_PAD_Y,
 } from './tileMetrics'
 
-export function TileNode({ data }: NodeProps) {
+export function TileNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'service')
   return (
     <div
@@ -17,7 +15,6 @@ export function TileNode({ data }: NodeProps) {
         boxShadow: d.__focus ? `0 0 0 3px ${p.color}66, 0 0 24px ${p.color}44` : 'none',
       }}
     >
-      <NodeHandles />
       <NodeIcon icon={d.icon} pattern={p} size={TILE_ICON} />
       <div style={{ textAlign: 'center', minWidth: 0, overflowWrap: 'anywhere' }}>
         <div style={{ fontSize: TILE_LABEL_FONT, fontWeight: 600, lineHeight: `${TILE_LABEL_LINE_H}px` }}>{d.label}</div>

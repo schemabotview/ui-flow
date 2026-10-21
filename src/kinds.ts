@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
-import type { NodeProps } from '@xyflow/react'
 import type { SceneNode } from './types'
+import type { NodeViewProps } from './nodeStyle'
 import { codeCardSize } from './codeMetrics'
 import { memoryCardSize } from './memoryMetrics'
 import { tableCardSize } from './tableMetrics'
@@ -16,7 +16,7 @@ import { EvolutionNode } from './EvolutionNode'
 
 export interface NodeKind {
   size: (n: SceneNode) => { w: number; h: number }
-  component: ComponentType<NodeProps>
+  component: ComponentType<NodeViewProps>
 }
 
 export const NODE_KINDS: Record<string, NodeKind> = {

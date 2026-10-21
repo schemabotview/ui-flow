@@ -1,12 +1,10 @@
-import type { NodeProps } from '@xyflow/react'
-import { NodeHandles } from './Handles'
-import { FILL, MONO, SANS, glow, useNodeStyle } from './nodeStyle'
+import { FILL, MONO, SANS, glow, useNodeStyle, type NodeViewProps } from './nodeStyle'
 import {
   MEM_FONT, MEM_ROW_H, MEM_AXIS_GAP, MEM_CELL_PAD_X, MEM_NOTE_GAP, MEM_BRACKET_GAP, MEM_BRACKET_W, MEM_BRACKET_LABEL_GAP,
   MEM_LABEL_FONT, MEM_TITLE_FONT, MEM_TITLE_LINE_H, MEM_FOOT_LINE_H, cellCols, groupRuns, memoryGeometry,
 } from './memoryMetrics'
 
-export function MemoryNode({ data }: NodeProps) {
+export function MemoryNode({ data }: NodeViewProps) {
   const { d, t, p } = useNodeStyle(data, 'network')
   const slots = d.slots ?? []
   const { nameCols } = cellCols(slots)
@@ -14,7 +12,6 @@ export function MemoryNode({ data }: NodeProps) {
   const rule = `2px solid ${p.color}`
   return (
     <div style={{ ...FILL, position: 'relative', fontFamily: SANS }}>
-      <NodeHandles />
       {d.label && (
         <div style={{ height: titleH, display: 'flex', alignItems: 'center', paddingLeft: axisW, boxSizing: 'border-box', fontSize: MEM_TITLE_FONT, fontWeight: 600, lineHeight: `${MEM_TITLE_LINE_H}px`, overflowWrap: 'anywhere', color: t.ink }}>
           <div style={{ minWidth: 0 }}>{d.label}</div>
