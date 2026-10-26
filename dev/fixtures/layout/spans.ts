@@ -18,15 +18,14 @@ const grid: SceneNode = {
   ],
 }
 
-const fan: SceneNode = {
-  id: 'fan',
-  label: 'Aligned ports',
-  sub: 'a face with several edges slides each anchor to line up with its far end',
+const layered: SceneNode = {
+  id: 'layered',
+  label: 'A spanning node in a layered row',
+  sub: "alone in its layer, span: 'all' takes the width of the widest row",
   pattern: 'group',
-  header: 'plain',
   flow: 'BT',
   children: [
-    { id: 'base', label: 'Shared platform', sub: 'one face, three edges', pattern: 'storage', span: 'all', children: [leaf('b1', 'Inner', 'storage')] },
+    { id: 'base', label: 'Shared platform', sub: 'as wide as the row above', pattern: 'storage', span: 'all', children: [leaf('b1', 'Inner', 'storage')] },
     leaf('up1', 'Consumer A', 'user'),
     leaf('up2', 'Consumer B', 'user'),
     leaf('up3', 'Consumer C', 'user'),
@@ -38,30 +37,12 @@ const fan: SceneNode = {
   ],
 }
 
-const crowd: SceneNode = {
-  id: 'crowd',
-  label: 'Crowded face',
-  sub: 'far ends too close together spread evenly instead',
-  pattern: 'group',
-  children: [
-    leaf('hub', 'Hub', 'network'),
-    { id: 'pair', label: 'Two paths to one card', kind: 'note', pattern: 'network' },
-    leaf('sink', 'Sink', 'network'),
-  ],
-  edges: [
-    { source: 'hub', target: 'pair' },
-    { source: 'hub', target: 'sink', label: 'first' },
-    { source: 'hub', target: 'sink', label: 'second', dashed: true },
-  ],
-}
-
-export const rails: Scene = {
-  id: 'rails',
-  title: 'Spans, aligned ports and header bands',
-  header: 'band',
+export const spans: Scene = {
+  id: 'spans',
+  title: "Spans — span: 'all' in a grid and in a layered row",
   framed: true,
-  cols: 3,
+  cols: 2,
   align: 'start',
-  nodes: [grid, fan, crowd],
+  nodes: [grid, layered],
   edges: [],
 }

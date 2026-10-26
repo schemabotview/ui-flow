@@ -55,7 +55,7 @@ try {
     }
   for (const key of Object.keys(BRAND_ICONS)) assert.ok(!(key in LUCIDE_ICONS), `brand key '${key}' would shadow the lucide glyph`)
 
-  const railFix = allFixtures.find(scene => scene.id === 'rails')
+  const railFix = allFixtures.find(scene => scene.id === 'spans')
   const railNodes = computeLayout(railFix)
   const at = id => railNodes.find(node => node.id === id)
   const gridKids = railNodes.filter(node => node.parentId === 'grid')

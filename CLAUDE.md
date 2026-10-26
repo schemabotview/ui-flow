@@ -80,7 +80,10 @@ The pipeline is `Scene` (declarative, author-written) → `computeLayout` (pure)
   `NodeIcon.tsx` in that order.
 - **`dev/fixtures/index.ts`** is the harness catalog and the source of truth for both check scripts —
   a fixture added there is swept without touching either script. Categorize by the capability
-  exercised, not the domain depicted, and keep scene ids stable (consumer links depend on them).
+  exercised, not the domain depicted — nodes, edges, containers, layout, charts, styling, icons,
+  templates (reusable frames), studies (architecture-scale stress cases) — and keep scene ids stable
+  (consumer links depend on them; a split or rename leaves its old id in `FIXTURE_ALIASES`).
+  `check-visual` asserts the category count, so adding one means updating it there.
 
 ## Invariants (do not break)
 

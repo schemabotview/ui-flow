@@ -34,7 +34,7 @@ try {
     fixtures: document.querySelectorAll('.gallery-fixture').length,
     previews: document.querySelectorAll('.gallery-preview').length,
   }))
-  if (gallery.categories !== 5 || gallery.sidebarLinks !== 5 || gallery.sidebarChildren !== 0 || gallery.fixtures !== FIXTURES.length || gallery.previews !== FIXTURES.length) {
+  if (gallery.categories !== 9 || gallery.sidebarLinks !== 9 || gallery.sidebarChildren !== 0 || gallery.fixtures !== FIXTURES.length || gallery.previews !== FIXTURES.length) {
     throw new Error(`Unexpected gallery structure: ${JSON.stringify(gallery)}`)
   }
   const overflow = await page.evaluate(() => [...document.querySelectorAll('.preview-scroll')]
