@@ -1,13 +1,15 @@
-import type { Scene } from '../../../src'
+import type { SceneNode } from '../../../src'
 
 const pricing = "from decimal import Decimal, ROUND_HALF_UP\n\nfrom roastery.catalogue import CATALOGUE\n\nCENT = Decimal(\"0.01\")\n\n\ndef line_total(sku: str, quantity: int) -> Decimal:\n    \"\"\"Price of one order line, before any discount.\"\"\"\n    return CATALOGUE[sku][\"price\"] * quantity\n\n\ndef subtotal(order: dict[str, int]) -> Decimal:\n    \"\"\"Sum of every line in the order.\"\"\"\n    return sum((line_total(sku, qty) for sku, qty in order.items()), Decimal(\"0\"))\n\n\ndef apply_discount(amount: Decimal, order: dict[str, int]) -> Decimal:\n    \"\"\"10% off when the order holds 3 or more bags.\"\"\"\n    bags = sum(order.values())\n    if bags >= 3:\n        amount = amount * Decimal(\"0.90\")\n    return amount.quantize(CENT, rounding=ROUND_HALF_UP)"
 
-export const ide: Scene = {
-  id: 'ide',
-  title: 'IDE panes — tree, folded and highlighted code, terminal',
+export const idePanesGroup: SceneNode = {
+  id: 'content-ide',
+  label: 'IDE panes',
+  sub: 'a file tree, folded and highlighted code, a terminal with a traceback',
+  pattern: 'group',
   cols: 3,
   align: 'start',
-  nodes: [
+  children: [
     {
       id: 'deep-tree',
       kind: 'tree',
@@ -60,5 +62,4 @@ export const ide: Scene = {
     { id: 'fold-one', kind: 'code', filename: 'a fold of exactly one line', label: 'a = 1\nb = 2\nc = 3', show: [[1, 1], [3, 3]], highlight: [3], pattern: 'warn', hug: true },
     { id: 'tiny-tree', kind: 'tree', label: 'x', tree: [{ name: 'main.py', state: 'active' }] },
   ],
-  edges: [],
 }

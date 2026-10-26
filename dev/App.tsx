@@ -8,8 +8,8 @@ import { CATEGORIES, CATEGORY_LABELS, FIXTURE_ALIASES, fixtureCatalog, allFixtur
 const THEME_KEYS: ThemeKey[] = ['dark', 'light']
 
 const CATEGORY_HEADINGS: Record<Category, string> = {
-  nodes: 'Node types', edges: 'Edges & ports', containers: 'Containers', layout: 'Layout & viewport',
-  charts: 'Charts', styling: 'Styling — roles, framing, header bands', icons: 'Icon libraries',
+  nodes: 'Node types', edges: 'Edges & ports', containers: 'Containers', layout: 'Layout',
+  charts: 'Charts', styling: 'Styling — roles, framing, header bands, padding', icons: 'Icon libraries',
   templates: 'Templates — reusable frames', studies: 'Architecture studies',
 }
 

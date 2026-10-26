@@ -1,20 +1,18 @@
 import type { Scene } from '../../src'
 
 import { overview } from './nodes/overview'
-import { prose } from './nodes/prose'
-import { code } from './nodes/code'
-import { annotations } from './nodes/annotations'
-import { ide } from './nodes/ide'
+import { text } from './nodes/text'
+import { content } from './nodes/content'
 import { edges } from './edges/edges'
 import { ports } from './edges/ports'
 import { containers } from './containers/containers'
 import { flow } from './layout/flow'
 import { spans } from './layout/spans'
-import { padding } from './layout/padding'
 import { plot } from './charts/plot'
 import { evolution } from './charts/evolution'
 import { patterns } from './styling/patterns'
 import { bands } from './styling/bands'
+import { padding } from './styling/padding'
 import { icons } from './icons/icons'
 import { ideFrame, ideFrameShort } from './templates/ide-frame'
 import { barclaysAzure } from './studies/barclays-azure'
@@ -47,20 +45,18 @@ function entry(category: Category, scene: Scene, description: string, tags: stri
 
 export const fixtureCatalog: Fixture[] = [
   entry('nodes', overview, 'Every node type in one frame — card, tile, chip, list, table, code, memory, container, plot, evolution. Use the focus control to light any of them.', ['overview', 'card', 'tile', 'chip', 'list', 'table', 'code', 'memory', 'container', 'plot', 'evolution', 'focus'], 'example'),
-  entry('nodes', prose, 'Text hierarchy, wrapping cards and headers, and list width floors.', ['prose', 'wrapping', 'list', 'minimum-width', 'headers', 'focus']),
-  entry('nodes', code, 'Content-sized cards: code width floor, hug and minCols; table schema and data modes; memory layout.', ['code', 'table', 'memory', 'minimum-width', 'sizing']),
-  entry('nodes', annotations, 'Notes (dashed callouts sized to their text) and list pills against the default bullets, including a wrapping pill and an unbreakable token.', ['note', 'list', 'pills', 'minimum-width']),
-  entry('nodes', ide, 'IDE panes: a file tree (nesting, NEW badges, a collapsed folder, a long unbreakable name, notes), code with folded ranges and highlighted lines in real line numbers, a terminal with a traceback, and Python keywords coloured.', ['tree', 'code', 'terminal', 'fold', 'highlight', 'traceback', 'minimum-width']),
+  entry('nodes', text, 'Text hierarchy, wrapping cards and headers, list width floors; notes (dashed callouts sized to their text) and list pills against the default bullets, including a wrapping pill and an unbreakable token.', ['prose', 'wrapping', 'list', 'minimum-width', 'headers', 'focus', 'note', 'pills']),
+  entry('nodes', content, 'Content-sized cards: code width floor, hug and minCols; table schema and data modes; memory layout; IDE panes — a file tree (nesting, NEW badges, a collapsed folder, a long unbreakable name, notes), code with folded ranges and highlighted lines, a terminal with a traceback, Python keywords coloured.', ['code', 'table', 'memory', 'tree', 'terminal', 'fold', 'highlight', 'traceback', 'minimum-width', 'sizing']),
   entry('edges', edges, 'Routing, direction overrides, arrowheads and labels.', ['edges', 'routing', 'directions', 'labels', 'arrowheads']),
   entry('edges', ports, 'Aligned ports: a face with three edges slides each anchor to its far end, and a crowded face spreads evenly instead.', ['ports', 'fan', 'anchors', 'edges']),
   entry('containers', containers, 'Nested containers and edges crossing boundaries.', ['nesting', 'headers', 'cross-container']),
   entry('layout', flow, 'Flow directions, fan ordering and grid wrapping.', ['TB', 'BT', 'LR', 'RL', 'branching', 'grid']),
   entry('layout', spans, "span: 'all' owning a row in an edgeless grid and in a layered row.", ['span', 'grid', 'rails']),
-  entry('layout', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
   entry('charts', plot, 'Cartesian plane and machine-learning figures: lines, scatter, areas, markers, segments and arrowed vectors.', ['plot', 'line', 'scatter', 'axes', 'machine-learning', 'vector', 'arrowheads']),
   entry('charts', evolution, 'Evolution rows on a truncated and on a zero-based axis.', ['evolution', 'baseline', 'truncated-axis', 'zero-based']),
   entry('styling', patterns, 'The seven pattern roles, framing inheritance and warn in context.', ['patterns', 'roles', 'framed', 'warn']),
   entry('styling', bands, "header: 'band' inherited from the scene, two levels deep, and overridden to plain on one container.", ['header', 'band', 'inheritance']),
+  entry('styling', padding, 'Viewport padding on a sparse scene.', ['viewport', 'padding', 'fit']),
   entry('icons', icons, 'How an icon key resolves, and every AWS, Lucide and Azure key the engine registers.', ['aws', 'azure', 'lucide', 'registry', 'fallback'], 'gallery'),
   entry('templates', ideFrame, 'The python-ct IDE frame: explorer, editor and terminal side by side, with code and output that were actually run.', ['ide', 'tree', 'code', 'terminal', 'python', 'roastery'], 'template'),
   entry('templates', ideFrameShort, 'The IDE frame with a four-line file: minimum sizes keep every panel exactly where ide-frame has it.', ['ide', 'template', 'minW', 'minH', 'consistency'], 'template'),
@@ -90,4 +86,6 @@ export const FIXTURE_ALIASES: Record<string, string> = {
   'vendor-icons': 'icon-gallery',
   'azure-gallery': 'icon-gallery',
   rails: 'spans',
+  annotations: 'prose-hierarchy',
+  ide: 'code',
 }

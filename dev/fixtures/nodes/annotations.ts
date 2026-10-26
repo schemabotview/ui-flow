@@ -1,11 +1,13 @@
-import type { Scene } from '../../../src'
+import type { SceneNode } from '../../../src'
 
-export const annotations: Scene = {
-  id: 'annotations',
-  title: 'Notes and property pills',
+export const notesGroup: SceneNode = {
+  id: 'text-notes',
+  label: 'Notes and property pills',
+  sub: 'dashed callouts sized to their text; pills against the default bullets',
+  pattern: 'group',
   cols: 3,
   align: 'start',
-  nodes: [
+  children: [
     { id: 'note-short', label: 'On S3', kind: 'note', pattern: 'network' },
     { id: 'note-long', label: 'Separate Delta and Iceberg locations, so neither table format reads the other', kind: 'note', pattern: 'network' },
     { id: 'note-token', label: 'checkpoint_location_for_structured_streaming_state', kind: 'note', pattern: 'warn' },
@@ -22,5 +24,4 @@ export const annotations: Scene = {
       items: ['Cleanse & standardise', 'Normalise units (apply corrections)', 'Enrich with reference data', 'Conform to data model'],
     },
   ],
-  edges: [],
 }

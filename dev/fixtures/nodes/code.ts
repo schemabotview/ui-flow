@@ -1,4 +1,4 @@
-import type { Scene } from '../../../src'
+import type { SceneNode } from '../../../src'
 
 const SPARK = [
   'df = spark.read.parquet(path)',
@@ -7,11 +7,13 @@ const SPARK = [
   '    .groupBy("region").count())',
 ].join('\n')
 
-export const code: Scene = {
-  id: 'code',
-  title: 'Content cards — code, table, memory',
+export const contentGroup: SceneNode = {
+  id: 'content-cards',
+  label: 'Code, table and memory',
+  sub: 'code width floor, hug and minCols; table schema and data modes; memory layout',
+  pattern: 'group',
   cols: 2,
-  nodes: [
+  children: [
     {
       id: 'floor',
       label: 'The floor — padded to 64 columns',
@@ -108,5 +110,4 @@ export const code: Scene = {
       ],
     },
   ],
-  edges: [],
 }

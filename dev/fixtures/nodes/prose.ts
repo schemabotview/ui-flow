@@ -1,10 +1,12 @@
-import type { Scene } from '../../../src'
+import type { SceneNode } from '../../../src'
 
-export const prose: Scene = {
-  id: 'prose-hierarchy',
-  title: 'Text & sizing — hierarchy, wrapping, list floors',
+export const proseGroup: SceneNode = {
+  id: 'text-prose',
+  label: 'Hierarchy, wrapping and list floors',
+  sub: 'cards, list titles and container headers grow to fit',
+  pattern: 'group',
   cols: 2,
-  nodes: [
+  children: [
     { id: 'outer', label: 'Neutral outer container', pattern: 'group', cols: 2,
       sub: 'Focus an inner container to compare its outline with its neutral parent.',
       children: [
@@ -80,5 +82,4 @@ export const prose: Scene = {
       ],
     },
   ],
-  edges: [],
 }
